@@ -1,0 +1,111 @@
+{
+  "cap": 0.1,
+  "n_holdout": 1775,
+  "precision": 0.9669992325402916,
+  "recall": 0.8780487804878049,
+  "recovered_inr": 71983693.80000001,
+  "fraud_admitted_inr": 4832541.499999999,
+  "net_inr": 67149802.30000001,
+  "net_contribution_inr": 13129781.950000003,
+  "abstention_rate": 0.1628169014084507,
+  "per_merchant_caps": {
+    "Aurum Jewels": 0.02,
+    "BookNest": 0.1,
+    "HomeHaul": 0.075,
+    "Kirana Direct": 0.1,
+    "PharmaNow": 0.1,
+    "SnackBox": 0.1,
+    "Threadline": 0.075,
+    "Voltcart": 0.005
+  },
+  "moat_contribution_gain_inr": [
+    [
+      "network_clean_rate",
+      0.345540221442039
+    ],
+    [
+      "network_merchants_prior",
+      0.18570399194951567
+    ],
+    [
+      "f_is_cod",
+      0.12065118463621158
+    ],
+    [
+      "network_tenure_days",
+      0.05319094457155189
+    ],
+    [
+      "network_orders_prior",
+      0.05213360268073125
+    ],
+    [
+      "amount",
+      0.03615702513918497
+    ],
+    [
+      "risk_score",
+      0.03598513656831167
+    ],
+    [
+      "f_orders_last_24h",
+      0.03379815959011394
+    ],
+    [
+      "f_amount_z",
+      0.03373976611403525
+    ],
+    [
+      "network_rto_prior",
+      0.02290254868408399
+    ],
+    [
+      "f_pincode_rto_propensity",
+      0.016194799501586407
+    ],
+    [
+      "network_disputes_prior",
+      0.015740717579205327
+    ],
+    [
+      "f_merchant_prior_rto",
+      0.01557995146404203
+    ],
+    [
+      "network_instrument_merchants",
+      0.006995726523010656
+    ],
+    [
+      "f_international",
+      0.006285189525320773
+    ],
+    [
+      "f_address_mismatch",
+      0.0046661537807694865
+    ],
+    [
+      "f_is_night",
+      0.004074631266943092
+    ],
+    [
+      "f_disposable_email",
+      0.003993233025384979
+    ],
+    [
+      "f_thin_file_flag",
+      0.0024852749656976945
+    ],
+    [
+      "f_device_is_new",
+      0.0020556414637980763
+    ],
+    [
+      "f_device_account_fanout",
+      0.0018339693786779126
+    ],
+    [
+      "network_device_fanout",
+      0.00029213014978437
+    ]
+  ]
+}

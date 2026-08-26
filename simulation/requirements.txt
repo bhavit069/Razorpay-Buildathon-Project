@@ -1,0 +1,13 @@
+# Phase 1 — decision core
+numpy>=2.0
+pandas>=2.2
+scikit-learn>=1.5
+lightgbm>=4.5
+scipy>=1.13
+matplotlib>=3.9
+
+# Phase 2 — agent plane (uncomment as they land)
+# fastapi>=0.115
+# uvicorn[standard]>=0.32
+# anthropic>=0.40
+# pytest>=8.0

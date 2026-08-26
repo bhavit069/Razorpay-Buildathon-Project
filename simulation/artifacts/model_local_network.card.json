@@ -1,0 +1,37 @@
+{
+  "blocks": [
+    "local",
+    "network"
+  ],
+  "features": [
+    "f_device_is_new",
+    "f_device_account_fanout",
+    "f_address_mismatch",
+    "f_orders_last_24h",
+    "f_amount_z",
+    "f_pincode_rto_propensity",
+    "f_is_night",
+    "f_thin_file_flag",
+    "f_disposable_email",
+    "f_international",
+    "f_merchant_prior_rto",
+    "f_is_cod",
+    "risk_score",
+    "amount",
+    "network_orders_prior",
+    "network_merchants_prior",
+    "network_tenure_days",
+    "network_clean_rate",
+    "network_disputes_prior",
+    "network_rto_prior",
+    "network_device_fanout",
+    "network_instrument_merchants"
+  ],
+  "n_fit": 5192,
+  "n_calib": 1298,
+  "base_rate_fit": 0.2553929121725732,
+  "learner": "lightgbm",
+  "seed": 42,
+  "feature_hash": "1805b25305fb2171",
+  "source": "data300k\\appeal_queue.csv"
+}
