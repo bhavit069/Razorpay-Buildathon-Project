@@ -95,12 +95,23 @@ Layer 1, the decision system: done. A calibrated model plus an economic
 decision rule, backtested against a year of simulated traffic with the answer
 key locked behind a test suite. No language model in it. Deterministic.
 
-Layer 2, the agent: not started. Writes verdicts in English, runs the
-verification conversation, serves a dashboard.
+Layer 2, the agent: core done. It writes a plain-English note for every case,
+runs the verification exchange, keeps a tamper-evident log, and hands
+escalations to a reviewer with a written brief. The dashboard is not built.
 
-The order is the argument. The language model explains and negotiates; it never
-decides whether money moves. Every decision the agent will make is one the
-backtest already graded.
+The order is the argument, and it is checked rather than claimed. Run the
+backtest and the agent over the same 300 cases and every score is identical to
+the last digit; the only two decisions that differ are the two the agent
+resolved by asking the customer a question, which the backtest has no way to do.
+
+The language model explains and negotiates. It never decides whether money
+moves. Three separate tests enforce that: the tools it can reach take no text,
+the fact-extraction schema has no field for a decision, and verdicts are handed
+a decision that was already made.
+
+One caveat worth stating plainly: there is no API key on this machine, so no
+verdict has actually been through Claude yet. Everything runs against
+deterministic templates that are labelled as such.
 
 ## Results
 
@@ -114,6 +125,10 @@ Reviewing 1,775 blocked orders the model was not trained on:
 | Revenue recovered | ₹7.04 cr |
 | Fraud let through | ₹22.57 L |
 | Refused to decide | 17% |
+
+Every released order carries a written note explaining why, and every number in
+those notes is checked against the evidence before it is shown. A note that
+invents a figure is rewritten. On the last 300-case run, all 300 passed.
 
 Two things to read alongside that table.
 
@@ -160,6 +175,7 @@ standard.
 | `development/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
 | `development/METRICS.md` | Every number the project quotes, generated |
 | `development/notes.txt` | Running log of what was built and what broke |
+| `pr/PULL_REQUEST.md` | Full change writeup, including what is wrong with it |
 | `simulation/` | Original data generator, archived |
 | `IDEA.md`, `ARCHITECTURE.md` | Original plan. Numbers in these are stale. |
 | `pr/` | This file, the change writeup, and a code snapshot |
@@ -176,4 +192,5 @@ python run.py data300k    # build the simulated world   ~31s
 python run.py test        # 33 tests                     ~4s
 python run.py metrics     # regenerate every number     ~60s
 python run.py seeds       # how much it moves between worlds
+python run.py agent       # run the agent over the blocked pile
 ```

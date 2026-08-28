@@ -129,13 +129,112 @@ stripped the writing back across the docs and code comments. it had drifted into
   pitch prose.
 
 
-OPEN
-----
+OPEN at this point
+------------------
 - retune the generator so shop-only evidence is weaker (pitch assumes 0.81, it's
   0.87), or keep the data and rewrite the moat claim around shape. leaning
   toward the second.
 - the Kolkata-type miss: long spotless files scoring too high.
 - DATA_CARD.md and IDEA.md still carry stale numbers.
-- phase 2 not started. no LLM in this codebase.
 - determinism verified on one machine only. float behaviour across platforms
   untested.
+
+
+2026-08-27 later - phase 2, the agent
+-------------------------------------
+ledger - append-only log where each entry hashes the previous one. rewriting a
+  past decision breaks every hash after it, so the file shows tampering. tested
+  by editing an entry and checking the chain complains about that exact one.
+
+llm client - one entry point to Claude with a disk cache keyed on the inputs.
+  three modes: live calls the API and records the reply, replay serves only from
+  cache and errors on a miss, offline falls back to a deterministic template.
+  offline output is tagged source="template" and never claims to be model
+  output. no API key on this machine so everything currently runs offline.
+
+tools - the only path from the agent to anything that moves money. thin wrappers
+  over phase 1, every call logged. none of them takes text as an argument, so
+  there's no signature through which generated prose could reach the policy.
+
+verdict writer - model gets the evidence and the decision that was already made,
+  writes 3-6 sentences. then every number in the prose is checked against the
+  evidence and regenerated if it invented one. 300 of 300 clean on the last run.
+
+  found a bug in that check: amounts print rounded to whole rupees, so a Rs
+  641.76 order shows as "642", and the checker rejected it as invented. now
+  allows the rounded form of any value.
+
+stepup - two model roles, agent asks and a simulated customer answers, seeded
+  from ground truth so honest customers answer and fraudsters evade. a third
+  call extracts structured facts. only the facts come back; the model's opinion
+  of the conversation is thrown away.
+
+orchestrator - the case loop. adjudicate, decide, maybe verify, write, log.
+
+got the step-up mechanism wrong twice before getting it right:
+
+  first version zeroed the customer's past return count when they agreed to
+  prepay. that's falsifying history - prepaying removes FUTURE return risk, it
+  doesn't mean the returns never happened.
+
+  second version credited verification as extra prior orders. same mistake in a
+  different costume. and it backfired: adding 3 orders to a thin file in the
+  same tenure looks like velocity, so two customers who verified successfully
+  came out scoring WORSE than before they answered (0.204 -> 0.571).
+
+  the actual fix: verification isn't history and doesn't belong in the features
+  at all. it goes to the insufficiency gate, which is asking "can we identify
+  this person", and leaves p_bad completely alone. the record didn't change so
+  the estimate of the record shouldn't either. tested.
+
+then: only 2 of 75 step-ups resolved anything, because most step-ups come from
+  the ambiguous branch where the gate was never the blocker. running a dialogue
+  there can't change the outcome. now only insufficiency step-ups get an
+  exchange - 4 instead of 75, and both that resolved were correct.
+
+on 300 holdout cases: 151 released at 99.3% correct, 75 upheld, 73 held for
+  verification, 1 escalated. all 300 verdicts audit-clean, ledger verifies.
+
+worth noting: upholds are only 56% correct. at cap=0.02 the system is refusing
+  a lot of good customers to protect precision on the releases. that's the
+  conservative end of the frontier doing what it says.
+
+
+STILL OPEN
+----------
+- generator retune vs reframing the moat claim (see above, unresolved)
+- the Kolkata-type miss: long spotless files scoring too high
+- DATA_CARD.md and IDEA.md still carry stale numbers
+- determinism verified on one machine only
+- no API key on this machine, so no verdict has been through Claude yet. the
+  code path is written and cached-replay is ready; needs one live run to record
+  the cache.
+- service/ and the UI are not started.
+- the ambiguous-branch step-ups (73 of 300) have no path to resolution. either
+  give verification an EV effect for them or accept they stay abstentions.
+
+
+2026-08-27 evening - hardening
+------------------------------
+tested the claim the whole two-phase design rests on: that wrapping the decision
+  system in an agent doesn't change what it decides. ran both over the same 300
+  cases. p_bad identical on all 300 (difference exactly 0.0), and the only two
+  action differences are the two step-ups that resolved, which the backtest had
+  no way to run. now a permanent test, and demo.py rechecks it every run.
+
+the agent's decisions are now priced by the same grader the backtest uses,
+  instead of a separate accounting. as_core_ledger() re-expresses an agent run
+  as a phase 1 ledger so core.metrics.grade works on it unchanged. on 300 cases
+  at cap=0.02: 151 released, 99.3% precision, Rs 73.06L recovered against
+  Rs 1,494 admitted.
+
+escalation briefs. the spec calls escalation a first-class outcome with a
+  written brief, but it was just reusing the verdict. now has its own prompt and
+  template addressed to a reviewer rather than a merchant: what's being asked,
+  what the record shows, what's missing, what would settle it. citation-checked
+  like a verdict.
+
+latency percentiles instead of a bare median. p50 0.78ms, p95 1.03ms, max
+  4.54ms. that's offline templates; a live run will be dominated by API time.
+
+61 tests.

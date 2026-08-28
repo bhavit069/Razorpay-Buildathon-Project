@@ -12,6 +12,7 @@ point; the Makefile just delegates here for parity with the architecture doc.
     python run.py test        # the Phase 1 test suite
     python run.py notebooks   # rebuild and re-execute the explainers
     python run.py seeds       # how much does all of this move between worlds?
+    python run.py agent       # Phase 2: run the agent over the holdout docket
     python run.py clean
 """
 import os
@@ -75,6 +76,10 @@ def seeds():
     sh("seed_check.py")
 
 
+def agent():
+    sh("demo.py", "--limit", 100)
+
+
 def clean():
     for d in ("data", "data300k", "artifacts"):
         p = os.path.join(ROOT, d)
@@ -91,7 +96,7 @@ def _dataset():
     sys.exit("No dataset found. Run `python run.py data300k` first.")
 
 
-TASKS = {f.__name__: f for f in (data, data300k, validate, moat, sweep, metrics, test, notebooks, seeds, clean)}
+TASKS = {f.__name__: f for f in (data, data300k, validate, moat, sweep, metrics, test, notebooks, seeds, agent, clean)}
 
 if __name__ == "__main__":
     name = sys.argv[1] if len(sys.argv) > 1 else ""

@@ -1,0 +1,15 @@
+# generated data — regenerate with `make data` (deterministic given seed)
+data/
+data300k/
+artifacts/
+*.pkl
+
+# generated report
+METRICS.md
+
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.env

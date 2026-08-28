@@ -1,6 +1,6 @@
 # METRICS
 
-Generated 2026-08-26 20:37 UTC by `python run.py metrics`. Regenerates from seed. No number here is typed by hand.
+Generated 2026-08-28 22:55 UTC by `python run.py metrics`. Regenerates from seed. No number here is typed by hand.
 
 - Dataset `data300k/` - 8265 appealed (blocked) orders, 6490 train / 1775 holdout, temporal split.
 - Learner `lightgbm`, isotonic-calibrated on the last 1298 train cases; fitted on 5192.

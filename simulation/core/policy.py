@@ -80,8 +80,31 @@ def ev_release(p_bad: float, amount_inr: float, cfg: PolicyConfig) -> float:
     return upside - downside - cfg.review_cost_inr
 
 
-def evidence_sufficient(evidence, cfg: PolicyConfig) -> tuple[bool, tuple]:
-    """Is there enough *file* here to exonerate anyone? Quantity, not confidence."""
+@dataclass(frozen=True)
+class Verification:
+    """Outcome of a step-up exchange, as an input to the gate.
+
+    Verification is not history. Confirming an address shows someone controls
+    the account; it does not create a payment record, so it must not be written
+    into the network features. Doing that falsifies the file, and because the
+    model reads order counts as shape it can make a customer who verified score
+    worse.
+
+    It enters at the gate instead, which is the part asking whether we can
+    identify this person. p_bad is untouched.
+    """
+    identity_confirmed: bool = False
+    prepaid_accepted: bool = False
+    confirmations: int = 0
+
+    @property
+    def clears_gate(self) -> bool:
+        return self.identity_confirmed and self.confirmations >= 2
+
+
+def evidence_sufficient(evidence, cfg: PolicyConfig,
+                        verification: "Verification | None" = None) -> tuple[bool, tuple]:
+    """Is there enough here to act on? Quantity of record, or a verified identity."""
     n = evidence.network["network_orders_prior"]
     tenure = evidence.network["network_tenure_days"]
     reasons = []
@@ -89,13 +112,16 @@ def evidence_sufficient(evidence, cfg: PolicyConfig) -> tuple[bool, tuple]:
         reasons.append(f"thin_network_file(orders={n:.0f}<{cfg.min_network_orders})")
     if tenure < cfg.min_network_tenure_days:
         reasons.append(f"short_tenure(days={tenure:.0f}<{cfg.min_network_tenure_days})")
+    if reasons and verification is not None and verification.clears_gate:
+        return True, (f"identity_verified({verification.confirmations}_confirmations)",)
     return (not reasons), tuple(reasons)
 
 
-def decide(p_bad: float, evidence, cfg: PolicyConfig = PolicyConfig()) -> Decision:
+def decide(p_bad: float, evidence, cfg: PolicyConfig = PolicyConfig(),
+           verification: "Verification | None" = None) -> Decision:
     A = evidence.amount_inr
     ev = ev_release(p_bad, A, cfg)
-    sufficient, gate_reasons = evidence_sufficient(evidence, cfg)
+    sufficient, gate_reasons = evidence_sufficient(evidence, cfg, verification)
     big_enough = A >= cfg.stepup_floor_inr
 
     # Confidence check runs before the insufficiency gate. ARCHITECTURE.md 1.3
@@ -115,6 +141,8 @@ def decide(p_bad: float, evidence, cfg: PolicyConfig = PolicyConfig()) -> Decisi
     elif ev > 0 and p_bad < cfg.cap:
         action = Action.OVERTURN
         reasons = (f"ev_positive({ev:+,.0f})", f"p_bad_under_cap({p_bad:.3f}<{cfg.cap})")
+        if verification is not None and verification.clears_gate:
+            reasons += gate_reasons
     else:
         action = Action.STEP_UP if big_enough else Action.UPHOLD
         reasons = ("ambiguous",

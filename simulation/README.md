@@ -25,6 +25,7 @@ python run.py metrics     # regenerate METRICS.md and artifacts/
 python run.py test        # 33 tests, ~4s
 python run.py notebooks   # rebuild and re-execute the explainers
 python run.py seeds       # rerun the pipeline on five generated worlds, ~5min
+python run.py agent       # phase 2: run the agent over the holdout docket
 python run.py clean
 ```
 
@@ -191,8 +192,48 @@ overturns. That is a model miss and the most interesting open bug.
 
 [notes.txt](notes.txt), chronological.
 
+## Phase 2
+
+The agent plane. Adds language, interaction and audit; adds no decision logic.
+
+| Module | Job |
+|---|---|
+| [agent/ledger.py](agent/ledger.py) | Append-only log, each entry hashing the previous one |
+| [agent/llm.py](agent/llm.py) | Claude access with a disk replay cache; live / replay / offline |
+| [agent/tools.py](agent/tools.py) | The only path from the agent to the model and policy |
+| [agent/verdict.py](agent/verdict.py) | Writes the case note, then checks every number in it |
+| [agent/stepup.py](agent/stepup.py) | Verification exchange and structured fact extraction |
+| [agent/orchestrator.py](agent/orchestrator.py) | The case loop |
+
+`python run.py agent` runs it. On 300 holdout cases at cap=0.02: 151 released at
+99.3% correct, 75 upheld, 73 held for verification, 1 escalated, all 300 verdicts
+audit-clean, ledger verifies.
+
+**There is no API key on this machine, so nothing has been through Claude yet.**
+Everything runs in `offline` mode against deterministic templates, tagged
+`source="template"` so they can never be mistaken for model output. One live run
+records the cache and `replay` mode then serves the demo off-network.
+
+### Verification is not evidence
+
+The step-up mechanism was wrong twice before it was right. The first version
+zeroed a customer's past return count when they agreed to prepay; the second
+credited verification as extra prior orders. Both falsify the record, and the
+second backfired: crediting a thin file with three extra orders in the same
+tenure reads as velocity, so two customers who verified successfully scored
+*worse* afterwards (p_bad 0.204 to 0.571).
+
+Verification now goes to the insufficiency gate, which is the thing actually
+asking whether we can identify this person, and leaves `p_bad` untouched. The
+record did not change, so the estimate of the record must not either. Asserted
+by `test_verification_never_touches_the_record`.
+
+Only insufficiency step-ups get an exchange. Ambiguous-branch cases already have
+a full record, so verification cannot move them; running one anyway cost 73
+dialogues to resolve 2 cases.
+
 ## State
 
-Phase 1 done. `agent/` and `service/` are empty scaffolds and there is no LLM in
+Phase 1 and Phase 2 core done. `service/` and the UI are not started. `agent/` and `service/` are empty scaffolds and there is no LLM in
 this codebase. `datagen/moat_ledger.py` duplicates what `core/metrics.py` does
 properly and is kept only for the comparison above.
