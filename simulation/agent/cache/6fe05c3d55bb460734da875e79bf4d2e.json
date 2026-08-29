@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "content": "ORDER\n  payment_id     pay_5E72cODtQrmZkn\n  merchant       Aurum Jewels\n  amount         Rs 515,681\n  method         upi\n  blocked for    amount_anomaly\n  merchant score 0.509 against a threshold of 0.38\n\nWHAT THE MERCHANT COULD SEE\n  new device            1\n  address mismatch      0\n  basket vs their norm  4.56 sd\n  ordered at night      0\n  first order here      0\n  disposable email      0\n  pincode RTO index     1.15\n  prior RTO here        0\n  cash on delivery      0\n\nWHAT ONLY THE NETWORK CAN SEE\n  prior orders          75\n  across merchants      1\n  tenure                1534 days\n  completed cleanly     0.960\n  prior disputes        1\n  prior RTOs            2\n  devices seen          1\n  instrument used at    1 merchants\n\nDECISION (already made, not yours to revisit)\n  action                OVERTURN\n  P(block was correct)  0.003\n  expected value of release  Rs 126,928\n  rules that fired      ev_positive(+126,928), p_bad_under_cap(0.003<0.2)",
+      "role": "user"
+    }
+  ],
+  "model": "gemini-3.6-flash",
+  "provider": "gemini",
+  "system": "You write the case note for a payments risk review system.\n\nA merchant's fraud stack blocked an order. A calibrated model and an\nexpected-value policy have already re-examined it and reached a decision. Your\nonly job is to explain that decision in plain English for the merchant.\n\nRules, all of them hard:\n- 3 to 6 sentences. No headings, no bullet points, no preamble.\n- State the decision in the first sentence.\n- Cite only figures present in the evidence you are given. Never estimate,\n  round to a nicer number, or introduce a figure that is not there.\n- Name the counter-evidence. If the decision was to release, say what still\n  looks bad about the order. If it was to uphold, say what looked good.\n- Do not speculate about the customer's intent or circumstances. You know their\n  transaction record and nothing else.\n- Do not recommend a different decision. It is not yours to make.\n\nWrite for someone who will read a hundred of these. Be flat and specific.",
+  "text": "The decision is to overturn the initial block and release order pay_5E72cODtQrmZkn for Rs 515,681. Across the network, the account reflects a tenure of 1534 days with 75 prior orders and a clean completion rate of 0.960, resulting in a 0.003 probability that the block was correct and an expected release value of Rs 126,928. Counter-evidence to this release includes a basket variance of 4.56 sd above norm, a merchant score of 0.509 against a threshold of 0.38, and a new device value of 1. The account also carries network records of 1 prior dispute, 2 prior RTOs, and a pincode RTO index of 1.15.",
+  "usage": {
+    "input_tokens": 530,
+    "output_tokens": 183,
+    "thinking_tokens": 2002
+  }
+}

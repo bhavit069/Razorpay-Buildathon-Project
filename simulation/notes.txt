@@ -92,8 +92,9 @@ five of the six showcase cases are in the training half. demoing them means
   demoing on cases the model studied. notebook 04 finds holdout replacements.
 
 the Kolkata case doesn't behave as the pitch says. an 88-order customer with
-  three years and a spotless record scores 0.22, too high, so the system
-  abstains instead of releasing. real model miss.
+  three years and a spotless record scores 0.22, so the system abstains instead
+  of releasing. filed as a model miss at the time. it isn't one - see the
+  2026-08-27 entry.
 
 
 2026-08-27 - accuracy pass before pushing
@@ -238,3 +239,185 @@ latency percentiles instead of a bare median. p50 0.78ms, p95 1.03ms, max
   4.54ms. that's offline templates; a live run will be dominated by API time.
 
 61 tests.
+
+
+2026-08-27 - review response
+----------------------------
+ten items from review. all of them make a headline number worse. took all of
+them.
+
+renaming was already done, 0 ACQUIT left anywhere.
+
+1. deployment mode is now a declared assumption sitting next to the step-up pass
+   rates. booking the full order value as recovered is only honest if we run
+   inline at checkout with the customer still in session. a queue review means
+   they already left, so only some come back. Deployment(inline|queue) with a
+   recontact rate, swept in METRICS.md 9. at 35% return the same decisions are
+   worth Rs 0.12cr instead of Rs 1.29cr. the discount applies only to recovery,
+   not to fraud admitted: a fraudster invited back to finish a stolen-card order
+   is more motivated to return than an honest customer who already bought
+   elsewhere.
+   inline also means step-up has to complete in session. an email round trip is
+   a queue review wearing an inline costume.
+
+2. stopped demoing at cap=0.02. that number was picked because it made precision
+   look good, which is the exact behaviour the whole thesis criticises. now runs
+   at the EV point, cap=0.20, which is where EV(release) stops being positive.
+   precision fell 98.6% -> 96.3%, fraud admitted Rs 22.57L -> Rs 51.21L, recall
+   rose to 88.2%. worse-looking and correct.
+
+3. recall of recoverable now leads the headline table in bold, with the
+   abstention rate and the raw count of undecided cases next to it. precision is
+   the constraint, not the goal. in a product about getting wrongly blocked
+   customers through, the share of them that got through is the number.
+
+4. leave-one-merchant-out. dropped 1,946 Aurum training cases, tested on the 451
+   Aurum holdout cases. AUC falls 0.0008, which is nothing - the model ranks an
+   unseen merchant about as well as one it trained on. but precision at the same
+   cap drops 92.9% -> 89.0% and contribution by Rs 31L, because the probabilities
+   are calibrated to merchants it has seen. so the platform claim holds for the
+   hard part, learning who is safe from cross-merchant behaviour, and fails for
+   the easy part, which is recalibrating on a few hundred of the new merchant's
+   own cases before trusting the operating point.
+
+5. human reviewer baseline added: 87.5% accuracy, Rs 150 a case, ~4 hours.
+   they beat us. Rs 1.36cr against our Rs 1.29cr on judgment alone. the row that
+   doesn't survive is the assumption behind it - that a person reviews all 1,775
+   cases. review is rationed to the top few percent by value because of what it
+   costs. the honest claim is not that this is smarter than a reviewer, it's
+   that every case gets reviewed instead of the top 2%.
+
+6. generator retune: closed by taking the reframe. the moat claim is that
+   network evidence releases more orders at higher precision at the same time,
+   and moving a cutoff can't do both. one sentence, two numbers. the AUC
+   ablation is a diagnostic and belongs in the appendix, not the pitch.
+
+7. Kolkata miss: closed, not a bug. an 88-order spotless file scoring 0.22 is
+   the bust-out prior doing its job. the dataset has 42% of fraudsters farming
+   clean history on purpose, so a long clean record can't be a free pass. the
+   model declining to treat it as one is the feature.
+
+8. live model run: done, partially. gemini key arrived, so llm.py now has two
+   providers behind the same complete() entry point and picks whichever
+   credential is present. the anthropic path is untouched.
+
+   four things went wrong, all worth writing down:
+   - TLS failed on this machine even outside the sandbox. something intercepts
+     it with a cert that's in the windows store but not certifi's bundle.
+     truststore.inject_into_ssl() fixes it.
+   - the .env has "GEMINI_API KEY" with a space, which no shell will load.
+     read_env() tolerates it. worth renaming to GEMINI_API_KEY.
+   - gemini 3.x thinks by default and max_output_tokens caps thinking plus
+     visible text together. a 600-token budget spent 432 on thinking and
+     returned 54 of prose, cut mid-sentence. verdicts now get 3000 tokens of
+     headroom on top of their own budget.
+   - free tier is 20 requests per day PER MODEL. gemini-flash-latest is an
+     alias for 3.7-flash, whose bucket we'd already spent. switched to
+     3.6-flash, which has its own.
+
+   and one real bug in our own code, which only showed up because a live model
+   was finally exercising it: the citation checker pulled digits out of payment
+   ids. "pay_5E72cODtQrmZkn" contains 72, which is not in the evidence, so
+   every correctly-cited verdict failed the check three times and fell back to
+   the template. the offline runs never caught it because the template doesn't
+   print the payment id. so "300 of 300 audit clean" was measuring a checker
+   that would have rejected real output. fixed, and it still catches
+   fabrication.
+
+   3 demo cases now carry real gemini verdicts, citation-checked and cached.
+   the rest hit the daily cap. warm_cache.py records the demo cases only, which
+   is what a demo needs; replay serves them off-network.
+
+9. showcase cases are picked by predicate now, in core/showcase.py. six roles
+   described by shape, matched against holdout, ranked by each role's own
+   tiebreak. survives a reseed, and no case from the train split can sneak in.
+   metrics harness emits artifacts/tables.md so the other docs stop being
+   hand-patched.
+
+10. UI cut to one screen. service/case_room.py writes a single self-contained
+    html file: case list, local vs network evidence side by side, verdict, tool
+    trace, transcript. no server, no build step, opens from disk. the frontier
+    and portfolio views stay in METRICS.md and the notebooks, which carry them
+    better anyway.
+
+11. checked the queue haircut because it looked like a bug. 35% recontact
+    turning 1.29cr into 11.5L reads like the discount is being taken twice.
+    it isn't. it's applied once, to recovery, and net contribution is computed
+    off the already-discounted number. wrote the whole thing out term by term
+    in METRICS.md 11 and added tests that assert the published rows reproduce
+    grade() to the paisa.
+
+    the reason it drops that hard: only one term scales.
+      net = 0.25 * R_gross * rate - A - 750*n_bad - reviews
+    margin is 25% of a recovered rupee, fraud is 100% of an admitted one, so a
+    fixed 51.58L of drag comes off a quarter of a shrinking number. cushion at
+    cap 0.20 is only 3.5x. breakeven is a 28.6% return rate, which is a better
+    thing to quote than any single point in the band.
+
+    also stopped reporting one rate. 70/50/35 now, because an in-session retry
+    prompt is not a next-day email. and the asymmetry assumption (fraudsters
+    come back more readily than honest customers) is declared at the top of
+    the section instead of sitting in a dataclass default.
+
+12. added a reviewer baseline that reflects what merchants actually do. the
+    old row assumed a person works all 1775 cases. nobody does. rank by order
+    value, work down until the day runs out, everything below the line stays
+    blocked. same reviewer, same 87.5%, charged only for what they reach.
+
+      all 1775      88.3% recall   1.36cr    (beats us)
+      top 10%        8.6% recall   69.41L
+      top  3%        2.4% recall   28.17L
+      us, all 1775  88.2% recall   1.29cr
+
+    the full-review row stays in. losing to it is the honest result. the two
+    rows together are the actual claim: a reviewer wins case for case, nobody
+    can afford one across the whole pile, so most cases are never looked at.
+
+13. froze METRICS.md, and freezing it turned up a bad number. the seed sweep
+    was re-picking the cap on each seed's own calibration slice, so the range
+    it produced described a different policy than the headline did. worse,
+    re-tuning per seed absorbs exactly the variation you're trying to measure.
+    every seed is graded twice now and the headline quotes the shipped row.
+
+                      tuned cap (old)        shipped cap 0.20 (now)
+      contribution    1.15 - 1.87 cr         0.90 - 1.86 cr
+      precision       97.8% - 99.1%          92.0% - 98.2%
+      recall          not reported           83.1% - 89.6%
+      fraud admitted  not reported           8.13L - 51.21L
+
+    so "precision is the stable number" is withdrawn. it moves 6.2 points
+    across five worlds at a fixed operating point. recall is the steady one.
+    seed 42, which we quote everywhere, is middling on revenue and the worst
+    of the five on cost.
+
+14. housekeeping. renamed GEMINI_API KEY to GEMINI_API_KEY, the space meant no
+    shell would ever have loaded it. added run.py room and run.py warm so the
+    case room and the cache warmer are reachable like everything else. pulled
+    the em dashes out of DATA_CARD.md and .gitignore.
+
+    and a git thing worth writing down: the outer folder and pr/ are two
+    different repositories. pr/ is the real clone of the github repo and is on
+    dev tracking origin/dev. the outer folder is local-only and its history has
+    no common ancestor with github at all. push from pr/. i had this wrong
+    earlier and said there was no remote.
+
+15. found a bug while checking the demo actually demos anything. the case room
+    ran the orchestrator over the first 400 holdout cases in chronological
+    order and then tagged whichever of them matched a showcase role. five of
+    the six showcase cases sit past position 400. so the page rendered exactly
+    one tagged case, and none of the three recorded gemini verdicts were ever
+    requested, which meant every verdict on the demo screen was a template.
+
+    the header even said "1 tagged as demo cases" and nobody read it, me
+    included. the showcase cases are now put in explicitly and the stream
+    fills the rest of the limit. three of the six now carry real model output,
+    including the spotless-record-still-refused case, which is the one worth
+    opening first.
+
+    worth noting what the shape of this bug was: nothing threw, nothing failed
+    a test, the page looked fine. it was only visible by counting verdict
+    sources on the generated html.
+
+    small thing left alone: the model writes booleans as counts, "0 address
+    mismatches", "0 cash on delivery". reads a bit odd. it's a prompt wording
+    issue, not a correctness one, and metrics are frozen.

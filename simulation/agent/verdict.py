@@ -55,7 +55,10 @@ class Verdict:
 # ---------------------------------------------------------------------------
 # citation checking
 # ---------------------------------------------------------------------------
-_NUM = re.compile(r"\d[\d,]*\.?\d*")
+# Numbers only where they stand alone. Payment ids such as pay_5E72cODtQrmZkn
+# contain digits, and matching those made the checker reject its own
+# correctly-cited verdicts and fall back to the template every time.
+_NUM = re.compile(r"(?<![A-Za-z0-9_.])\d[\d,]*(?:\.\d+)?(?![A-Za-z0-9_])")
 
 
 def _variants(x: float) -> set:

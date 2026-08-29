@@ -37,7 +37,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="data300k")
     ap.add_argument("--limit", type=int, default=100)
-    ap.add_argument("--cap", type=float, default=0.02)
+    ap.add_argument("--cap", type=float, default=0.20,
+                    help="EV point. Releasing is EV-positive only below "
+                         "m/(1+m)=0.20, so this is the policy releasing whenever "
+                         "it is worth money rather than a tuned threshold.")
     ap.add_argument("--mode", default="offline", choices=("offline", "replay", "live"))
     ap.add_argument("--ledger", default="artifacts/ledger.jsonl")
     ap.add_argument("--show", type=int, default=2, help="verdicts to print per action")

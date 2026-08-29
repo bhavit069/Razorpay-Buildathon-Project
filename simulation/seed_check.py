@@ -57,14 +57,27 @@ def main(n_seeds=len(SEEDS)):
             cap = best_cap(calibration_ledger(store, m, base), vault, base, su)
             g = grade(run(store, m, base, "holdout").redecide(base.for_merchant(cap)),
                       vault, su)
-            res[blocks] = (roc_auc_score(y, m.predict(store, ho)), g)
+            res[blocks] = (roc_auc_score(y, m.predict(store, ho)), g, m)
 
-        la, lg = res[("local",)]
-        na, ng = res[("local", "network")]
+        la, lg, _ = res[("local",)]
+        na, ng, nm = res[("local", "network")]
+
+        # Two operating points per seed, and they answer different questions.
+        # The tuned cap is the fair one for the ablation: comparing two models
+        # at one arbitrary cap measures the cap. The shipped cap is the policy
+        # actually used, so it is the one the rupee range in the headline has
+        # to come from. Quoting a range measured at the tuned point next to a
+        # headline priced at the shipped point compares two different policies.
+        sg = grade(run(store, nm, base, "holdout"), vault, su)   # base.cap == shipped
+
         moat = ng.net_contribution_inr - lg.net_contribution_inr
         rows.append((na - la, ng.precision, ng.recall_recoverable,
-                     ng.net_contribution_inr, moat, 100 * moat / lg.net_contribution_inr))
-        meta.append((seed, len(ho), la, na, na - la, ng.precision, ng.net_contribution_inr))
+                     ng.net_contribution_inr, moat, 100 * moat / lg.net_contribution_inr,
+                     sg.precision, sg.recall_recoverable, sg.net_contribution_inr,
+                     sg.fraud_admitted_inr))
+        meta.append((seed, len(ho), la, na, na - la, ng.precision,
+                     ng.net_contribution_inr, sg.precision, sg.recall_recoverable,
+                     sg.net_contribution_inr, sg.fraud_admitted_inr))
         print(f'{seed:>5}{len(ho):>9}{la:>9.4f}{na:>9.4f}{na-la:>8.4f}'
               f'{ng.precision:>8.3f}{ng.recall_recoverable:>8.3f}'
               f'{ng.net_contribution_inr/1e7:>10.2f}cr{moat/1e5:>9.2f}L{rows[-1][5]:>+8.1f}')
@@ -75,10 +88,14 @@ def main(n_seeds=len(SEEDS)):
         print(f'{name:>5}{"":>9}{"":>9}{"":>9}{f(a[:,0]):>8.4f}{f(a[:,1]):>8.3f}'
               f'{f(a[:,2]):>8.3f}{f(a[:,3])/1e7:>10.2f}cr{f(a[:,4])/1e5:>9.2f}L{f(a[:,5]):>+8.1f}')
     print()
-    print(f"net contribution varies {a[:,3].min()/1e7:.2f}-{a[:,3].max()/1e7:.2f} cr "
-          f"across seeds (sd {a[:,3].std()/1e7:.2f}). Quote the range, not a point.")
+    print(f"tuned cap:   contribution {a[:,3].min()/1e7:.2f}-{a[:,3].max()/1e7:.2f} cr, "
+          f"precision {a[:,1].min():.3f}-{a[:,1].max():.3f}")
+    print(f"shipped cap {base.cap}: contribution {a[:,8].min()/1e7:.2f}-{a[:,8].max()/1e7:.2f} cr, "
+          f"precision {a[:,6].min():.3f}-{a[:,6].max():.3f}, "
+          f"recall {a[:,7].min():.3f}-{a[:,7].max():.3f}, "
+          f"fraud admitted {a[:,9].min()/1e5:.2f}-{a[:,9].max()/1e5:.2f} L")
+    print("The headline quotes the shipped row. Quote the range, not a point.")
     print(f"AUC lift varies {a[:,0].min():.4f}-{a[:,0].max():.4f} (mean {a[:,0].mean():.4f}).")
-    print(f"precision is the stable one: {a[:,1].min():.3f}-{a[:,1].max():.3f}.")
 
     os.makedirs("artifacts", exist_ok=True)
     with open("artifacts/seed_check.json", "w", encoding="utf-8") as fh:
@@ -86,14 +103,26 @@ def main(n_seeds=len(SEEDS)):
             "rows": [
                 {"seed": s_, "n_holdout": int(n_), "local_auc": float(la_),
                  "net_auc": float(na_), "lift": float(lf), "precision": float(pr),
-                 "contribution": float(cn)}
-                for s_, n_, la_, na_, lf, pr, cn in meta
+                 "contribution": float(cn),
+                 "shipped_precision": float(sp), "shipped_recall": float(sr),
+                 "shipped_contribution": float(sc_), "shipped_fraud_admitted": float(sf)}
+                for s_, n_, la_, na_, lf, pr, cn, sp, sr, sc_, sf in meta
             ],
             "lift_mean": float(a[:, 0].mean()), "lift_min": float(a[:, 0].min()),
             "lift_max": float(a[:, 0].max()),
-            "precision_min": float(a[:, 1].min()), "precision_max": float(a[:, 1].max()),
-            "contribution_min": float(a[:, 3].min()), "contribution_max": float(a[:, 3].max()),
-            "contribution_sd": float(a[:, 3].std()),
+            # tuned cap, the fair point for the ablation
+            "tuned_precision_min": float(a[:, 1].min()),
+            "tuned_precision_max": float(a[:, 1].max()),
+            "tuned_contribution_min": float(a[:, 3].min()),
+            "tuned_contribution_max": float(a[:, 3].max()),
+            # shipped cap, the point every headline number is priced at
+            "shipped_cap": float(base.cap),
+            "precision_min": float(a[:, 6].min()), "precision_max": float(a[:, 6].max()),
+            "recall_min": float(a[:, 7].min()), "recall_max": float(a[:, 7].max()),
+            "contribution_min": float(a[:, 8].min()), "contribution_max": float(a[:, 8].max()),
+            "contribution_sd": float(a[:, 8].std()),
+            "fraud_admitted_min": float(a[:, 9].min()),
+            "fraud_admitted_max": float(a[:, 9].max()),
         }, fh, indent=2)
     print("wrote artifacts/seed_check.json")
 

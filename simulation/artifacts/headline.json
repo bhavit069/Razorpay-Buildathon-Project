@@ -1,13 +1,13 @@
 {
-  "cap": 0.1,
+  "cap": 0.2,
   "n_holdout": 1775,
-  "precision": 0.9669992325402916,
-  "recall": 0.8780487804878049,
-  "recovered_inr": 71983693.80000001,
-  "fraud_admitted_inr": 4832541.499999999,
-  "net_inr": 67149802.30000001,
-  "net_contribution_inr": 13129781.950000003,
-  "abstention_rate": 0.1628169014084507,
+  "precision": 0.9634703196347032,
+  "recall": 0.8822299651567944,
+  "recovered_inr": 72127281.53,
+  "fraud_admitted_inr": 5120702.7,
+  "net_inr": 67005228.83,
+  "net_contribution_inr": 12873767.682500001,
+  "abstention_rate": 0.1532394366197183,
   "per_merchant_caps": {
     "Aurum Jewels": 0.02,
     "BookNest": 0.1,
@@ -107,5 +107,86 @@
       "network_device_fanout",
       0.00029213014978437
     ]
-  ]
+  ],
+  "deployment": "inline",
+  "human_baseline": {
+    "accuracy": 0.875,
+    "cost_inr_per_case": 150.0,
+    "latency_hours": 4.0,
+    "precision": 0.9664378337147216,
+    "net_contribution_inr": 13596044.055
+  },
+  "unseen_merchant": {
+    "merchant": "Aurum Jewels",
+    "auc_drop": 0.0008156355801786086,
+    "precision_full": 0.9287598944591029,
+    "precision_lomo": 0.8902743142144638,
+    "contribution_drop_inr": 3101505.74
+  },
+  "queue": {
+    "range": [
+      0.7,
+      0.5,
+      0.35
+    ],
+    "breakeven_rate": 0.2860527994725327,
+    "terms": {
+      "n_good_released": 1266,
+      "R_gross_inr": 72127281.53,
+      "n_bad_released": 48,
+      "fraud_admitted_inr": 5120702.7,
+      "n_escalated": 9,
+      "margin": 0.25,
+      "dispute_overhead_inr": 750.0,
+      "review_cost_inr": 150.0,
+      "overhead_total_inr": 36000.0,
+      "reviews_total_inr": 1350.0,
+      "drag_inr": 5158052.7
+    },
+    "rows": [
+      {
+        "rate": 1.0,
+        "booked_inr": 72127281.53,
+        "margin_inr": 18031820.3825,
+        "drag_inr": 5158052.7,
+        "net_contribution_inr": 12873767.682500001
+      },
+      {
+        "rate": 0.7,
+        "booked_inr": 50489097.070999995,
+        "margin_inr": 12622274.267749999,
+        "drag_inr": 5158052.7,
+        "net_contribution_inr": 7464221.5677499985
+      },
+      {
+        "rate": 0.5,
+        "booked_inr": 36063640.765,
+        "margin_inr": 9015910.19125,
+        "drag_inr": 5158052.7,
+        "net_contribution_inr": 3857857.49125
+      },
+      {
+        "rate": 0.35,
+        "booked_inr": 25244548.535499997,
+        "margin_inr": 6311137.133874999,
+        "drag_inr": 5158052.7,
+        "net_contribution_inr": 1153084.4338749992
+      }
+    ]
+  },
+  "queue_contribution_inr": 1153084.4338749992,
+  "human_rationed": {
+    "0.03": {
+      "reviewed": 53,
+      "precision": 0.9459459459459459,
+      "recall": 0.024390243902439025,
+      "net_contribution_inr": 2817225.8225
+    },
+    "0.10": {
+      "reviewed": 178,
+      "precision": 0.9538461538461539,
+      "recall": 0.08641114982578398,
+      "net_contribution_inr": 6940847.287500001
+    }
+  }
 }

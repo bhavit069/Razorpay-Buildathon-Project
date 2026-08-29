@@ -49,7 +49,7 @@ Release and uphold are the easy two. The other two matter more:
   re-arguing the old evidence.
 - **Send to a human.** Not enough evidence and no question would settle it.
 
-At the default settings the system refuses to decide about 17% of cases. A
+At the shipped settings the system refuses to decide on 15.3% of cases. A
 system that always answers is claiming to know things it doesn't.
 
 ## Why a payment platform
@@ -95,9 +95,10 @@ Layer 1, the decision system: done. A calibrated model plus an economic
 decision rule, backtested against a year of simulated traffic with the answer
 key locked behind a test suite. No language model in it. Deterministic.
 
-Layer 2, the agent: core done. It writes a plain-English note for every case,
-runs the verification exchange, keeps a tamper-evident log, and hands
-escalations to a reviewer with a written brief. The dashboard is not built.
+Layer 2, the agent: done. It writes a plain-English note for every case, runs
+the verification exchange, keeps a tamper-evident log, and hands escalations to
+a reviewer with a written brief. One screen on top of it, a self-contained HTML
+case room that opens from disk.
 
 The order is the argument, and it is checked rather than claimed. Run the
 backtest and the agent over the same 300 cases and every score is identical to
@@ -109,40 +110,97 @@ moves. Three separate tests enforce that: the tools it can reach take no text,
 the fact-extraction schema has no field for a decision, and verdicts are handed
 a decision that was already made.
 
-One caveat worth stating plainly: there is no API key on this machine, so no
-verdict has actually been through Claude yet. Everything runs against
-deterministic templates that are labelled as such.
+Three demo cases carry real, citation-checked model verdicts, recorded and
+replayed off-network. The rest run on deterministic templates that are labelled
+as templates. The free tier is 20 requests per day per model, so wider live
+coverage needs a paid key rather than any code change.
 
 ## Results
 
-Reviewing 1,775 blocked orders the model was not trained on:
+Reviewing 1,775 blocked orders the model was not trained on, at the operating
+point that actually ships:
 
 | | |
 |---|---|
-| Released | 1,181 of 1,775 |
-| Of those, good | 98.6% |
-| Good orders rescued | 81% of recoverable |
-| Revenue recovered | ₹7.04 cr |
-| Fraud let through | ₹22.57 L |
-| Refused to decide | 17% |
+| Good orders rescued | 88.2% of recoverable |
+| Released, and good | 96.3% |
+| Revenue recovered | Rs 7.21 cr |
+| Fraud let through | Rs 51.21 L |
+| Net contribution | Rs 1.29 cr |
+| Refused to decide | 15.3% |
+
+The operating point is cap 0.20, which is not tuned. It is where the expected
+value of releasing stops being positive at a 25% margin. Tuning it down to 0.02
+would show 98.6% precision and Rs 22.57 L of fraud instead, which is the
+threshold that flatters the table. Picking that is the behaviour this project
+exists to criticise, so the headline uses the EV point and leads with recall.
 
 Every released order carries a written note explaining why, and every number in
 those notes is checked against the evidence before it is shown. A note that
-invents a figure is rewritten. On the last 300-case run, all 300 passed.
+invents a figure is rewritten.
 
-Two things to read alongside that table.
+Four things to read alongside that table. All of them make it look worse.
 
-**The rupee figures move a lot between runs.** Regenerating the world under
-five different random seeds gives net contribution anywhere from ₹1.15 cr to
-₹1.87 cr. Quote the range. Precision is the stable number: 97.8% to 99.1%
-across the same five.
+**A human reviewer beats this system.** A person adjudicating every case at
+87.5% accuracy reaches Rs 1.36 cr against our Rs 1.29 cr. On judgment alone a
+competent reviewer wins.
 
-**The cross-merchant advantage is modest.** About +5% in profit terms over a
-merchant using everything it can see on its own, and +0.04 to +0.07 AUC. Older
-drafts of our own documents claimed considerably more, and were wrong. The
-claim that survives is about shape rather than size: network evidence releases
-more orders at higher accuracy at the same time. Moving a threshold trades one
-against the other; new evidence buys both.
+What beats the reviewer is coverage. Manual review costs about Rs 150 and four
+hours per case, so real queues are ranked by value and worked down until the
+day runs out:
+
+| Reviewer coverage | Cases reviewed | Recall of recoverable | Net contribution |
+|---|---|---|---|
+| all 1,775 | 1,775 | 88.3% | Rs 1.36 cr |
+| top 3% by value | 53 | 2.4% | Rs 28.17 L |
+| top 10% by value | 178 | 8.6% | Rs 69.41 L |
+| **this system, all 1,775** | **1,775** | **88.2%** | **Rs 1.29 cr** |
+
+The gap is not intelligence, it is reach. The cases a queue skips are exactly
+the small ones where the customer never complains and quietly never comes back.
+
+**The money depends on where it runs.** Everything above assumes inline at
+checkout, where a released order converts at full value because the customer is
+still in session. As a queue that emails people later, only some return.
+Breakeven is a 28.6% return rate; below that the programme costs money to run.
+`METRICS.md` section 11 writes out every term so the arithmetic can be checked
+by hand.
+
+**The rupee figures move a lot between runs.** Regenerating the world under five
+random seeds and regrading all of them at this same operating point gives net
+contribution anywhere from Rs 0.90 cr to Rs 1.86 cr, precision 92.0% to 98.2%,
+fraud admitted Rs 8.13 L to Rs 51.21 L. Recall is the steadiest, 83.1% to 89.6%.
+Quote the range.
+
+An earlier draft of this file said precision was the stable number at 97.8% to
+99.1%. That range was measured at a cap re-tuned on each seed, which absorbs
+exactly the variation being measured. At a fixed operating point the variation
+shows up.
+
+**The cross-merchant advantage is modest.** About +4.6% in profit terms over a
+merchant using everything it can see on its own, and +0.043 to +0.072 AUC.
+Older drafts of our own documents claimed considerably more, and were wrong.
+The claim that survives is about shape rather than size: network evidence
+releases more orders at higher accuracy at the same time. Moving a threshold
+trades one against the other; new evidence buys both.
+
+## Does it work on a merchant it has never seen
+
+This is pitched as a platform product, so it has to. Drop the largest merchant
+out of training entirely and score only them:
+
+| Trained on | AUC | Precision | Net contribution |
+|---|---|---|---|
+| everything | 0.8832 | 92.9% | Rs 99.71 L |
+| everything except Aurum Jewels | 0.8824 | 89.0% | Rs 68.69 L |
+
+Ranking transfers, pricing does not. AUC falls by 0.0008, which is nothing.
+Precision at the same cap falls from 92.9% to 89.0%.
+
+The expensive part, learning what fraud looks like across merchants, comes for
+free. The cheap part, calibrating to one merchant's baskets and margins, needs
+a few hundred of their own cases. That is the shape of a platform product, and
+the precision drop is what makes it credible rather than a slogan.
 
 ## Caveats
 
@@ -169,28 +227,37 @@ standard.
 
 ## Layout
 
-| Folder | Contents |
+| Path | Contents |
 |---|---|
-| `development/` | Current work: decision system, tests, notebooks |
-| `development/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
-| `development/METRICS.md` | Every number the project quotes, generated |
-| `development/notes.txt` | Running log of what was built and what broke |
-| `pr/PULL_REQUEST.md` | Full change writeup, including what is wrong with it |
-| `simulation/` | Original data generator, archived |
-| `IDEA.md`, `ARCHITECTURE.md` | Original plan. Numbers in these are stale. |
-| `pr/` | This file, the change writeup, and a code snapshot |
+| `simulation/` | The whole system: decision core, agent, tests, notebooks |
+| `simulation/METRICS.md` | Every number the project quotes, generated |
+| `simulation/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
+| `simulation/notes.txt` | Running log of what was built and what broke |
+| `PULL_REQUEST.md` | Full change writeup, including what is wrong with it |
 
-`IDEA.md` and `DATA_CARD.md` quote figures from an older version of the
-generator. Don't quote them. `development/METRICS.md` regenerates from current
-code.
+`IDEA.md`, `ARCHITECTURE.md` and `DATA_CARD.md` quote figures from an older
+version of the generator. Don't quote them. `simulation/METRICS.md` regenerates
+from current code and is the only document whose numbers are current by
+construction. Everything else, this file included, is written against it.
 
 ## Running it
 
 ```bash
-cd development
+cd simulation
+pip install -r requirements.txt
 python run.py data300k    # build the simulated world   ~31s
-python run.py test        # 33 tests                     ~4s
+python run.py test        # 74 tests                     ~8s
 python run.py metrics     # regenerate every number     ~60s
-python run.py seeds       # how much it moves between worlds
+python run.py room        # build the case room, then open artifacts/case_room.html
 python run.py agent       # run the agent over the blocked pile
+python run.py seeds       # how much it moves between worlds, ~6 min
 ```
+
+If you only have two minutes:
+
+```bash
+cd simulation && python run.py data300k && python run.py room
+```
+
+then open `simulation/artifacts/case_room.html`. It is one file, no server, no
+network.

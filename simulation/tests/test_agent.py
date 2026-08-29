@@ -18,7 +18,7 @@ from agent.verdict import allowed_numbers, check_citations, write
 from core.policy import Action, PolicyConfig, decide
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CFG = PolicyConfig(cap=0.02)
+CFG = PolicyConfig(cap=0.20)      # the EV point, same as the report and demo
 
 
 @pytest.fixture(scope="module")

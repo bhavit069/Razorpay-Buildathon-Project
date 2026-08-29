@@ -1,8 +1,8 @@
-# Phases 1 and 2: decision core, agent, generated metrics
+# Phases 1 and 2, plus review response
 
 Target branch: `dev`
-Scope: `ARCHITECTURE.md` 1.1 to 1.6 and 2.1 to 2.5. The service and UI (2.6) are not started.
-Code snapshot: [`pr/simulation/`](simulation/)
+Scope: `ARCHITECTURE.md` 1.1 to 1.6 and 2.1 to 2.6, with 2.6 cut to a single screen.
+Code: [`simulation/`](simulation/)
 
 ## What this does
 
@@ -18,15 +18,197 @@ tamper-evident log.
 The agent adds no decision logic. That is checked rather than asserted: see
 "Agent reproduces the backtest" below.
 
-Headline on a 1,775-case temporal holdout, cap 0.02: 98.6% overturn precision,
-81.1% recall of recoverable revenue, Rs 7.04 cr recovered against Rs 22.57 L of
-fraud admitted, Rs 1.53 cr net contribution, 17% abstention.
+Headline on a 1,775-case temporal holdout at the EV point (cap 0.20):
+**88.2% recall of recoverable revenue**, 96.3% overturn
+precision, Rs 7.21 cr recovered against
+Rs 51.21 L of fraud admitted,
+Rs 1.29 cr net contribution,
+15.3% abstention.
+
+Those numbers are worse than the previous revision on every axis except recall,
+which is the point. See "Review response" below.
 
 Read "How valid is this" before quoting any of it.
 
+
+## Review response
+
+Ten items. Every one makes a headline number look worse. All taken.
+
+**1. Deployment mode is now declared.** Booking full order value as recovered is
+only honest running inline at checkout with the customer still in session. As a
+queue review they have already left. `Deployment(inline|queue)` carries a
+recontact rate and section 11 sweeps it as a band: at a 70/50/35% return rate
+the same decisions are worth Rs 74.64 L / Rs 38.58 L / Rs 11.53 L against
+Rs 1.29 cr inline, and breakeven is a 28.6% return rate.
+The discount applies to recovery only,
+not to fraud admitted, since a fraudster invited back to finish a stolen-card
+order is more motivated to return than an honest customer who already bought
+elsewhere. Inline also requires the step-up to finish in session; an email round
+trip is a queue review wearing an inline costume.
+
+**2. Stopped demoing at cap 0.02.** That value was picked because it flattered
+precision, which is the behaviour this project criticises. The report, the demo
+and the tests now run at cap 0.20, where EV(release) stops being positive.
+Precision fell to 96.3%, fraud admitted roughly doubled,
+recall rose to 88.2%. The baselines table shows both rows and
+labels the tuned one as existing solely to make the ablation fair.
+
+**3. Recall leads the headline** in bold, with abstention rate and the raw count
+of undecided cases beside it.
+
+**4. Leave-one-merchant-out.** Dropped Aurum Jewels from
+training and scored only its holdout cases. AUC falls
+0.0008, which is nothing. Precision at the same cap
+drops 92.9% to
+89.0% and contribution by
+Rs 31 L. Ranking
+transfers; pricing does not. The platform claim holds for the hard part and
+fails for the easily fixed part, which is recalibrating on a few hundred of the
+new merchant's own cases.
+
+**5. Human-reviewer baseline added** at 87.5%
+accuracy, Rs 150 a case,
+4 hours. **It beats this system**:
+Rs 1.36 cr against
+Rs 1.29 cr. What does not survive is that row's
+assumption, that a person reviews all 1,775 cases. Rationed rows follow below.
+
+**6. Generator retune: closed by reframing.** The moat claim is that network
+evidence releases more orders at higher precision at the same time, and a
+threshold move cannot do both. The AUC ablation is a diagnostic in section 4.
+
+**7. Kolkata miss: closed, not a bug.** An 88-order spotless file scoring 0.22 is
+the bust-out prior working. 42% of fraudsters in this data farm clean history on
+purpose, so a long clean record cannot be a free pass.
+
+**8. Live model run: done, partially.** A Gemini key arrived, so `llm.py` now has
+two providers behind the same `complete()` entry point; the Anthropic path is
+untouched and the cache key includes provider and model. Three demo cases carry
+real, citation-checked Gemini verdicts, cached, replayable off-network. The rest
+hit the free tier's 20-requests-per-day-per-model cap.
+
+Four environment problems and one real bug, all in `notes.txt`. The bug matters:
+the citation checker was pulling digits out of payment ids, so
+`pay_5E72cODtQrmZkn` contributed "72", and every correctly-cited model verdict
+failed three times and fell back to the template. Offline runs never caught it
+because the template does not print the payment id. "300 of 300 audit clean" was
+measuring a checker that would have rejected real output. Fixed; it still
+catches fabrication.
+
+**9. Docs emit rather than get patched.** `artifacts/tables.md` is generated.
+Showcase cases are selected by predicate in `core/showcase.py`: six roles
+described by shape, matched against holdout, so the list survives a reseed and
+no train-split case can appear.
+
+**10. UI cut to one screen.** `service/case_room.py` writes a single
+self-contained HTML file with the case list, local against network evidence,
+verdict, tool trace and transcript. No server, no build step. The frontier and
+portfolio views stay in `METRICS.md` and the notebooks.
+
+## Second review response
+
+Three items, then frozen. Each one makes something worse or exposes something
+that was quietly wrong. A fourth turned up while checking the demo.
+
+**A. The queue haircut was checked, and it is not a bug.** A 35% recontact rate
+turning Rs 1.29 cr into Rs 11.53 L looked like a double discount. It is not. The
+discount is applied once, to recovery, and net contribution is computed from the
+already-discounted figure. Section 11 now prints every term and every row of the
+arithmetic, and `tests/test_accounting.py` asserts the published rows reproduce
+`grade()` to the paisa.
+
+The reason a 65% cut in recovery costs 91% of contribution is that only the
+first term scales:
+
+    net contribution = m * R_gross * rate  -  A  -  f * n_bad  -  reviews
+                     = 0.25 * 7,21,27,282 * rate  -  51,58,053
+
+Margin is 25% of a recovered rupee; fraud is 100% of an admitted one. So a fixed
+Rs 51.58 L of drag is subtracted from a quarter of a shrinking number, and
+contribution is roughly 4x as sensitive to the rate as revenue is. At cap 0.20
+the cushion is only 3.5x, which is a real property of the operating point rather
+than an artefact.
+
+Two things changed as a result. The rate is reported as a band (70/50/35)
+instead of one pessimistic point, because an in-session retry prompt is not a
+next-day email. And breakeven, 28.6%, is reported alongside it, since that is
+the one figure that does not depend on guessing the right point in the band.
+
+The asymmetry, that fraudsters return more readily than honest customers, is now
+a declared assumption at the top of section 11 and in the `Deployment` docstring
+rather than a constant buried in a dataclass. It is asserted, not measured, and
+it is asserted in the pessimistic direction.
+
+**B. A realistic-coverage reviewer baseline.** The existing row assumed a person
+reviews all 1,775 cases. Nobody does. Real queues rank by order value and work
+down until the day runs out; everything below the line stays blocked and
+recovers nothing, because nobody undid the block. Same reviewer, same 87.5%
+accuracy, charged only for the cases reached:
+
+| Reviewer coverage | Cases reviewed | Recall of recoverable | Net contribution |
+|---|---|---|---|
+| all 1,775 | 1,775 | 88.3% | Rs 1.36 cr |
+| top 3% by value | 53 | 2.4% | Rs 28.17 L |
+| top 10% by value | 178 | 8.6% | Rs 69.41 L |
+| **this system, all 1,775** | **1,775** | **88.2%** | **Rs 1.29 cr** |
+
+The full-review row stays, because losing to it is the honest result. The two
+together are the actual claim: a reviewer beats this case for case, nobody can
+afford to run one across the whole pile, so in practice most cases are never
+reviewed at all. The gap is coverage, not judgment.
+
+**C. `METRICS.md` frozen, and freezing it found a bad number.** Regenerated at
+cap 0.20 with recall and abstention in the headline, fraud admitted beside every
+recovery figure, both reviewer rows, LOMO, the deployment assumption block, and
+the between-seed range for money.
+
+Adding that last one exposed a mismatch. The seed sweep re-picked the cap on
+each seed's own calibration slice, so the range it produced described a
+different policy from the one in the headline, and re-tuning per seed absorbs
+exactly the variation being measured. Every seed is now graded twice, and the
+headline quotes the shipped row:
+
+| | tuned cap (what was quoted before) | shipped cap 0.20 (what is quoted now) |
+|---|---|---|
+| net contribution | Rs 1.15 cr to Rs 1.87 cr | Rs 89.95 L to Rs 1.86 cr |
+| precision | 97.8% to 99.1% | 92.0% to 98.2% |
+| recall | not reported | 83.1% to 89.6% |
+| fraud admitted | not reported | Rs 8.13 L to Rs 51.21 L |
+
+So the claim "precision is the stable number" is withdrawn. At a fixed operating
+point it moves 6.2 points across five worlds, and recall is the steadiest of the
+three. Seed 42, used everywhere else, is a middling draw on revenue and the
+worst of the five on cost: no other seed admits more fraud.
+
+**D. The demo screen was showing no demo cases.** Not on the list, found while
+checking the case room actually replays the recorded verdicts. `collect()` ran
+the orchestrator over the first 400 holdout cases in chronological order and
+then tagged whichever of them happened to match a showcase role. Five of the six
+showcase cases sit past position 400. So the page rendered one tagged case out
+of six, none of the three recorded Gemini verdicts were ever requested, and
+every verdict on the demo screen was a template.
+
+Nothing threw, no test failed, the page looked fine. It was only visible by
+counting verdict sources in the generated HTML. The header had been printing
+"1 tagged as demo cases" the whole time.
+
+Showcase cases are now inserted explicitly and the stream fills the rest of the
+limit. Three of the six carry real model output, including the spotless-record
+case that gets upheld, which is the one worth opening first. Two tests added:
+the case room must contain every showcase case, and at least one verdict on it
+must come from the cache rather than a template.
+
+Also in this pass: `GEMINI_API KEY` renamed to `GEMINI_API_KEY` (the space meant
+no shell would ever have loaded it), `run.py room` and `run.py warm` added so
+the case room and the cache warmer are reachable the same way as everything
+else, `artifacts/tables.md` and `artifacts/case_room.html` un-ignored so a
+cloner can open the demo without running anything, em dashes removed from
+`DATA_CARD.md`, and 13 tests added covering the accounting and the demo screen.
+
 ## Files
 
-`development/core/`, 1,587 lines:
+`simulation/core/`, 2,286 lines:
 
 | Module | Does |
 |---|---|
@@ -37,20 +219,23 @@ Read "How valid is this" before quoting any of it.
 | `backtest.py` | Chronological replay, self-describing ledger |
 | `metrics.py` | Grading, bootstrap CIs, baselines, frontier |
 | `report.py` | Writes `METRICS.md` and three figures |
+| `showcase.py` | Picks demo cases by predicate, not by payment id |
 
-`development/agent/`, 1,041 lines:
+`simulation/agent/`, 1,151 lines:
 
 | Module | Lines | Does |
 |---|---:|---|
 | `ledger.py` | 89 | Append-only log, each entry hashing the previous |
-| `llm.py` | 149 | Claude access with a disk replay cache |
+| `llm.py` | 218 | Anthropic and Gemini behind one entry point, disk replay cache |
 | `tools.py` | 102 | The agent's only route to the model and policy |
 | `verdict.py` | 301 | Case notes and escalation briefs, citation-checked |
 | `stepup.py` | 227 | Verification exchange and fact extraction |
 | `orchestrator.py` | 173 | The case loop |
 
-`development/tests/`, 721 lines, 61 tests, 4s: leakage 9, policy 12,
-determinism 10, agent 28.
+`simulation/tests/`, 873 lines, 74 tests, 8s: leakage 11, policy 12,
+determinism 10, agent 28, accounting and demo screen 13.
+
+`simulation/service/case_room.py` writes the one demo screen.
 
 Also `notebooks/` (five executable explainers, generated so outputs cannot
 drift from code), `seed_check.py`, `demo.py`, `notes.txt`, `run.py`.
@@ -80,22 +265,31 @@ The numbers above look better than they are.
 `python run.py seeds` reruns the pipeline on five independently generated
 worlds:
 
-| seed | holdout | local AUC | +network AUC | lift | precision | net contribution |
-|---|---|---|---|---|---|---|
-| 42 | 1775 | 0.8682 | 0.9134 | +0.0452 | 98.6% | Rs 1.53 cr |
-| 1 | 1745 | 0.8501 | 0.9209 | +0.0709 | 97.8% | Rs 1.87 cr |
-| 2 | 1486 | 0.8414 | 0.9066 | +0.0651 | 98.4% | Rs 1.15 cr |
-| 3 | 1826 | 0.8602 | 0.9321 | +0.0719 | 99.1% | Rs 1.80 cr |
-| 4 | 1800 | 0.8678 | 0.9109 | +0.0431 | 98.5% | Rs 1.19 cr |
+Each seed is graded at the shipped cap 0.20, the operating point everything
+else on this page is priced at:
 
-Net contribution ranges Rs 1.15 cr to Rs 1.87 cr, sd Rs 30 L. That spread is
+| seed | holdout | local AUC | +network AUC | lift | precision | recall | fraud admitted | net contribution |
+|---|---|---|---|---|---|---|---|---|
+| 42 | 1775 | 0.8682 | 0.9134 | +0.0452 | 96.3% | 88.2% | Rs 51.21 L | Rs 1.29 cr |
+| 1 | 1745 | 0.8501 | 0.9209 | +0.0709 | 97.6% | 89.3% | Rs 16.63 L | Rs 1.86 cr |
+| 2 | 1486 | 0.8414 | 0.9066 | +0.0651 | 92.0% | 89.6% | Rs 41.43 L | Rs 89.95 L |
+| 3 | 1826 | 0.8602 | 0.9321 | +0.0719 | 95.6% | 87.0% | Rs 38.30 L | Rs 1.51 cr |
+| 4 | 1800 | 0.8678 | 0.9109 | +0.0431 | 98.2% | 83.1% | Rs 8.13 L | Rs 1.18 cr |
+
+Net contribution ranges Rs 89.95 L to Rs 1.86 cr, sd Rs 32.37 L. That spread is
 wider than the bootstrap interval in `METRICS.md` 1, so the limit is how the
 world was generated, not how many holdout cases there are.
 
-Precision holds: 97.8% to 99.1%. AUC lift ranges +0.043 to +0.072, mean +0.059.
-Seed 42, used throughout, is the least favourable of the five.
+Precision does not hold, and an earlier revision of this document said it did.
+At a fixed operating point it runs 92.0% to 98.2%, a 6.2 point spread, and
+recall is the steadiest of the three at 83.1% to 89.6%. The old claim of 97.8%
+to 99.1% came from a sweep that re-picked the cap on each seed, which absorbs
+the variation it was supposed to be measuring. See "Second review response" C.
 
-Quote precision as a number. Quote money as a range.
+AUC lift ranges +0.043 to +0.072, mean +0.059. Seed 42, used throughout, is a
+middling draw on revenue and the worst of the five on cost.
+
+Quote all of it as a range.
 
 ### Corrections made to earlier claims
 
@@ -227,7 +421,7 @@ count, which is flat and ranks it sixth at 0.085. Gain puts it first at 0.346.
 
 **`IDEA.md` and `DATA_CARD.md` carry stale numbers throughout.** Row counts,
 block rates and the moat table come from an earlier generator. Audit in
-`development/README.md`.
+`simulation/README.md`.
 
 ## Defects fixed
 
@@ -283,9 +477,9 @@ Now allows the rounded form of any value.
 
 ## Tests
 
-61 passed in 4s.
+74 passed in 8s.
 
-**Leakage (9).** AST check that quarantined modules never import the answer key;
+**Leakage (11).** AST check that quarantined modules never import the answer key;
 training door raises on holdout ids; no answer-key columns reach the store; no
 single feature scores above 0.99 AUC alone; shuffle test collapses holdout AUC
 from 0.913 to 0.49; point-in-time counters monotone across 3,401 pairs; tenure
@@ -309,6 +503,16 @@ labelled; ledger chain verifies and tampering breaks it at the right entry;
 escalations carry a citation-checked brief; replay mode refuses to invent;
 orchestrator deterministic.
 
+**Accounting and the demo screen (13).** Recontact discount applied exactly once
+at every rate; fraud admitted does not move with the rate; every published row
+of the section 11 arithmetic reproduces `grade()`; breakeven rate lands at zero
+contribution; fixed drag is fixed; the rationed reviewer reaches only the top
+slice by value; unreviewed cases recover nothing; more coverage never recovers
+less; review cost is charged only for cases reviewed; the rationed reviewer at
+100% coverage equals the unrationed one; a full-coverage reviewer beats this
+system and every rationed one loses to it; the case room contains every showcase
+case; at least one verdict on it comes from a recorded model reply.
+
 Phase 1 definition of done: `METRICS.md` regenerates with one command, yes.
 Holdout precision and recall with CIs, yes. Test files green, yes. Moat ablation
 at least +0.05 AUC: +0.045 on seed 42, +0.059 averaged across five, so not on
@@ -316,36 +520,56 @@ this seed.
 
 ## Open
 
-1. Retune the generator so merchant-visible evidence is weaker (local-only is
-   0.868 where design intent was ~0.81), or keep the data and rebuild the moat
-   argument around shape. Leaning toward the second. This also settles the
-   +0.05 gate.
-2. No live Claude run yet. The code path is written and the replay cache is
-   ready; one live run records it and `replay` then serves the demo off-network.
-3. An 88-order, 1,132-day, spotless customer scores 0.22 and abstains where it
-   should clear easily.
-4. Ambiguous-branch step-ups (73 of 300) have no resolution path. Either give
-   verification an EV effect for them or accept they stay abstentions.
-5. Whether thin-file small-amount cases should really cost a human review.
+Items 1 and 3 of the previous revision are closed: the generator is kept and
+the moat argument is rebuilt around shape (review item 6), and the spotless
+customer scoring 0.22 is the bust-out prior working as designed (review item 7).
+What is left:
+
+1. No live Anthropic run yet. That path is written and is the documented
+   default, but no Anthropic key exists on this machine, so only the Gemini
+   path has actually executed. Three demo cases are recorded and replay
+   off-network; wider coverage needs a paid key, not code.
+2. Ambiguous-branch step-ups (73 of 300) have no resolution path. Either give
+   verification an EV effect for them or accept they stay abstentions. This is
+   the largest open item: it means a human still touches about 4% of the pile
+   and nothing here reduces that.
+3. Whether thin-file small-amount cases should really cost a human review.
+4. Step-up pass rates are assumed, not measured. Both are stated and both are
+   swept in `METRICS.md` 5, but real numbers need a pilot.
+5. No latency or throughput measurement. The case loop runs at a p50 under a
+   millisecond, but inline deployment lives or dies on p99 and that is not
+   measured here.
+6. Reviewer accuracy of 87.5% is the midpoint of a published range, not
+   something measured. The baseline in section 2 is only as good as that number,
+   and it is the baseline that beats us.
 
 ## Running it
 
 ```bash
-cd development
-python run.py data300k    # ~31s
-python run.py test        # ~4s
+cd simulation
+pip install -r requirements.txt
+python run.py data300k    # ~31s, required first
+python run.py test        # ~8s
 python run.py metrics     # ~60s
+python run.py room        # ~15s, then open artifacts/case_room.html
 python run.py agent       # ~10s
 python run.py notebooks   # ~90s
-python run.py seeds       # ~5min, five worlds end to end
+python run.py seeds       # ~6min, five worlds end to end
 ```
 
-Reading order coming back to this cold: `pr/README.md`, then
+`artifacts/case_room.html` is committed, so a reader can open the demo without
+running anything first.
+
+Reading order coming back to this cold: `README.md`, then the case room, then
 `notebooks/00_start_here.ipynb`, then `core/policy.py`, then `METRICS.md`
-sections 2 and 8, then `tests/test_leakage.py`. `notes.txt` is the chronological
-log.
+sections 1, 2, 8 and 11, then `tests/test_leakage.py`. `notes.txt` is the
+chronological log and is the only document written in the first person.
 
 ## Not included
 
-`ARCHITECTURE.md` 2.6: the FastAPI service and the four demo screens.
-`service/` is an empty scaffold.
+Three of the four screens in `ARCHITECTURE.md` 2.6, cut on review. There is no
+FastAPI service: the case room is a static file, which is one less thing to fail
+during a demo.
+
+Full live coverage. Three demo cases have real model verdicts; the rest run on
+labelled templates until the daily quota resets or billing is enabled.
