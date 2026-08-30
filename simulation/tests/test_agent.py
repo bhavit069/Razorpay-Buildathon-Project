@@ -128,11 +128,28 @@ def test_verdict_states_the_action(results):
 
 
 def test_template_fallback_is_labelled(results):
-    """Offline output must not claim to be model output."""
+    """Template output must not be mistakable for model output, and model
+    output must say which model wrote it.
+
+    The old version asserted every result was a template, which held only
+    while the cache was empty, and allowed a source string "claude" that a
+    Completion never actually produces. What matters is not that everything is
+    a template; it is that a reader can always tell which is which, because a
+    screenshot must not imply model output that is not there.
+    """
     for r in results:
-        assert r.verdict_source in ("claude", "cache", "template")
-    assert all(r.verdict_source == "template" for r in results), \
-        "expected offline mode with no cache present"
+        assert r.verdict_source in ("anthropic", "gemini", "cache", "template")
+        if r.verdict_from_model:
+            assert r.verdict_provenance
+            assert "template" not in r.verdict_provenance.lower()
+        else:
+            assert "template" in r.verdict_provenance.lower()
+            assert "not model output" in r.verdict_provenance.lower()
+
+
+def test_every_case_carries_a_provenance_string(results):
+    """Nothing may render without one."""
+    assert all(r.verdict_provenance for r in results)
 
 
 # --- ledger ------------------------------------------------------------------

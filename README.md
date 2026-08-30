@@ -110,10 +110,13 @@ moves. Three separate tests enforce that: the tools it can reach take no text,
 the fact-extraction schema has no field for a decision, and verdicts are handed
 a decision that was already made.
 
-Three demo cases carry real, citation-checked model verdicts, recorded and
-replayed off-network. The rest run on deterministic templates that are labelled
-as templates. The free tier is 20 requests per day per model, so wider live
-coverage needs a paid key rather than any code change.
+All six demo cases carry real, citation-checked model verdicts, recorded and
+replayed off-network. The rest run on deterministic templates. Every verdict on
+the screen says which it is: a badge naming the model, or one reading TEMPLATE,
+NOT MODEL OUTPUT, with the split stated in the header. A screenshot of the page
+cannot imply model output that is not there. The free tier is 20 requests per
+day per model, so wider live coverage needs a paid key rather than any code
+change.
 
 ## Results
 
@@ -233,12 +236,19 @@ standard.
 | `simulation/METRICS.md` | Every number the project quotes, generated |
 | `simulation/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
 | `simulation/notes.txt` | Running log of what was built and what broke |
+| `flow.html` | Browser walkthrough of the pipeline, one real case through eight stages |
+| `knowledge.txt` | What to run, what the idea is, what is left to do |
+| `SCRIPT.txt` | The demo script, five beats |
+| `IDEA.md` | The pitch. Sections 5 and 7 regenerate from the harness. |
+| `ARCHITECTURE.md` | The original plan. Read it for intent, not numbers. |
 | `PULL_REQUEST.md` | Full change writeup, including what is wrong with it |
 
-`IDEA.md`, `ARCHITECTURE.md` and `DATA_CARD.md` quote figures from an older
-version of the generator. Don't quote them. `simulation/METRICS.md` regenerates
-from current code and is the only document whose numbers are current by
-construction. Everything else, this file included, is written against it.
+`simulation/METRICS.md` regenerates from current code and is the only document
+whose numbers are current by construction. `IDEA.md` sections 5 and 7 and
+`DATA_CARD.md` sections 2, 4 and 5b regenerate from the harness between markers
+via `python run.py docs`, and `python -m core.docs --check` fails if either has
+drifted. Everything else, this file included, is hand-written against those and
+can go stale.
 
 ## Running it
 
@@ -246,10 +256,12 @@ construction. Everything else, this file included, is written against it.
 cd simulation
 pip install -r requirements.txt
 python run.py data300k    # build the simulated world   ~31s
-python run.py test        # 74 tests                     ~8s
+python run.py test        # 76 tests                    ~11s
 python run.py metrics     # regenerate every number     ~60s
 python run.py room        # build the case room, then open artifacts/case_room.html
 python run.py agent       # run the agent over the blocked pile
+python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
+python run.py dry         # pre-demo check, network cut, 12 checks
 python run.py seeds       # how much it moves between worlds, ~6 min
 ```
 

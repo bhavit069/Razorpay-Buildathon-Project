@@ -85,6 +85,9 @@ FACT_SCHEMA = {
 }
 
 
+MODEL_SOURCES = frozenset({"anthropic", "gemini", "cache"})
+
+
 @dataclass
 class StepUpFacts:
     address_confirmed: bool = False
@@ -190,7 +193,10 @@ def run(ev: Evidence, llm: LLMClient, persona: str = "legit_stable",
     res.facts = facts
     res.verification = facts.as_verification()
     res.prepaid = facts.prepaid_accepted and bool(ev.local["f_is_cod"])
-    res.source = "claude" if sources & {"claude", "cache"} else "template"
+    # "claude" was never one of the source strings a Completion can carry, so
+    # this used to test against a value that never appeared and read "template"
+    # for exchanges a model had actually written.
+    res.source = "model" if sources & MODEL_SOURCES else "template"
     return res
 
 

@@ -421,3 +421,52 @@ renaming was already done, 0 ACQUIT left anywhere.
     small thing left alone: the model writes booleans as counts, "0 address
     mismatches", "0 cash on delivery". reads a bit odd. it's a prompt wording
     issue, not a correctness one, and metrics are frozen.
+
+16. warmed all six showcase cases. the quota is per day per model and it had
+    rolled over, so the three that were missing went through on the first try.
+    every demo case now carries real model output instead of half of them.
+
+17. provenance is on the screen now, which was the point. the case room used
+    to print "verdict source: cache" in small grey text, which is technically
+    honest and useless. now: a green badge naming the model, or an amber one
+    reading TEMPLATE, NOT MODEL OUTPUT, plus a line under each verdict saying
+    which it is in words, plus MODEL/TMPL tags in the list, plus a header
+    stating the split. a screenshot of the page cannot imply model output that
+    isn't there.
+
+    threading that through turned up two dead strings. Completion never
+    produced a source called "claude", so the orchestrator summary bucket for
+    it always read 0, and stepup.py tested `sources & {"claude","cache"}` and
+    reported "template" for exchanges a model had actually written. both fixed.
+    the test that was supposed to catch this asserted every verdict was a
+    template, which was only true while the cache was empty.
+
+18. IDEA.md and DATA_CARD.md regenerate now. core/docs.py fills marked blocks
+    in place, so the prose stays hand-written and the numbers stop being.
+    seven blocks: portfolio context, the six worked examples, the frontier,
+    the results table, the calibration table, the file table, the outcome mix.
+    `python -m core.docs --check` fails if a document has drifted.
+
+    IDEA.md section 5 was the worst of it. five hand-picked payment ids from
+    the 100k dataset, five of six in the train split, quoting rupee figures
+    from a generator that has changed twice since. it now prints whatever
+    core/showcase.py selects out of holdout.
+
+19. dry_run.py. replaces socket.socket with something that raises, then does
+    everything the demo does: doc blocks current, suite green, model fits, six
+    cases picked from holdout, agent over 300 orders, agent matches the
+    backtest to the digit, case room builds with every demo case on it and
+    model-backed, page loads nothing external, replay serves the demo cases.
+    12 checks. ran it twice, clean both times.
+
+    the point isn't that it passes. if it needs a code change to pass, that's
+    the finding, and better now than in front of a room.
+
+20. wrote SCRIPT.txt at the root: five beats, what to say, which case to open
+    for each, and a list of numbers that are allowed to be said out loud along
+    with three that aren't. the four-things-that-got-worse part is beat five,
+    not a footnote.
+
+    also flow.html, a browser walkthrough of the pipeline. one real case,
+    pay_5E72cODtQrmZkn, carried through all eight stages with a status bar
+    that fills in as you walk it. self-contained, opens from disk.

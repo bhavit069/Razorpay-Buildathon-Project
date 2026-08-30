@@ -78,11 +78,20 @@ class Completion:
     source: str            # anthropic | gemini | cache | template
     key: str
     usage: dict = field(default_factory=dict)
+    model: str | None = None   # which model wrote it, None for templates
 
     @property
     def from_model(self) -> bool:
         """True if a model produced this text, now or earlier."""
         return self.source in ("anthropic", "gemini", "cache")
+
+    @property
+    def provenance(self) -> str:
+        """One short phrase for the screen. A reader should never have to work
+        out whether they are looking at model output or a filled-in template."""
+        if self.source == "template":
+            return "deterministic template, not model output"
+        return f"{self.model or 'unknown model'}"
 
 
 def _gemini_schema(schema: dict) -> dict:
@@ -149,7 +158,8 @@ class LLMClient:
 
         hit = self._read_cache(key)
         if hit is not None:
-            return Completion(hit["text"], "cache", key, hit.get("usage", {}))
+            return Completion(hit["text"], "cache", key, hit.get("usage", {}),
+                              model=hit.get("model"))
 
         if self.mode == "replay":
             raise CacheMiss(
@@ -159,13 +169,13 @@ class LLMClient:
         if self.mode == "offline":
             if template is None:
                 raise CacheMiss(f"no cached reply for {key} and no template supplied")
-            return Completion(template(), "template", key)
+            return Completion(template(), "template", key)   # model stays None
 
         text, usage = self._call(system, messages, schema, max_tokens, effort)
         self._write_cache(key, {"text": text, "usage": usage, "model": self.model,
                                 "provider": self.provider, "system": system,
                                 "messages": messages})
-        return Completion(text, self.provider, key, usage)
+        return Completion(text, self.provider, key, usage, model=self.model)
 
     def _call(self, system, messages, schema, max_tokens, effort):
         """Retry transient failures. Gemini returns 503 under load often enough

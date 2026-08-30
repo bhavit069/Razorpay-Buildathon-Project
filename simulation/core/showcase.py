@@ -39,9 +39,10 @@ ROLES = (
     ),
     Role(
         "clean_looking_fraud", "A spotless record the system still refuses",
-        "Separates this from a naive rehabilitator. Perfect clean rate, but "
-        "orders spread thinly across many merchants in short tenure is "
-        "reconnaissance, not shopping.",
+        "Separates this from a naive rehabilitator. The clean rate is perfect "
+        "and the block still stands, because a handful of orders spread across "
+        "many merchants in short tenure is a shape, not a record. A model keyed "
+        "on clean rate alone releases this one.",
         lambda e, p, v: (not _clean(v) and p > 0.5
                          and e.network["network_clean_rate"] >= 0.99
                          and e.network["network_merchants_prior"] >= 3),

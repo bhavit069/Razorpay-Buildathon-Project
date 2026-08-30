@@ -1,0 +1,547 @@
+RECLAIMIFY
+Razorpay Buildathon, Track 02
+knowledge.txt: what to run, what the idea is, what is left to do.
+
+Last updated after the review-response pass. Every number quoted here comes
+from development/METRICS.md, which is generated. If a number here and a number
+there disagree, METRICS.md is right and this file is stale.
+
+
+===============================================================================
+PART 1. WHAT YOU CAN EXECUTE AND SEE
+===============================================================================
+
+Everything runs from the development/ folder. There is no server, no docker,
+no cloud account needed. One-time setup:
+
+    cd development
+    pip install -r requirements.txt
+    python run.py data300k        # builds the simulated world, about 31s
+
+That second command writes development/data300k/. It is gitignored because it
+is 300,000 rows and it regenerates byte-identically from the seed. You have to
+run it once before anything else works.
+
+
+--- The five things worth actually looking at ---
+
+1. THE CASE ROOM. This is the demo.
+
+       python run.py room
+       start artifacts\case_room.html          (Windows)
+
+   One HTML file, opens from disk with no network. Left side is a list of
+   blocked orders. Click one and you get: what the merchant could see about
+   that customer, what only the payment network can see, the action taken, the
+   written verdict, the tools that were called, and the verification
+   conversation if there was one.
+
+   All six demo cases are tagged and sorted to the top, and all six carry real
+   model output. Every verdict says where it came from: a green badge naming
+   the model, or an amber one reading TEMPLATE, NOT MODEL OUTPUT. The header
+   states the split. A screenshot of this page cannot imply model output that
+   is not there.
+
+   This is the screen to put on the projector. It is the whole argument in one
+   view: the left column is why the order got blocked, the right column is why
+   that was wrong.
+
+2. THE NUMBERS.
+
+       python run.py metrics
+       (writes development/METRICS.md, about 60s)
+
+   Eleven sections. Every figure the project quotes is in there and none of it
+   is typed by hand. Read sections 1 (headline), 2 (baselines, including the
+   human reviewer rows that beat us), 8 (how much it all moves between random
+   seeds), 10 (unseen merchant), and 11 (deployment mode with the arithmetic
+   written out so it can be checked with a calculator).
+
+   It also writes development/artifacts/: three charts, headline.json, and
+   tables.md, which is the block the other documents quote so nothing gets
+   hand-patched out of sync.
+
+3. THE AGENT RUNNING.
+
+       python run.py agent
+
+   Runs the agent over 100 blocked orders and prints the decisions, the
+   verdicts, one escalation brief, and one verification exchange that actually
+   resolved a case. At the end it re-prices everything with the Phase 1 grader
+   and re-checks the central architectural claim: that the agent and the
+   deterministic backtest produce identical scores. If a single probability
+   drifts, it says so.
+
+   Nothing here touches the network. Where a real model reply was recorded it
+   is replayed from disk; everywhere else it uses a deterministic template that
+   is labelled as one, so the two can never be confused.
+
+       python demo.py --limit 300 --mode replay
+
+   Stricter: cached replies only, and it raises on the first case that has none.
+   Only useful once the cache is warm for every case you are running, which it
+   is not, so expect it to stop early. It exists to prove the offline path
+   cannot silently reach the network, not as the demo command.
+
+4. THE EXPLAINERS.
+
+       development/notebooks/00_start_here.ipynb
+
+   Five notebooks with output already committed, so they read without running
+   anything. 00 is the tour, 01 is the data, 02 is the cross-merchant argument,
+   03 is the decision system, 04 walks through individual cases. Start at 00.
+
+       python run.py notebooks     # rebuild and re-execute them
+
+5. THE TESTS.
+
+       python run.py test          # 74 tests, about 8s
+
+   Worth running in front of someone, because of what they test. Not "does the
+   function return a float". They test that the answer key cannot be read
+   during training, that the language model cannot move money, that the queue
+   discount is not applied twice, that the demo screen actually contains the
+   demo cases, and that a reviewer beats us case for case. That last one is a
+   test that asserts we lose. If it ever starts passing for the wrong reason,
+   the narrative in METRICS.md is wrong.
+
+
+6. THE DRY RUN. Do this before any recording.
+
+       python run.py dry           # 12 checks, network cut, about 20s
+
+   It blocks the socket module and then does everything the demo does: checks
+   the generated doc blocks are current, runs the suite, fits the model, picks
+   the six demo cases, runs the agent over 300 orders, confirms the agent
+   reproduces the deterministic backtest exactly, builds the case room,
+   confirms every demo case is on it and model-backed, confirms the page loads
+   nothing from the network, and confirms replay mode serves the demo cases
+   from cache.
+
+   If it needs a code change to pass, that is the finding. Better here than in
+   front of a room.
+
+
+--- The rest of the commands ---
+
+    python run.py validate      is the signal there, and does the network add
+                                anything on top of what one merchant can see
+    python run.py moat          the same question, priced in rupees
+    python run.py sweep         does it survive merchants who block at
+                                different rates
+    python run.py seeds         regenerates the whole world under 5 different
+                                random seeds and reruns everything. slow, about
+                                6 minutes. this is where the honest error bars
+                                come from
+    python run.py warm          calls the real model and records the replies
+                                into agent/cache/. needs the API key. the free
+                                tier is 20 calls per day per model, so this is
+                                deliberately limited to the demo cases
+    python run.py docs          refills the generated blocks in IDEA.md and
+                                DATA_CARD.md. those two documents used to carry
+                                hand-typed numbers from an older dataset. now
+                                everything between the GENERATED markers comes
+                                out of the harness, and `python -m core.docs
+                                --check` fails if they have drifted
+    python run.py clean         deletes generated data and artifacts
+
+    python run.py data          100k rows instead of 300k. reproduces the
+                                original committed stats exactly, kept as a
+                                regression check on the generator
+
+
+--- If you only have two minutes ---
+
+    cd development
+    python run.py data300k && python run.py room && start artifacts\case_room.html
+
+
+===============================================================================
+PART 2. THE IDEA
+===============================================================================
+
+--- The problem, in one paragraph ---
+
+Someone tries to buy something. The shop's fraud software scores the order as
+risky and blocks it. They were not a fraudster. They bought a new phone last
+week so the device is unrecognised, or they are shipping a gift so the address
+does not match billing, or they shop at 1am, or they live in a pincode with
+bad return statistics. What happens next is nothing. The customer assumes
+their bank declined them and buys somewhere else. No complaint, no dispute, no
+refund, no record anywhere that a good customer was turned away.
+
+Now compare that to letting fraud through. A chargeback arrives, money is
+clawed back, there is a fee and a dispute record and somebody's number moves.
+
+One side of the trade is measured and the other side is invisible. So blocking
+more always looks like an improvement, and the fraud threshold ratchets in one
+direction forever. Roughly a third of merchants do not track their
+false-decline rate at all, which is less negligence than an absence of
+anything to track.
+
+--- What this builds ---
+
+An appeals process. It opens a case on each blocked order, gathers evidence,
+and picks one of four actions:
+
+    OVERTURN    release it. the block was wrong.
+    UPHOLD      the block was right. leave it.
+    STEP_UP     not enough evidence to be sure, enough money at stake to be
+                worth asking the customer a question
+    ESCALATE    not enough evidence, and no question would settle it. send it
+                to a person with a written brief.
+
+The two middle actions are the ones that matter. STEP_UP generates new
+evidence instead of re-arguing the evidence that is already there. ESCALATE is
+the system saying it does not know. At the shipped settings it refuses to
+decide on about 15% of cases. A system that always answers is claiming to know
+things it does not.
+
+--- Why a payment platform can do this and a merchant cannot ---
+
+A merchant scoring a first-time order sees exactly one thing: this person, at
+this shop, never seen before. Thin file, high risk, block. That inference is
+correct given what the merchant can see.
+
+A payment platform sees the same identity across every merchant on its rails.
+Eight hundred orders over three years at forty merchants, no disputes, same
+device throughout. A single merchant cannot buy that view at any price.
+
+The naive version of this does not work, and that matters. "Long clean history
+means safe" is the obvious rule, and professional fraudsters beat it on
+purpose by farming a record: age the account, place small honest orders across
+several shops, then cash out on one big one. So the real test is not whether
+the system releases obviously good customers. It is whether it refuses someone
+whose record looks perfect. There is a case in the holdout with a 1.000 clean
+rate that gets blocked, because two orders across seven merchants in 33 days
+is not shopping, it is reconnaissance.
+
+
+===============================================================================
+PART 3. HOW IT IS BUILT
+===============================================================================
+
+Two layers, and the order is the whole architectural argument.
+
+LAYER 1, the decision system. No language model anywhere in it. A gradient
+boosted model produces a probability that the block was correct, isotonic
+calibration makes that probability mean what it says, and then a plain
+expected-value rule decides what to do with it:
+
+    EV(release) = (1 - p_bad) * margin * amount  -  p_bad * (amount + overhead)
+
+Releasing is worth money only when p_bad is below margin / (1 + margin), which
+at a 25% margin is 0.20. So the operating point is not tuned. It is the point
+where the arithmetic stops being positive.
+
+LAYER 2, the agent. It wraps layer 1 without touching it. It writes the
+plain-English verdict, runs the verification conversation, keeps a hash-chained
+log, and hands escalations to a human with a brief.
+
+The invariant, which is the point of the whole design:
+
+    The language model explains and negotiates. It never decides whether
+    money moves.
+
+That is not a promise in a document, it is enforced three ways and tested.
+The tools the model can reach accept no free text. The fact-extraction schema
+has no field for a decision. Verdicts are handed a decision that was already
+made. And `python run.py agent` re-checks it every run: agent and backtest
+produce identical probabilities on the same cases, and the only decisions that
+differ are the ones the agent resolved by asking the customer a question,
+which the backtest has no mechanism to do.
+
+Three more things worth knowing about how it is put together:
+
+  The answer key is behind a lock. core/truth.py is the only module that can
+  open the ground truth file. It has two doors: training_labels() raises an
+  exception if you ask it about a holdout case, and grade() is unrestricted
+  and is only imported by the grading module. Leakage is a test failure, not a
+  code review question.
+
+  Verification is not history. When a customer confirms their identity in a
+  step-up, that fact goes to the sufficiency gate, never into the model's
+  features. Confirming an address proves someone controls the account. It does
+  not create a payment record. An earlier version wrote confirmations in as
+  prior orders, and two verified customers came out scoring worse than before
+  they verified. That is now structurally impossible.
+
+  Every number in every verdict is checked against the evidence before the
+  verdict is shown. If the model writes a figure that cannot be derived from
+  what it was given, the verdict is rewritten.
+
+
+===============================================================================
+PART 4. WHERE IT STANDS
+===============================================================================
+
+Reviewing 1,775 blocked orders the model never trained on, at cap 0.20:
+
+    recall of recoverable revenue      88.2%
+    overturn precision                 96.3%
+    revenue recovered                  Rs 7.21 cr
+    fraud let through                  Rs 51.21 L
+    net contribution                   Rs 1.29 cr
+    refused to decide                  15.3%
+
+Read that with four things next to it, all of which make it look worse and all
+of which are in METRICS.md.
+
+1. A HUMAN REVIEWER BEATS THIS SYSTEM. A person adjudicating every case at
+   87.5% accuracy reaches Rs 1.36 cr against our Rs 1.29 cr. On judgment alone
+   a competent reviewer wins, and that row is left in the table because it is
+   true.
+
+   What beats the reviewer is coverage. Manual review costs about Rs 150 and
+   four hours per case, so real queues are ranked by order value and worked
+   down until the day runs out. At 10% coverage a reviewer recovers 8.6% of
+   recoverable revenue. At 3% coverage, 2.4%. This gets to all 1,775 at
+   effectively zero marginal cost. The gap is not intelligence, it is reach,
+   and the cases a queue skips are exactly the small ones where the customer
+   never complains and quietly never comes back.
+
+2. THE MONEY DEPENDS ON WHERE THIS RUNS. Everything above assumes it runs
+   inline at checkout, where a released order converts at full value because
+   the customer is still sitting there. Run it as a queue that emails people
+   later and only some of them come back. Breakeven is a 28.6% return rate.
+   Below that the programme costs money to run. Section 11 of METRICS.md
+   writes out every term so the arithmetic can be checked by hand.
+
+3. THE NUMBERS MOVE A LOT BETWEEN WORLDS. Regenerate the whole dataset under
+   five different random seeds and rerun everything at this same operating
+   point: net contribution lands anywhere from Rs 0.90 cr to Rs 1.86 cr,
+   precision from 92.0% to 98.2%, fraud admitted from Rs 8.13 L to Rs 51.21 L.
+   Recall is the steadiest of the three, 83.1% to 89.6%. Quote the range.
+
+   Earlier drafts said "precision is the stable number, 97.8% to 99.1%". That
+   was measured at a cap re-tuned on each seed, which absorbs exactly the
+   variation being measured. At the fixed operating point that actually ships,
+   the variation shows up. The corrected range is 6 points wide.
+
+   The seed we quote everywhere, 42, is a middling draw on revenue and the
+   worst of the five on cost. No other seed admits more fraud.
+
+4. THE CROSS-MERCHANT ADVANTAGE IS MODEST. About +4.6% of net contribution and
+   +0.045 AUC over a merchant using everything it can see on its own, ranging
+   +0.043 to +0.072 across seeds. Earlier drafts of our own documents claimed
+   far more and were wrong: they compared the two models at a shared raw
+   threshold on uncalibrated scores, which measures miscalibration, not
+   evidence. The claim that survives is about shape rather than size. Network
+   evidence releases more orders at higher precision at the same time. Moving
+   a threshold trades one against the other. New evidence buys both.
+
+5. IT WORKS ON A MERCHANT IT HAS NEVER SEEN, ALMOST. Drop the largest merchant
+   out of training entirely and score only them: AUC falls by 0.0008, which is
+   nothing. Precision at the same cap falls from 92.9% to 89.0%. Ranking
+   transfers, pricing does not. The expensive part, learning what fraud looks
+   like across merchants, comes free. The cheap part, calibrating to one
+   merchant's baskets and margins, needs a few hundred of their own cases.
+   That is the shape of a platform product, and the precision drop is what
+   makes it credible instead of a slogan.
+
+--- Two things that were silently broken, and how they were found ---
+
+Neither of these threw an exception. Neither failed a test. Both had green
+tests sitting on top of them that were measuring nothing. Both were found by
+looking at real output instead of at a pass count. That is the reason they are
+in this file rather than buried in a commit message.
+
+THE CITATION CHECKER WAS READING PAYMENT IDS AS EVIDENCE. Every verdict the
+model writes gets checked: any number in the text has to be derivable from the
+evidence, or the verdict is rejected and rewritten. The number-extraction
+regex also matched digits inside payment ids, so `pay_5E72cODtQrmZkn`
+contributed "72", which is not in the evidence. Every correctly cited model
+verdict therefore failed the check three times and fell back to a template.
+
+The offline runs never caught it because the template does not print the
+payment id. So the line "300 of 300 verdicts audit clean" was true, and was
+measuring a checker that would have rejected every real verdict it ever saw.
+Only a live model call exposed it. The fix is a lookaround in the regex; it
+still catches fabricated figures.
+
+THE DEMO SCREEN CONTAINED NO DEMO CASES. The case room ran the agent over the
+first 400 blocked orders in date order and then tagged whichever of them
+happened to match a showcase role. Five of the six showcase cases sit past
+position 400. So one tagged case rendered out of six, none of the recorded
+model verdicts were ever requested, and every verdict on the demo screen was a
+template. The page looked completely normal. The header had been printing
+"1 tagged as demo cases" the whole time and nobody read it.
+
+Found by counting verdict sources in the generated HTML rather than by opening
+it. Both are now covered by tests that assert the thing that actually matters:
+that the demo screen contains the demo cases, and that at least one verdict on
+it came from a model.
+
+The general lesson, which is worth saying on camera: a test that passes tells
+you the code did what the test asked. It does not tell you the test asked for
+anything.
+
+--- What is honestly wrong with it ---
+
+The data is synthetic. We wrote the world, so in a real sense we wrote the
+answers. Calibrating the generator against published industry figures and
+sweeping its parameters reduces the circularity but does not remove it. The
+claim is that the conclusions survive the assumptions we chose, not that this
+is what reality looks like.
+
+The holdout is small, about 1,775 cases, and the confidence intervals are
+wide. They are published rather than omitted. They also only cover sampling
+error inside one generated world, which is much narrower than the variation
+between worlds, which is why the seed sweep exists and why item 3 above is
+where the honest error bars are.
+
+Most of the holdout's value sits with one merchant, so the rupee headline is
+substantially a measurement of that one merchant's blocked pile.
+
+Cross-merchant data has real privacy implications. The features are aggregate
+behavioural counts rather than shared personal information, and a payment
+processor already holds this data. That is an argument, not a dismissal.
+
+This does not replace a fraud system. It reviews one, the way an appeals court
+re-examines a trial court's decision with more evidence and a different
+standard of proof.
+
+
+===============================================================================
+PART 5. WHAT IS LEFT TO DO
+===============================================================================
+
+--- Before the demo ---
+
+  Run `python run.py dry` twice. The second run has to be clean start to
+  finish. It cuts the network itself, so it proves the demo cannot quietly
+  fall back to a live call.
+
+  Read SCRIPT.txt. Five beats, about five minutes.
+
+  Have an answer ready for "your reviewer baseline beats you". The answer is
+  in Part 4 item 1 and it is a good answer, but it has to be said out loud
+  before someone else says it.
+
+  Have an answer ready for "your precision swings 6 points between seeds".
+  It does, that is Part 4 item 3, and the reason to say it first is that the
+  alternative range on offer, 97.8% to 99.1%, is the one that is wrong.
+
+  Decide which single case to open first. The strongest is the one with a
+  perfect clean rate that still gets blocked, because it kills the "you just
+  release anyone with good history" objection in about fifteen seconds.
+
+--- Known gaps, roughly in order of how much they matter ---
+
+  1. Ambiguous cases have no resolution path. 73 of 300 cases sit in the band
+     where the model is unsure and no verification question would settle it.
+     They escalate. That is correct behaviour, but it means a human still
+     touches 4% of the pile and nothing here reduces that number.
+
+  2. Live model coverage is 6 cases, which is all six demo cases and nothing
+     else. The free tier is 20 requests per day per model. Everything else
+     runs on deterministic templates, which are tagged TMPL in the case list
+     and marked on the case itself so a screenshot cannot imply model output
+     that is not there. Closing this needs a paid key, not any code.
+
+  3. Only Gemini has been exercised live. The architecture was written against
+     Anthropic and that path is implemented and is the documented default, but
+     no Anthropic key exists on this machine, so it has never actually run.
+
+  4. The step-up pass rates are assumed, not measured. How often a genuine
+     customer completes a verification challenge and how often a fraudster
+     abandons it are both inputs, both stated, and both swept in METRICS.md
+     section 5. Real numbers would come from a pilot, not from this dataset.
+
+  5. No latency or throughput measurement. It is fast, and the case room
+     builds 400 cases in a few seconds, but "fast" is not a number and inline
+     deployment lives or dies on p99 latency.
+
+  6. The reviewer accuracy of 87.5% is a midpoint of a published range, not
+     something measured here. The baseline is only as good as that figure.
+
+--- If this became real, in order ---
+
+  Pilot with one merchant, inline, on a slice of their blocked traffic, with
+  a proper holdout. Everything above is a simulation and the only thing that
+  settles it is one merchant's real blocked pile.
+
+  Measure the recontact rate directly instead of assuming it. It is the single
+  input the economics is most sensitive to, and it is trivially measurable in
+  a pilot.
+
+  Recalibrate per merchant on their own cases. The unseen-merchant result says
+  ranking transfers and pricing does not, so onboarding a merchant means
+  collecting a few hundred of their decisions before trusting the operating
+  point. That is a product requirement, not a research problem.
+
+  Close the loop on overturns. Right now a release is graded against a
+  simulated outcome. In production the outcome arrives later as a completed
+  order or a chargeback, and that feedback should retrain the model. Nothing
+  in this codebase does that yet.
+
+
+===============================================================================
+PART 6. WHERE THINGS LIVE
+===============================================================================
+
+    development/              all current work
+      core/                   the decision system. no language model in here.
+        truth.py              the only module that can open the answer key
+        feature_store.py      evidence, split into local and network blocks
+        policy.py             the expected-value rule and the four actions
+        model.py              the calibrated learner
+        backtest.py           replays the policy over a split, writes a ledger
+        metrics.py            grading, baselines, bootstrap, deployment modes
+        report.py             generates METRICS.md. nothing is hand-typed.
+        showcase.py           picks demo cases by predicate, not by id
+      agent/                  the wrapper. this is where the model lives.
+        llm.py                two providers, one entry point, disk replay cache
+        orchestrator.py       the case loop
+        verdict.py            writes the note, checks every number in it
+        stepup.py             the verification conversation
+        tools.py              what the model is allowed to reach
+        ledger.py             hash-chained append-only log
+        cache/                recorded model replies. committed on purpose so
+                              the demo runs off-network. no credentials in it.
+      service/case_room.py    builds the one screen
+      datagen/                the world generator
+      notebooks/              five explainers, output committed
+      tests/                  72 tests
+      METRICS.md              generated. the source of truth for every number.
+      notes.txt               running log in plain language of what was built
+                              and what broke
+      DATA_CARD.md            what the generator makes and its known quirks
+
+    pr/                       a clone of the GitHub repo, where the writeup
+                              and a code snapshot live
+      PULL_REQUEST.md         the full change writeup, including what is wrong
+      README.md               the short version of the idea
+      simulation/             snapshot of development/ as pushed
+
+    simulation/               the original data generator, archived
+    IDEA.md                   the pitch. sections 5 and 7 are regenerated from
+                              the harness now, so the numbers and the worked
+                              examples are current
+    ARCHITECTURE.md           the original plan. read it for intent, not for
+                              numbers. two deliberate deviations from it are
+                              documented inline in the code
+    SCRIPT.txt                the demo script. five beats, what to say, which
+                              case to open, and the numbers you are allowed to
+                              quote
+    flow.html                 an eight-stage walkthrough of the pipeline that
+                              opens in a browser, following one real case from
+                              docket to grading
+    knowledge.txt             this file
+
+A note on which documents are current. METRICS.md regenerates from code.
+IDEA.md sections 5 and 7 and DATA_CARD.md sections 2, 4 and 5b regenerate from
+the harness, between markers, via `python run.py docs`. Everything else is
+hand-written prose and can drift, which is why the dry run checks the
+generated blocks before a recording.
+
+A note on names. The older documents call this ACQUIT. Ignore that, the name
+is RECLAIMIFY. IDEA.md and DATA_CARD.md also quote figures from an earlier
+version of the generator, so do not quote them. METRICS.md regenerates from
+current code and is the only document whose numbers are current by
+construction.
+
+A note on git. The outer folder and pr/ are two different repositories. pr/ is
+the real clone of github.com/bhavit069/Razorpay-Buildathon-Project and is the
+one that gets pushed. The outer folder is a local-only working repo whose
+history is unrelated to GitHub. Push from pr/, and fetch first.

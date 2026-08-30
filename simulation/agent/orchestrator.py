@@ -34,6 +34,8 @@ class CaseResult:
     amount_inr: float
     verdict: str
     verdict_source: str
+    verdict_provenance: str       # what to print on screen next to the text
+    verdict_from_model: bool
     citations_ok: bool
     brief: str = ""
     stepped_up: bool = False
@@ -95,6 +97,7 @@ class Orchestrator:
         result = CaseResult(
             payment_id=ev.payment_id, action=d.action.value, p_bad=float(p),
             amount_inr=ev.amount_inr, verdict=v.text, verdict_source=v.source,
+            verdict_provenance=v.provenance, verdict_from_model=v.from_model,
             citations_ok=v.citations_ok, brief=brief, stepped_up=stepped,
             action_before_stepup=before_action, p_bad_before_stepup=before_p,
             prepaid_swap=prepaid, transcript=transcript, facts=facts,
@@ -111,6 +114,7 @@ class Orchestrator:
             "prepaid_swap": prepaid,
             "verdict": result.verdict,
             "verdict_source": result.verdict_source,
+            "verdict_provenance": result.verdict_provenance,
             "citations_ok": result.citations_ok,
             "brief": brief,
             "tools": [t["tool"] for t in result.tool_trace],
@@ -157,8 +161,11 @@ class Orchestrator:
             "stepped_up": sum(r.stepped_up for r in results),
             "prepaid_swaps": sum(r.prepaid_swap for r in results),
             "verdicts_audit_clean": sum(r.citations_ok for r in results),
+            # "claude" was never a source string, so that bucket always read 0
+            # and the summary silently under-reported model output.
             "verdict_sources": {s: sum(r.verdict_source == s for r in results)
-                                for s in ("claude", "cache", "template")},
+                                for s in ("anthropic", "gemini", "cache", "template")},
+            "verdicts_from_model": sum(r.verdict_from_model for r in results),
             "latency_ms": self._latency(results),
             "ledger_entries": len(self.ledger),
             "llm": self.llm.summary(),

@@ -42,14 +42,28 @@ Write for someone who will read a hundred of these. Be flat and specific."""
 class Verdict:
     payment_id: str
     text: str
-    source: str            # claude | cache | template
+    source: str            # anthropic | gemini | cache | template
     attempts: int
     citations_ok: bool
     rejected: tuple = ()   # numbers that failed the check, if any
+    model: str | None = None   # which model wrote it, None for a template
 
     @property
     def audited(self) -> bool:
         return self.citations_ok
+
+    @property
+    def from_model(self) -> bool:
+        return self.source in ("anthropic", "gemini", "cache")
+
+    @property
+    def provenance(self) -> str:
+        """What to print next to the text. A reader must never have to work out
+        whether they are looking at model output or a filled-in template, and a
+        screenshot must not imply the first when it is the second."""
+        if not self.from_model:
+            return "deterministic template, not model output"
+        return self.model or "model, version not recorded"
 
 
 # ---------------------------------------------------------------------------
@@ -271,7 +285,8 @@ def write_brief(ev: Evidence, d: Decision, llm: LLMClient) -> Verdict:
     )
     ok, bad = check_citations(c.text, ev, d)
     if ok:
-        return Verdict(ev.payment_id, c.text.strip(), c.source, 1, True)
+        return Verdict(ev.payment_id, c.text.strip(), c.source, 1, True,
+                       model=c.model)
     text = _brief_template(ev, d)
     ok2, bad2 = check_citations(text, ev, d)
     return Verdict(ev.payment_id, text, "template", 1, ok2, bad)
@@ -295,7 +310,8 @@ def write(ev: Evidence, d: Decision, llm: LLMClient) -> Verdict:
         )
         ok, bad = check_citations(c.text, ev, d)
         if ok:
-            return Verdict(ev.payment_id, c.text.strip(), c.source, attempt, True)
+            return Verdict(ev.payment_id, c.text.strip(), c.source, attempt, True,
+                           model=c.model)
         last_bad = bad
 
     # Fall back to the template, which is built from the evidence.

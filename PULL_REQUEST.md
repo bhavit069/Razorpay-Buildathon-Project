@@ -206,6 +206,70 @@ else, `artifacts/tables.md` and `artifacts/case_room.html` un-ignored so a
 cloner can open the demo without running anything, em dashes removed from
 `DATA_CARD.md`, and 13 tests added covering the accounting and the demo screen.
 
+## Pre-demo pass
+
+Four must-do items, and a fifth that fell out of doing them.
+
+**A. IDEA.md and DATA_CARD.md regenerate now.** Both carried hand-typed figures
+from the 100k dataset and an earlier seed, and hand-patching them is how they
+got wrong in the first place. `core/docs.py` fills seven marked blocks in place,
+so the prose stays hand-written and the numbers stop being: portfolio context,
+the six worked examples, the frontier, the results table, the calibration
+anchors, the file table, the outcome and false-positive mix.
+`python -m core.docs --check` exits non-zero if either document has drifted.
+
+IDEA.md section 5 was the worst of it. Five payment ids picked by hand, five of
+the six in the train split, quoting rupee figures from a generator that has
+changed twice since. It prints whatever `core/showcase.py` selects out of
+holdout now, so it cannot drift back.
+
+The ACQUIT rename was already complete. The only two occurrences left are a
+line in `notes.txt` recording that the rename happened and a note in
+`knowledge.txt` telling a reader to ignore the name if they meet it in an older
+draft.
+
+**B. Two demo dry runs, off-network, no code changes.** `dry_run.py` replaces
+`socket.socket` with something that raises, then does everything the demo does:
+generated doc blocks current, suite green, model fits, six cases selected from
+holdout, agent over 300 orders, agent reproduces the deterministic backtest to
+the digit, case room builds with every demo case on it and model-backed, page
+loads nothing external, replay mode serves the demo cases from cache. Twelve
+checks. Run twice, clean both times, no code change needed between them.
+
+**C. Verdict provenance is on the screen.** The page used to print
+`verdict source: cache` in small grey text, which is honest and useless. Each
+verdict now carries a green badge naming the model or an amber one reading
+TEMPLATE, NOT MODEL OUTPUT, a sentence underneath saying which it is in words,
+a MODEL/TMPL tag in the case list, and a header stating the split. A screenshot
+of the page cannot imply model output that is not there.
+
+Threading provenance through turned up two dead strings. `Completion` never
+produced a source called `claude`, so the orchestrator's summary bucket for it
+always read zero, and `stepup.py` tested `sources & {"claude", "cache"}` and
+reported `template` for exchanges a model had actually written. The test meant
+to catch this asserted that every verdict was a template, which held only while
+the cache was empty.
+
+**D. All six showcase cases are warmed.** The daily quota had rolled over, so
+the three that were still templates went through on the first attempt. Every
+demo case now carries a real, citation-checked verdict, cached and replayed
+off-network.
+
+**E. Metric story order, everywhere it appears.** Recall is the steady quantity
+at 83.1% to 89.6%. Precision moves 6.2 points, 92.0% to 98.2%. Money moves
+about twofold. Each depends on something different: recall on ranking,
+precision on where a fixed threshold lands in a particular world, money on that
+world's value distribution. "Precision is stable" is withdrawn from every
+document that still carried it. Section 11 now leads with the 28.6% breakeven
+rather than a guessed 35% recontact rate, because a threshold is defensible and
+a guessed parameter is not.
+
+Also in this pass: `run.py docs`, `run.py dry`, `run.py room` and `run.py warm`;
+`IDEA.md` and `ARCHITECTURE.md` added to the repo, since `README.md` referenced
+them and they were not here; em dashes removed from both; `SCRIPT.txt` with the
+five demo beats; and `flow.html`, a browser walkthrough of the pipeline that
+follows one real case through all eight stages. 76 tests.
+
 ## Files
 
 `simulation/core/`, 2,286 lines:
@@ -232,8 +296,11 @@ cloner can open the demo without running anything, em dashes removed from
 | `stepup.py` | 227 | Verification exchange and fact extraction |
 | `orchestrator.py` | 173 | The case loop |
 
-`simulation/tests/`, 873 lines, 74 tests, 8s: leakage 11, policy 12,
-determinism 10, agent 28, accounting and demo screen 13.
+`simulation/tests/`, 76 tests, 11s: leakage 11, policy 12, determinism 10,
+agent 29, accounting and demo screen 14.
+
+`simulation/core/docs.py` regenerates the marked blocks in `IDEA.md` and
+`DATA_CARD.md`. `simulation/dry_run.py` is the pre-demo check.
 
 `simulation/service/case_room.py` writes the one demo screen.
 
@@ -477,7 +544,7 @@ Now allows the rounded form of any value.
 
 ## Tests
 
-74 passed in 8s.
+76 passed in 11s.
 
 **Leakage (11).** AST check that quarantined modules never import the answer key;
 training door raises on holdout ids; no answer-key columns reach the store; no
@@ -495,7 +562,7 @@ money.
 identity; moving the operating point moves no probability; release count
 monotone in cap; grading and step-up resolution deterministic.
 
-**Agent (28).** Agent reproduces the backtest; agent runs price through the
+**Agent (29).** Agent reproduces the backtest; agent runs price through the
 Phase 1 grader; no LLM module calls `decide()`; `StepUpFacts` cannot name an
 action; verification never moves `p_bad`; verification cannot release a bad
 case; invented numbers caught; every verdict citation-clean; template output
@@ -503,7 +570,7 @@ labelled; ledger chain verifies and tampering breaks it at the right entry;
 escalations carry a citation-checked brief; replay mode refuses to invent;
 orchestrator deterministic.
 
-**Accounting and the demo screen (13).** Recontact discount applied exactly once
+**Accounting and the demo screen (14).** Recontact discount applied exactly once
 at every rate; fraud admitted does not move with the rate; every published row
 of the section 11 arithmetic reproduces `grade()`; breakeven rate lands at zero
 contribution; fixed drag is fixed; the rationed reviewer reaches only the top
@@ -511,7 +578,7 @@ slice by value; unreviewed cases recover nothing; more coverage never recovers
 less; review cost is charged only for cases reviewed; the rationed reviewer at
 100% coverage equals the unrationed one; a full-coverage reviewer beats this
 system and every rationed one loses to it; the case room contains every showcase
-case; at least one verdict on it comes from a recorded model reply.
+case; at least one verdict on it comes from a recorded model reply; every rendered case declares its provenance and the header states the split.
 
 Phase 1 definition of done: `METRICS.md` regenerates with one command, yes.
 Holdout precision and recall with CIs, yes. Test files green, yes. Moat ablation

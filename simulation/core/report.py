@@ -718,12 +718,20 @@ def build(data_dir="data300k", artifacts="artifacts", out="METRICS.md") -> str:
       "that number; it is asserted, and it is asserted in the pessimistic direction. "
       "If both returned at the same rate these figures would be better than shown.")
     A("")
-    A("The return rate is a band, not a point. An in-session retry prompt is close to "
-      "inline; a next-day email is not. So a range is reported, and with it the "
-      "breakeven rate, which is the one figure that does not depend on guessing right.")
-    A("")
     ra = recontact_arithmetic(ledger, vault, stepup)
     t = ra["terms"]
+    A(f"### Breakeven is a {ra['breakeven_rate']:.1%} return rate")
+    A("")
+    A(f"That is the number to quote, and it is the only one here that does not depend on "
+      f"guessing a parameter. Above a {ra['breakeven_rate']:.1%} customer return rate the "
+      f"programme makes money as a queue review; below it, it costs money to run. A rate "
+      f"is a guess, a threshold is a claim that can be checked against whatever rate a "
+      f"pilot actually measures.")
+    A("")
+    A("The band is reported underneath because an in-session retry prompt is close to "
+      "inline and a next-day email is not, and no single point in that range is "
+      "defensible on its own.")
+    A("")
     A("| Deployment | Recovered | Fraud admitted | Net contribution |")
     A("|---|---|---|---|")
     for dep in ((Deployment.inline(),)
@@ -731,9 +739,6 @@ def build(data_dir="data300k", artifacts="artifacts", out="METRICS.md") -> str:
         g = grade(ledger, vault, stepup, deployment=dep)
         A(f"| {dep.label()} | {cr(g.recovered_inr)} | {cr(g.fraud_admitted_inr)} | "
           f"{cr(g.net_contribution_inr)} |")
-    A("")
-    A(f"**Breakeven is a {ra['breakeven_rate']:.1%} return rate.** Below that the "
-      f"programme costs money to run.")
     A("")
     A("### The arithmetic, so it can be checked by hand")
     A("")
@@ -809,6 +814,7 @@ def build(data_dir="data300k", artifacts="artifacts", out="METRICS.md") -> str:
             "human_baseline": {
                 "accuracy": HUMAN_ACCURACY, "cost_inr_per_case": HUMAN_COST_INR,
                 "latency_hours": HUMAN_LATENCY_HOURS, "precision": hu.precision,
+                "recall": hu.recall_recoverable,
                 "net_contribution_inr": hu.net_contribution_inr,
             },
             "unseen_merchant": {

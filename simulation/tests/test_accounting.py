@@ -4,6 +4,9 @@ Both were added after review, and both are the kind of arithmetic that is easy
 to get wrong in a way nobody notices until it is on a slide. The queue discount
 in particular has to be applied exactly once.
 """
+import json
+import os
+
 import numpy as np
 import pytest
 
@@ -150,3 +153,24 @@ def test_recorded_model_verdicts_reach_the_demo(data_dir):
     from service.case_room import collect
     got = collect(data_dir, limit=10)
     assert any(c["verdict_source"] == "cache" for c in got)
+
+
+def test_every_rendered_case_declares_its_provenance(data_dir):
+    """Item 3 of the review: a screenshot must not imply model output that is
+    not there. Every case on the page carries a provenance string, and the
+    model/template split is stated in the header, not buried."""
+    import re
+    from service.case_room import build
+    out = build(out="artifacts/_provenance_check.html", data_dir=data_dir, limit=12)
+    html = open(out, encoding="utf-8").read()
+    cases = json.loads(re.search(r"const CASES=(\[.*?\]);", html, re.S).group(1))
+    assert cases
+    for c in cases:
+        assert c["provenance"], c["payment_id"]
+        if c["from_model"]:
+            assert "template" not in c["provenance"].lower()
+        else:
+            assert "not model output" in c["provenance"].lower()
+    n_model = sum(c["from_model"] for c in cases)
+    assert f"{n_model} of {len(cases)} verdicts were written by a model" in html
+    os.remove(out)

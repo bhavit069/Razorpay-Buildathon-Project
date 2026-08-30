@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "content": "agent: Hello. To help us process this high-value Aurum Jewels order, would you like to pay online via UPI or card instead of Cash on Delivery?\ncustomer: No, I chose COD for a reason. I'm in the middle of something right now, so please just process the order as it is\u2014why is this taking so long?\nagent: Understood. Please confirm the full delivery address, including the street name, city, and PIN code, where this package should be delivered.\ncustomer: It's whatever address is already saved on the order, just send it there. I'm running late for a meeting, can you guys just ship it out?\nagent: We need to verify this directly. Please tell me the recipient's full name and a landmark near the delivery address.\ncustomer: Look, the name and all those details are already right there in the order summary on your screen. I really don't have time to play 20 questions, just get the package dispatched today.",
+      "role": "user"
+    }
+  ],
+  "model": "gemini-3.6-flash",
+  "provider": "gemini",
+  "system": "Read the verification transcript and report only what the\ncustomer demonstrably did.\n\nReport facts, not impressions. If the customer gave a specific verifiable detail\nwithout hedging, that is a confirmation. Vague agreement is not. Refusing or\ndeflecting is not. You are not judging whether they are honest and you are not\nrecommending anything.",
+  "text": "{\"address_confirmed\":false,\"prior_order_confirmed\":false,\"prepaid_accepted\":false,\"evaded\":true,\"notes\":\"The customer declined prepaid payment and avoided confirming delivery details, stating, \\\"It's whatever address is already saved on the order, just send it there.\\\"\"}",
+  "usage": {
+    "input_tokens": 286,
+    "output_tokens": 62,
+    "thinking_tokens": 665
+  }
+}

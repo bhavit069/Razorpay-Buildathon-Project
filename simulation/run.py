@@ -13,8 +13,10 @@ point; the Makefile just delegates here for parity with the architecture doc.
     python run.py notebooks   # rebuild and re-execute the explainers
     python run.py seeds       # how much does all of this move between worlds?
     python run.py agent       # Phase 2: run the agent over the holdout docket
+    python run.py docs        # refill generated blocks in IDEA.md and DATA_CARD.md
     python run.py room        # build the case room, one HTML file, open it in a browser
     python run.py warm        # record real model replies for the demo cases
+    python run.py dry         # pre-demo dry run, network cut
     python run.py clean
 """
 import os
@@ -82,6 +84,16 @@ def agent():
     sh("demo.py", "--limit", 100)
 
 
+def dry():
+    """Everything that happens on stage, with the network cut."""
+    sh("dry_run.py")
+
+
+def docs():
+    """Refill the generated blocks in IDEA.md and DATA_CARD.md."""
+    sh("-m", "core.docs")
+
+
 def room():
     """The one screen. Writes a self-contained HTML file, no server."""
     sh("-m", "service.case_room")
@@ -109,7 +121,7 @@ def _dataset():
 
 
 TASKS = {f.__name__: f for f in (data, data300k, validate, moat, sweep, metrics,
-                                 test, notebooks, seeds, agent, room, warm, clean)}
+                                 test, notebooks, seeds, agent, docs, room, warm, dry, clean)}
 
 if __name__ == "__main__":
     name = sys.argv[1] if len(sys.argv) > 1 else ""

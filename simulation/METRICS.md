@@ -1,6 +1,6 @@
 # METRICS
 
-Generated 2026-08-29 13:59 UTC by `python run.py metrics`. Regenerates from seed. No number here is typed by hand.
+Generated 2026-08-30 12:47 UTC by `python run.py metrics`. Regenerates from seed. No number here is typed by hand.
 
 - Dataset `data300k/` - 8265 appealed (blocked) orders, 6490 train / 1775 holdout, temporal split.
 - Learner `lightgbm`, isotonic-calibrated on the last 1298 train cases; fitted on 5192.
@@ -266,7 +266,11 @@ Everything above assumes the review runs inline at checkout, where a released or
 
 **Declared assumption, not a measurement.** Only good releases are discounted. A fraudster invited back to finish a stolen-instrument order is more motivated to return than an honest customer who has already bought elsewhere, so fraud admitted is booked in full at every rate below. Nothing in the data supports that number; it is asserted, and it is asserted in the pessimistic direction. If both returned at the same rate these figures would be better than shown.
 
-The return rate is a band, not a point. An in-session retry prompt is close to inline; a next-day email is not. So a range is reported, and with it the breakeven rate, which is the one figure that does not depend on guessing right.
+### Breakeven is a 28.6% return rate
+
+That is the number to quote, and it is the only one here that does not depend on guessing a parameter. Above a 28.6% customer return rate the programme makes money as a queue review; below it, it costs money to run. A rate is a guess, a threshold is a claim that can be checked against whatever rate a pilot actually measures.
+
+The band is reported underneath because an in-session retry prompt is close to inline and a next-day email is not, and no single point in that range is defensible on its own.
 
 | Deployment | Recovered | Fraud admitted | Net contribution |
 |---|---|---|---|
@@ -274,8 +278,6 @@ The return rate is a band, not a point. An in-session retry prompt is close to i
 | queue review, 70% of good customers return | Rs 5.05 cr | Rs 51.21 L | Rs 74.64 L |
 | queue review, 50% of good customers return | Rs 3.61 cr | Rs 51.21 L | Rs 38.58 L |
 | queue review, 35% of good customers return | Rs 2.52 cr | Rs 51.21 L | Rs 11.53 L |
-
-**Breakeven is a 28.6% return rate.** Below that the programme costs money to run.
 
 ### The arithmetic, so it can be checked by hand
 

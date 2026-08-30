@@ -32,14 +32,18 @@ Three further choices exist purely to stop the problem being fake-easy:
 
 ## 2. Calibration
 
+<!-- GENERATED: datacard-calibration -->
+Measured on the current dataset, not typed in.
+
 | Property | This dataset | Public anchor | Source (dated) |
 |---|---|---|---|
-| Orders blocked for risk | **2.7%** | ~2.7% of US domestic orders declined for fraud concerns (Q3 2023) | ClearSale, retrieved 2026-08-24 |
-| Share of blocked pile that was good | **76%** | 30-70% of merchant-declined orders estimated good | Signifyd, via 2026 industry playbooks |
-| Value wrongly blocked ÷ value correctly blocked | **3.8×** | False declines ≈13× fraud prevented | Javelin (2021), widely re-cited |
+| Orders blocked for risk | **2.76%** | ~2.7% of US domestic orders declined for fraud concerns (Q3 2023) | ClearSale, retrieved 2026-08-24 |
+| Share of blocked pile that was good | **76.8%** | 30-70% of merchant-declined orders estimated good | Signifyd, via 2026 playbooks |
+| Value wrongly blocked / value correctly blocked | **4.09x** | False declines around 13x fraud prevented | Javelin (2021), widely re-cited |
 | Merchants tracking their false-decline rate | n/a | ~64% | Corgi Labs, 2026-07 |
 
-**Read the disclaimers.** These figures are vendor-aggregated, several trace back to a single 2021 Javelin study, and India-specific data is thin. Treat them as order-of-magnitude context, not precision. **Our FP share (76%) sits slightly above the published 30-70% band**, and our value ratio (3.8×) is deliberately *more conservative* than the 13× headline. Both are stated rather than hidden, and §3 shows the conclusions survive across the whole range.
+Our false-positive share (76.8%) sits above the published 30-70% band, and our value ratio (4.09x) is deliberately more conservative than the 13x headline. Both are stated rather than hidden. The public anchors are vendor-aggregated, several trace back to a single 2021 Javelin study, and India-specific data is thin, so treat them as order-of-magnitude context.
+<!-- END GENERATED -->
 
 India-specific modelling choices: UPI is the dominant method (62% of non-COD), COD is 34% of orders with a base RTO rate of 17% modulated by regional propensity (Tier-2/3 pincodes carry higher RTO), and `error_source` uses Razorpay's documented enum.
 
@@ -64,16 +68,20 @@ Reproduce: `python generate.py --intercept -4.4 --out /tmp/x && python validate_
 
 ## 4. Files
 
+<!-- GENERATED: datacard-files -->
 | File | Rows | Contents |
 |---|---|---|
-| `payments.jsonl.gz` | 100,000 | Razorpay-shaped payment entities |
-| `orders.jsonl.gz` | 100,000 | Order entities |
-| `customers.jsonl.gz` | 12,000 | Customer entities, **`persona` stripped** |
-| `risk_decisions.jsonl.gz` | 100,000 | Scorecard decision + point-in-time features + network features |
-| `appeal_queue.csv` | 2,722 | Blocked orders only, what RECLAIMIFY adjudicates |
-| `disputes.jsonl` | 2,693 | Realised chargebacks (allowed orders only) |
-| `refunds.jsonl` | 5,762 | Realised RTO refunds (allowed orders only) |
-| `ground_truth.jsonl.gz` | 100,000 | **THE ANSWER KEY.** Join only at scoring time. |
+| `payments.jsonl.gz` | 300,000 | Razorpay-shaped payment entities |
+| `orders.jsonl.gz` | 300,000 | Order entities |
+| `customers.jsonl.gz` | 36,000 | Customer entities, **`persona` stripped** |
+| `risk_decisions.jsonl.gz` | 300,000 | Scorecard decision plus point-in-time and network features |
+| `appeal_queue.csv` | 8,265 | Blocked orders only, what RECLAIMIFY adjudicates |
+| `disputes.jsonl` | 7,298 | Realised chargebacks (allowed orders only) |
+| `refunds.jsonl` | 17,349 | Realised RTO refunds (allowed orders only) |
+| `ground_truth.jsonl.gz` | 300,000 | **THE ANSWER KEY.** Reachable only through `core/truth.py`. |
+
+Split chronologically: 249,679 train rows and 50,321 holdout rows, of which 1,775 were blocked and form the appeal queue every metric is measured on.
+<!-- END GENERATED -->
 
 Entity shapes mirror Razorpay's documented API: `pay_`/`order_`/`cust_` + 14 alphanumerics, **amounts in paise**, `created_at` UNIX seconds, `acquirer_data.rrn` for UPI/card and `bank_transaction_id` for netbanking, and the documented `error_source` enum (`customer`, `business`, `internal`, `gateway`, `issuer_bank`).
 
@@ -88,6 +96,34 @@ Every feature at decision time uses only events that had already occurred. Runni
 Customers are seeded with pre-window network history proportional to tenure, because a two-year-old identity should already carry a file on day 1. Without this, early orders would all look thin-file and the platform advantage would be *understated*.
 
 **Split is temporal, not random:** the final 61 days are `holdout` (16,756 orders, 615 blocked). A random split would leak customer identity across the boundary.
+
+---
+
+## 5b. Outcome and false-positive mix
+
+<!-- GENERATED: datacard-outcomes -->
+What each order *would have done* if allowed through.
+
+| True outcome | Orders | Share |
+|---|---|---|
+| `clean` | 269,790 | 89.93% |
+| `rto_return` | 17,997 | 6.00% |
+| `chargeback_friendly` | 5,361 | 1.79% |
+| `fraud_undisputed` | 3,637 | 1.21% |
+| `chargeback_fraud` | 3,215 | 1.07% |
+
+False positives are not injected, they emerge. Which personas end up in the blocked pile despite being good:
+
+| Persona | Wrongly blocked | Share of the mistakes |
+|---|---|---|
+| `legit_stable` | 2,838 | 44.7% |
+| `legit_new` | 1,733 | 27.3% |
+| `legit_atypical` | 1,331 | 21.0% |
+| `friendly_fraudster` | 243 | 3.8% |
+| `abuser` | 201 | 3.2% |
+
+`friendly_fraudster` and `abuser` appear here because on a given order they behaved, which is exactly why the class is hard: the evidence that exonerates an honest atypical buyer is the same evidence.
+<!-- END GENERATED -->
 
 ---
 
