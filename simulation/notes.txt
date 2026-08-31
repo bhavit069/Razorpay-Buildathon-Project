@@ -470,3 +470,39 @@ renaming was already done, 0 ACQUIT left anywhere.
     also flow.html, a browser walkthrough of the pipeline. one real case,
     pay_5E72cODtQrmZkn, carried through all eight stages with a status bar
     that fills in as you walk it. self-contained, opens from disk.
+
+21. built the browser console. five pages: how it works, portfolio and signals,
+    run the agent, operating point, how honest is it.
+
+    the agent page was the interesting problem. you paste a transaction and it
+    tells you fraud or not. in a static html file with no server there is no
+    lightgbm, so the options were fake it, look it up, or actually ship the
+    model. exported the 300 fitted trees and the isotonic calibrator into a
+    compact json and wrote about forty lines of javascript to walk them.
+
+    the export refuses to write unless its own reference implementation
+    reproduces python's p_bad on all 1775 holdout cases. then a separate node
+    script pulls rawScore, calibrate and decide straight out of the built html
+    and runs them against every holdout row, because the thing worth checking
+    is the code that ships, not a copy of it. worst |js - python| is 5.27e-15
+    and all 1775 actions match the backtest.
+
+    so the agent page is the real model. not a lookup, not an approximation.
+
+22. two chart decisions worth writing down. green and red as adjacent series on
+    one chart cannot clear deuteranopia separation at any lightness, tried
+    about six pairs. so anywhere both recovered and admitted are needed the
+    chart became two single-series panels instead. that also fixed a scale
+    problem i would have shipped otherwise: recovery runs ~15x fraud admitted,
+    so on a shared axis the line that matters most sits flat on the baseline.
+    no dual axis, obviously.
+
+23. no headless browser on this box, so the substitute is check_pages.js: run
+    the page scripts against a stub dom, call every render(), and fail on a
+    leaked undefined, a NaN, an unbalanced tag, an unresolved placeholder. it
+    caught two things immediately. a devanagari four had got into a hex colour
+    (#D9AA4C with the 4 being U+096A) which css would have silently dropped,
+    and C.paper does not exist so the sidebar was inlining "color:undefined".
+    neither would have thrown.
+
+    the dry run is 13 checks now, console included. clean twice.

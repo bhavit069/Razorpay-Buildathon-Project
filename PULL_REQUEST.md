@@ -270,6 +270,46 @@ them and they were not here; em dashes removed from both; `SCRIPT.txt` with the
 five demo beats; and `flow.html`, a browser walkthrough of the pipeline that
 follows one real case through all eight stages. 76 tests.
 
+## The browser console
+
+Five pages in one self-contained HTML file, `python run.py console`: how it
+works, portfolio and signals, run the agent, operating point, how honest is it.
+
+**The agent page runs the real model.** You paste a transaction and it returns a
+decision. In a static file with no server there is no LightGBM, so the options
+were to fake it, to look the answer up, or to actually ship the model. The 300
+fitted trees and the isotonic calibrator are exported into the page and walked
+in about forty lines of JavaScript.
+
+Two checks keep that honest. `service/export_bundle.py` refuses to write the
+bundle unless its reference implementation reproduces Python's `p_bad` on all
+1,775 holdout cases. Then `service/check_dashboard.js` pulls `rawScore`,
+`calibrate` and `decide` straight out of the built HTML and runs them against
+every holdout row, because the thing worth verifying is the code that ships, not
+a copy of it. Worst disagreement is 5.27e-15 and all 1,775 actions match the
+backtest.
+
+**The operating point page** puts the cap on a slider with the frontier under
+it. Dragging it left shows 98.6% precision and seven points less recall, which
+is the argument for the shipped point made in one gesture instead of a
+paragraph.
+
+Two chart decisions worth recording. Green and red cannot clear deuteranopia
+separation as adjacent series at any lightness, so anywhere both recovered and
+admitted are needed the chart is two single-series panels rather than two lines.
+That also fixed a scale problem that would otherwise have shipped: recovery runs
+about fifteen times fraud admitted, so on a shared axis the line that matters
+most sits flat on the baseline, and a second axis would have been worse.
+
+There is no headless browser on this machine, so `service/check_pages.js` runs
+the page scripts against a stub DOM, calls every `render()`, and fails on a
+leaked `undefined`, a `NaN`, an unbalanced tag or an unresolved placeholder. It
+immediately caught two things that would not have thrown: a Devanagari four had
+got into a hex colour, which CSS drops silently, and `C.paper` does not exist so
+the sidebar was inlining `color:undefined`.
+
+The dry run is 13 checks now with the console included, clean twice. 78 tests.
+
 ## Files
 
 `simulation/core/`, 2,286 lines:
@@ -296,13 +336,15 @@ follows one real case through all eight stages. 76 tests.
 | `stepup.py` | 227 | Verification exchange and fact extraction |
 | `orchestrator.py` | 173 | The case loop |
 
-`simulation/tests/`, 76 tests, 11s: leakage 11, policy 12, determinism 10,
-agent 29, accounting and demo screen 14.
+`simulation/tests/`, 78 tests, 23s: leakage 11, policy 12, determinism 10,
+agent 29, accounting, demo screen and console 16.
 
 `simulation/core/docs.py` regenerates the marked blocks in `IDEA.md` and
 `DATA_CARD.md`. `simulation/dry_run.py` is the pre-demo check.
 
-`simulation/service/case_room.py` writes the one demo screen.
+`simulation/service/case_room.py` writes the one demo screen;
+`simulation/service/dashboard.py` writes the five-page console and
+`export_bundle.py` exports the model it runs.
 
 Also `notebooks/` (five executable explainers, generated so outputs cannot
 drift from code), `seed_check.py`, `demo.py`, `notes.txt`, `run.py`.
@@ -544,7 +586,7 @@ Now allows the rounded form of any value.
 
 ## Tests
 
-76 passed in 11s.
+78 passed in 23s.
 
 **Leakage (11).** AST check that quarantined modules never import the answer key;
 training door raises on holdout ids; no answer-key columns reach the store; no
@@ -570,7 +612,7 @@ labelled; ledger chain verifies and tampering breaks it at the right entry;
 escalations carry a citation-checked brief; replay mode refuses to invent;
 orchestrator deterministic.
 
-**Accounting and the demo screen (14).** Recontact discount applied exactly once
+**Accounting, the demo screen and the console (16).** Recontact discount applied exactly once
 at every rate; fraud admitted does not move with the rate; every published row
 of the section 11 arithmetic reproduces `grade()`; breakeven rate lands at zero
 contribution; fixed drag is fixed; the rationed reviewer reaches only the top

@@ -3,15 +3,18 @@ Five beats, about five minutes. Every number here is in development/METRICS.md.
 
 BEFORE YOU RECORD
   cd development
-  python run.py dry          # 12 checks, network cut. must be 12 of 12.
+  python run.py dry          # 13 checks, network cut. must be 13 of 13.
   python run.py room         # writes artifacts/case_room.html
-  open artifacts/case_room.html
+  python run.py console      # writes artifacts/dashboard.html
+  open artifacts/case_room.html and artifacts/dashboard.html
 
   Pull the network cable, or turn wifi off. The page is one file and the demo
   cases replay from disk. If anything reaches for a network it fails loudly,
   which is the point of running the dry run first.
 
-  Have two windows: the case room, and a terminal sitting in development/.
+  Have three windows: the case room, the console, and a terminal in
+  development/. The case room is for beats 2, 3 and 4, one order at a time.
+  The console is for beats 1 and 5, where the argument is about the whole pile.
 
 
 -------------------------------------------------------------------------------
@@ -144,8 +147,10 @@ BEAT 5  THE FRONTIER, THE ONE WE GOT WRONG, AND THE FOUR NUMBERS
 This is the beat that wins or loses it. Do not rush it and do not treat the
 last part as a footnote.
 
-On screen: METRICS.md section 3 or the frontier chart, then
-  pay_cHqPoyD6hCHji7, "The most expensive wrong release".
+On screen: the console, Operating point page. Put your hand on the cap
+slider before you start talking. Then switch to the case room for
+pay_cHqPoyD6hCHji7, "The most expensive wrong release", and finish on the
+console's "How honest is it" page.
 
 Say, first the headline:
 
@@ -157,9 +162,15 @@ Say, first the headline:
 
   The operating point is not tuned. Releasing is worth money only while the
   probability of being wrong is below margin over one plus margin, which at a
-  25% margin is 0.20. That is where we sit. We could show you 98.6% precision
-  by moving it to 0.02, and that is exactly the behaviour this project
-  exists to criticise.
+  25% margin is 0.20. That is where we sit.
+
+  [drag the slider left]
+
+  Here is 0.02. Precision goes to 98.6%, which looks better on a slide, and
+  recall drops seven points, which is revenue we are choosing not to recover.
+  Picking the threshold that flatters the precision column is exactly the
+  behaviour this project exists to criticise, so we ship the point where the
+  arithmetic stops working rather than the point where the table looks best.
 
 Then the case you got wrong:
 
@@ -203,6 +214,39 @@ Close on:
   the whole pile. At 10% coverage, which is generous, a human queue recovers
   8.6% of the recoverable revenue. This recovers 88.2%. The gap is not
   intelligence. It is reach.
+
+If you have the console open, that whole closing argument is one table on the
+"How honest is it" page. Point at it rather than reciting it.
+
+
+-------------------------------------------------------------------------------
+IF ASKED "DOES IT ACTUALLY RUN, OR IS THAT A MOCKUP"
+-------------------------------------------------------------------------------
+Open the console, Run the agent page. Edit a number in the JSON, anything, and
+hit Adjudicate. Watch the probability and the action change.
+
+  That is the model. The 300 fitted trees and the calibrator are exported into
+  the page and evaluated in the browser. The exporter refuses to write them out
+  unless the JavaScript reproduces the Python probability on all 1,775 holdout
+  cases, and a separate check pulls those functions out of the built page and
+  runs them again. Worst disagreement is five times ten to the minus fifteen.
+
+Three edits that land, all verified on the shipped page:
+
+  network_orders_prior 75 -> 1
+      OVERTURN becomes STEP_UP. The probability does not move at all, 0.0031
+      either way. The evidence gate fired, not the model. Worth saying out
+      loud: the system is not less confident, it has decided it does not have
+      enough record to act on, which is a different thing.
+
+  network_clean_rate 0.96 -> 0.20 and network_disputes_prior 1 -> 6
+      p goes 0.0031 to 0.2317 and the action becomes STEP_UP, ambiguous.
+      That is the model, not the gate.
+
+  network_orders_prior -> 1 and amount_inr -> 3000
+      ESCALATE instead of STEP_UP. Same thin file, but it is not worth a
+      verification exchange on a three thousand rupee order, so it goes to a
+      person. The policy spends effort where the money is.
 
 
 -------------------------------------------------------------------------------

@@ -174,3 +174,35 @@ def test_every_rendered_case_declares_its_provenance(data_dir):
     n_model = sum(c["from_model"] for c in cases)
     assert f"{n_model} of {len(cases)} verdicts were written by a model" in html
     os.remove(out)
+
+
+# ---------------------------------------------------------------------------
+# The browser console
+# ---------------------------------------------------------------------------
+def test_exported_model_reproduces_the_fitted_one(data_dir, tmp_path):
+    """The agent page runs the exported trees. If they drift from the fitted
+    model the page is confidently wrong, which is worse than being broken, so
+    the exporter refuses to write and this asserts it stays that way."""
+    from service.export_bundle import build
+    out = build(data_dir=data_dir, out=str(tmp_path / "bundle.json"))
+    b = json.loads(open(out, encoding="utf-8").read())
+    assert b["model"]["n_trees"] > 0
+    assert b["model"]["features"], "no feature order exported"
+    assert len(b["samples"]) == 6, "the agent page needs all six demo cases"
+    for s in b["samples"]:
+        for f in b["model"]["features"]:
+            if f == "amount":
+                continue
+            assert f in s["json"], f"sample {s['json']['payment_id']} is missing {f}"
+
+
+def test_console_is_self_contained(data_dir, tmp_path):
+    """It has to open from disk with the network unplugged, like the case room."""
+    import re
+    from service.dashboard import build
+    out = build(out=str(tmp_path / "dashboard.html"), data_dir=data_dir)
+    html = open(out, encoding="utf-8").read()
+    assert "__BUNDLE__" not in html
+    refs = re.findall(r'(?:src|href)="((?:https?:)?//[^"]+)', html)
+    assert all("fonts.googleapis.com" in r or "fonts.gstatic.com" in r for r in refs), \
+        f"page loads something other than fonts: {refs}"

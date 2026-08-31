@@ -226,6 +226,28 @@ def main():
         return "no external src or href, opens from disk"
     c("case room is self-contained", no_external_refs)
 
+    def build_console():
+        """The console's agent page runs the exported model. The exporter
+        already refuses to write a bundle that disagrees with Python, so
+        getting here at all is most of the check; this confirms the page is
+        built, self-contained, and carries every demo case."""
+        import re
+
+        from service.dashboard import build as build_console_page
+        p = build_console_page(out="artifacts/dashboard.html", data_dir="data300k")
+        html = io.open(os.path.join(ROOT, p), encoding="utf-8").read()
+        refs = re.findall(r'(?:src|href)="((?:https?:)?//[^"]+)', html)
+        outside = [r for r in refs if "fonts.g" not in r]
+        if outside:
+            raise AssertionError(f"console loads external resources: {outside[:3]}")
+        b = json.loads(re.search(r"const B = (\{.*?\});\s*</script>", html, re.S).group(1))
+        if len(b["samples"]) != 6:
+            raise AssertionError(f"console ships {len(b['samples'])} demo cases, wanted 6")
+        size = os.path.getsize(os.path.join(ROOT, p)) / 1024
+        return (f"{size:.0f} KB, {b['model']['n_trees']} trees inlined, "
+                f"{len(b['samples'])} demo cases, fonts are the only external ref")
+    c("browser console builds and is self-contained", build_console)
+
     # --- replay strictness ---------------------------------------------------
     def replay_serves_demo_cases():
         store, vault, model = state["store"], state["vault"], state["model"]

@@ -8,6 +8,7 @@ artifacts/*
 # running anything first.
 !artifacts/tables.md
 !artifacts/case_room.html
+!artifacts/dashboard.html
 *.pkl
 
 # generated report

@@ -23,7 +23,7 @@ is 300,000 rows and it regenerates byte-identically from the seed. You have to
 run it once before anything else works.
 
 
---- The five things worth actually looking at ---
+--- The things worth actually looking at ---
 
 1. THE CASE ROOM. This is the demo.
 
@@ -46,7 +46,29 @@ run it once before anything else works.
    view: the left column is why the order got blocked, the right column is why
    that was wrong.
 
-2. THE NUMBERS.
+2. THE CONSOLE. Five pages in one file.
+
+       python run.py console
+       start artifacts\dashboard.html          (Windows)
+
+   How it works, portfolio and signals, run the agent, operating point, how
+   honest is it. No server, opens from disk.
+
+   The agent page is the one to show. Paste a transaction JSON, or click one of
+   the six samples, and it returns the probability, the expected-value
+   arithmetic line by line, the action, and the reasons. It runs the real
+   model: the 300 fitted trees and the isotonic calibrator are exported into
+   the page and evaluated in JavaScript. The exporter refuses to write unless
+   that reproduces Python on all 1,775 holdout cases, and a separate check
+   pulls the functions out of the built HTML and runs them against every case.
+   Worst disagreement is 5e-15 and all 1,775 actions match the backtest.
+
+   The operating point page has the cap slider. Drag it and watch recovery,
+   fraud admitted and contribution move together. That is the trade curve, and
+   it is the single most useful thing to have on screen when someone asks why
+   0.20.
+
+3. THE NUMBERS.
 
        python run.py metrics
        (writes development/METRICS.md, about 60s)
@@ -61,7 +83,7 @@ run it once before anything else works.
    tables.md, which is the block the other documents quote so nothing gets
    hand-patched out of sync.
 
-3. THE AGENT RUNNING.
+4. THE AGENT RUNNING.
 
        python run.py agent
 
@@ -83,7 +105,7 @@ run it once before anything else works.
    is not, so expect it to stop early. It exists to prove the offline path
    cannot silently reach the network, not as the demo command.
 
-4. THE EXPLAINERS.
+5. THE EXPLAINERS.
 
        development/notebooks/00_start_here.ipynb
 
@@ -93,9 +115,9 @@ run it once before anything else works.
 
        python run.py notebooks     # rebuild and re-execute them
 
-5. THE TESTS.
+6. THE TESTS.
 
-       python run.py test          # 74 tests, about 8s
+       python run.py test          # 78 tests, about 23s
 
    Worth running in front of someone, because of what they test. Not "does the
    function return a float". They test that the answer key cannot be read
@@ -106,9 +128,9 @@ run it once before anything else works.
    the narrative in METRICS.md is wrong.
 
 
-6. THE DRY RUN. Do this before any recording.
+7. THE DRY RUN. Do this before any recording.
 
-       python run.py dry           # 12 checks, network cut, about 20s
+       python run.py dry           # 13 checks, network cut, about 40s
 
    It blocks the socket module and then does everything the demo does: checks
    the generated doc blocks are current, runs the suite, fits the model, picks
@@ -143,6 +165,9 @@ run it once before anything else works.
                                 everything between the GENERATED markers comes
                                 out of the harness, and `python -m core.docs
                                 --check` fails if they have drifted
+    python run.py console       builds the five-page console. regenerates the
+                                model bundle first and verifies the exported
+                                trees against the fitted ones before writing
     python run.py clean         deletes generated data and artifacts
 
     python run.py data          100k rows instead of 300k. reproduces the
@@ -527,6 +552,9 @@ PART 6. WHERE THINGS LIVE
     flow.html                 an eight-stage walkthrough of the pipeline that
                               opens in a browser, following one real case from
                               docket to grading
+    console.html              the five-page console. same file as
+                              development/artifacts/dashboard.html, copied to
+                              the root so it is easy to find and open
     knowledge.txt             this file
 
 A note on which documents are current. METRICS.md regenerates from code.
