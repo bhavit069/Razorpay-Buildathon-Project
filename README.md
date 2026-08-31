@@ -236,7 +236,7 @@ standard.
 | `simulation/METRICS.md` | Every number the project quotes, generated |
 | `simulation/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
 | `simulation/notes.txt` | Running log of what was built and what broke |
-| `console.html` | Five-page console. Paste a transaction into the agent page and it runs the real model. |
+| `console.html` | Five-page console, also served by `run.py serve`. The agent page runs the real model. |
 | `flow.html` | Browser walkthrough of the pipeline, one real case through eight stages |
 | `knowledge.txt` | What to run, what the idea is, what is left to do |
 | `SCRIPT.txt` | The demo script, five beats |
@@ -257,10 +257,10 @@ can go stale.
 cd simulation
 pip install -r requirements.txt
 python run.py data300k    # build the simulated world   ~31s
-python run.py test        # 78 tests                    ~23s
+python run.py test        # 79 tests                    ~25s
 python run.py metrics     # regenerate every number     ~60s
 python run.py room        # build the case room, then open artifacts/case_room.html
-python run.py console     # build the five-page console, then open artifacts/dashboard.html
+python run.py serve       # build the console and serve it on http://localhost:4000
 python run.py agent       # run the agent over the blocked pile
 python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
 python run.py dry         # pre-demo check, network cut, 13 checks
@@ -276,9 +276,12 @@ cd simulation && python run.py data300k && python run.py room
 then open `simulation/artifacts/case_room.html`. It is one file, no server, no
 network.
 
-`console.html` at the repo root is the same thing for the whole system rather
-than one order: the pipeline, the portfolio, the operating-point curve, the
-honest-metrics page, and an agent page you can paste a transaction into. That
-page evaluates the 300 fitted trees in the browser, and the build refuses to
-write it unless the JavaScript reproduces the Python probability on all 1,775
-holdout cases.
+`python run.py serve` puts the whole system on http://localhost:4000: the
+pipeline, the portfolio, the operating-point curve, the honest-metrics page,
+and an agent page you can paste a transaction into. `/case` on the same server
+is the case room. That agent page evaluates the 300 fitted trees in the
+browser, and the build refuses to write it unless the JavaScript reproduces the
+Python probability on all 1,775 holdout cases.
+
+Nothing on either page loads from the network, so opening the files straight
+off disk works too.

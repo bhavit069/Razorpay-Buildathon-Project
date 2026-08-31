@@ -5,15 +5,17 @@ BEFORE YOU RECORD
   cd development
   python run.py dry          # 13 checks, network cut. must be 13 of 13.
   python run.py room         # writes artifacts/case_room.html
-  python run.py console      # writes artifacts/dashboard.html
-  open artifacts/case_room.html and artifacts/dashboard.html
+  python run.py serve        # builds the console, serves localhost:4000
+
+  Leave the server running. Open two tabs: localhost:4000 for the console and
+  localhost:4000/case for the case room.
 
   Pull the network cable, or turn wifi off. The page is one file and the demo
   cases replay from disk. If anything reaches for a network it fails loudly,
   which is the point of running the dry run first.
 
-  Have three windows: the case room, the console, and a terminal in
-  development/. The case room is for beats 2, 3 and 4, one order at a time.
+  Have two tabs and a terminal: localhost:4000/case for one order at a time,
+  localhost:4000 for the whole pile, and a terminal in development/. The case room is for beats 2, 3 and 4, one order at a time.
   The console is for beats 1 and 5, where the argument is about the whole pile.
 
 

@@ -206,3 +206,45 @@ def test_console_is_self_contained(data_dir, tmp_path):
     refs = re.findall(r'(?:src|href)="((?:https?:)?//[^"]+)', html)
     assert all("fonts.googleapis.com" in r or "fonts.gstatic.com" in r for r in refs), \
         f"page loads something other than fonts: {refs}"
+
+
+def test_local_server_serves_every_route(data_dir):
+    """`python run.py serve` is how the console is meant to be looked at, so
+    the routes it advertises have to actually resolve."""
+    import socket
+    import threading
+    from service import serve as srv
+
+    if not os.path.exists(os.path.join(srv.ARTIFACTS, "dashboard.html")):
+        pytest.skip("no built console; run `python run.py console`")
+
+    class S(srv.socketserver.ThreadingMixIn, srv.http.server.HTTPServer):
+        daemon_threads = True
+        allow_reuse_address = True
+
+    httpd = S(("127.0.0.1", 0), srv.Handler)
+    port = httpd.server_address[1]
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        # one keep-alive connection, the way a browser loads a page
+        c = socket.create_connection(("127.0.0.1", port), timeout=10)
+        try:
+            for path in ("/", "/console", "/case", "/artifacts/headline.json"):
+                c.sendall(f"GET {path} HTTP/1.1\r\nHost: x\r\n"
+                          f"Connection: keep-alive\r\n\r\n".encode())
+                buf = b""
+                while b"\r\n\r\n" not in buf:
+                    buf += c.recv(65536)
+                head, _, rest = buf.partition(b"\r\n\r\n")
+                assert b"200 OK" in head.split(b"\r\n")[0], f"{path}: {head[:60]}"
+                length = int(next(l.split(b":")[1] for l in head.split(b"\r\n")
+                                  if l.lower().startswith(b"content-length")))
+                while len(rest) < length:
+                    rest += c.recv(65536)
+                assert len(rest) == length, path
+        finally:
+            c.close()
+    finally:
+        httpd.shutdown()
+        httpd.server_close()

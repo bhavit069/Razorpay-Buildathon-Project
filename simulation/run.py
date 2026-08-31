@@ -16,6 +16,7 @@ point; the Makefile just delegates here for parity with the architecture doc.
     python run.py docs        # refill generated blocks in IDEA.md and DATA_CARD.md
     python run.py room        # build the case room, one HTML file, open it in a browser
     python run.py console     # build the five-page browser console
+    python run.py serve       # build it and serve on http://localhost:4000
     python run.py warm        # record real model replies for the demo cases
     python run.py dry         # pre-demo dry run, network cut
     python run.py clean
@@ -100,6 +101,11 @@ def room():
     sh("-m", "service.case_room")
 
 
+def serve():
+    """Build the pages and serve them on http://localhost:4000."""
+    sh("-m", "service.serve")
+
+
 def console():
     """The browser console: five pages, one self-contained HTML file. The agent
     page runs the exported model, so the exporter verifies it against Python
@@ -129,7 +135,7 @@ def _dataset():
 
 
 TASKS = {f.__name__: f for f in (data, data300k, validate, moat, sweep, metrics,
-                                 test, notebooks, seeds, agent, docs, room, console, warm, dry, clean)}
+                                 test, notebooks, seeds, agent, docs, room, console, serve, warm, dry, clean)}
 
 if __name__ == "__main__":
     name = sys.argv[1] if len(sys.argv) > 1 else ""

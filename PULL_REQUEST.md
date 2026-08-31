@@ -272,8 +272,15 @@ follows one real case through all eight stages. 76 tests.
 
 ## The browser console
 
-Five pages in one self-contained HTML file, `python run.py console`: how it
-works, portfolio and signals, run the agent, operating point, how honest is it.
+Five pages served on localhost, `python run.py serve` then
+http://localhost:4000: how it works, portfolio and signals, run the agent,
+operating point, how honest is it. `/case` is the case room, `/artifacts/` is
+everything else generated. The page loads nothing from the network, so opening
+the file off disk works too.
+
+It is styled as the case room, because that is the look this project already
+had: warm off-white, system sans, hairline rules, 7px cards, one blue accent,
+and the same three status colours used only as labelled tags. No webfont.
 
 **The agent page runs the real model.** You paste a transaction and it returns a
 decision. In a static file with no server there is no LightGBM, so the options
@@ -308,7 +315,20 @@ immediately caught two things that would not have thrown: a Devanagari four had
 got into a hex colour, which CSS drops silently, and `C.paper` does not exist so
 the sidebar was inlining `color:undefined`.
 
-The dry run is 13 checks now with the console included, clean twice. 78 tests.
+Getting it onto localhost turned up three real bugs. `localhost` resolves to
+`::1` before `127.0.0.1` on Windows, so a v4-only bind left every request
+hanging; the fix is a dual-stack bind. The single-threaded `TCPServer` let one
+slow connection block the next request. And the served directory is
+`artifacts/` itself, so `/artifacts/x` looked for `artifacts/artifacts/x`.
+
+Then a long detour chasing intermittent timeouts that were not the server.
+`urllib` opens a connection per request and sends `Connection: close`; sixty of
+those in a row drops about one in six on Windows. The same sixty over one
+keep-alive connection is 60 of 60 with a worst case of 49 ms, which is what a
+browser does. The fix was to measure the right thing, and the note is in
+`serve.py` so nobody re-debugs it.
+
+The dry run is 13 checks with the console included, clean twice. 79 tests.
 
 ## Files
 
@@ -336,15 +356,16 @@ The dry run is 13 checks now with the console included, clean twice. 78 tests.
 | `stepup.py` | 227 | Verification exchange and fact extraction |
 | `orchestrator.py` | 173 | The case loop |
 
-`simulation/tests/`, 78 tests, 23s: leakage 11, policy 12, determinism 10,
-agent 29, accounting, demo screen and console 16.
+`simulation/tests/`, 79 tests, 25s: leakage 11, policy 12, determinism 10,
+agent 29, accounting, demo screen, console and server 17.
 
 `simulation/core/docs.py` regenerates the marked blocks in `IDEA.md` and
 `DATA_CARD.md`. `simulation/dry_run.py` is the pre-demo check.
 
 `simulation/service/case_room.py` writes the one demo screen;
 `simulation/service/dashboard.py` writes the five-page console and
-`export_bundle.py` exports the model it runs.
+`export_bundle.py` exports the model it runs, and `serve.py` puts it on
+localhost:4000.
 
 Also `notebooks/` (five executable explainers, generated so outputs cannot
 drift from code), `seed_check.py`, `demo.py`, `notes.txt`, `run.py`.
@@ -586,7 +607,7 @@ Now allows the rounded form of any value.
 
 ## Tests
 
-78 passed in 23s.
+79 passed in 25s.
 
 **Leakage (11).** AST check that quarantined modules never import the answer key;
 training door raises on holdout ids; no answer-key columns reach the store; no
@@ -612,7 +633,7 @@ labelled; ledger chain verifies and tampering breaks it at the right entry;
 escalations carry a citation-checked brief; replay mode refuses to invent;
 orchestrator deterministic.
 
-**Accounting, the demo screen and the console (16).** Recontact discount applied exactly once
+**Accounting, the demo screen, the console and the server (17).** Recontact discount applied exactly once
 at every rate; fraud admitted does not move with the rate; every published row
 of the section 11 arithmetic reproduces `grade()`; breakeven rate lands at zero
 contribution; fixed drag is fixed; the rationed reviewer reaches only the top

@@ -506,3 +506,39 @@ renaming was already done, 0 ACQUIT left anywhere.
     neither would have thrown.
 
     the dry run is 13 checks now, console included. clean twice.
+
+24. redesigned the console. the terminal look was mine, not asked for, and the
+    case room's plain light style is the one that got liked. so the console is
+    now the same system: #faf9f7 ground, system sans at 15px/1.55, hairline
+    rules, 7px cards, one blue accent, and the same three status colours used
+    only as labelled tags.
+
+    dropped the webfont with it, so the page now loads nothing at all from the
+    network. it was two google fonts links before.
+
+    the chart decision survives the restyle: green and red still never sit
+    adjacent on one chart, they are separate single-series panels.
+
+25. it serves on localhost now instead of being a file you open. service/serve.py,
+    stdlib only, `python run.py serve` -> http://localhost:4000. / is the
+    console, /case is the case room, /artifacts/ is everything else generated.
+
+    three real bugs on the way there, all worth writing down:
+
+    - localhost resolves to ::1 before 127.0.0.1 on windows, and binding
+      127.0.0.1 only meant every request to http://localhost hung for seconds
+      and some timed out entirely. binding :: with IPV6_V6ONLY off answers on
+      both.
+    - single-threaded TCPServer: one slow connection blocked the next request.
+      ThreadingMixIn with daemon threads.
+    - the served directory IS artifacts/, so /artifacts/x looked for
+      artifacts/artifacts/x. accept the prefix anyway, because that is what
+      people type after reading the startup banner.
+
+    then a long detour chasing intermittent timeouts that turned out not to be
+    the server. urllib opens a new connection per request and sends
+    Connection: close; sixty of those in a row is windows socket churn and
+    drops about one in six. the same sixty over one keep-alive connection is
+    60/60 with a worst case of 49ms. a browser uses keep-alive. so the fix was
+    to measure the right thing, not to change the server, and the note is in
+    serve.py so nobody re-debugs it.

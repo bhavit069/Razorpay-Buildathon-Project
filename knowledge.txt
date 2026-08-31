@@ -46,13 +46,20 @@ run it once before anything else works.
    view: the left column is why the order got blocked, the right column is why
    that was wrong.
 
-2. THE CONSOLE. Five pages in one file.
+2. THE CONSOLE. Five pages, served locally.
 
-       python run.py console
-       start artifacts\dashboard.html          (Windows)
+       python run.py serve
+
+   Builds it and serves http://localhost:4000. Ctrl-C to stop.
+
+       /            the console
+       /case        the case room
+       /artifacts/  everything else that got generated
 
    How it works, portfolio and signals, run the agent, operating point, how
-   honest is it. No server, opens from disk.
+   honest is it. The page itself loads nothing from the network, so
+   `python run.py console` and opening artifacts/dashboard.html straight off
+   disk works too if you would rather not run a server.
 
    The agent page is the one to show. Paste a transaction JSON, or click one of
    the six samples, and it returns the probability, the expected-value
@@ -117,7 +124,7 @@ run it once before anything else works.
 
 6. THE TESTS.
 
-       python run.py test          # 78 tests, about 23s
+       python run.py test          # 79 tests, about 25s
 
    Worth running in front of someone, because of what they test. Not "does the
    function return a float". They test that the answer key cannot be read
@@ -168,6 +175,9 @@ run it once before anything else works.
     python run.py console       builds the five-page console. regenerates the
                                 model bundle first and verifies the exported
                                 trees against the fitted ones before writing
+    python run.py serve         the same, then serves it on localhost:4000.
+                                --port to move it, --no-build to serve what is
+                                already there
     python run.py clean         deletes generated data and artifacts
 
     python run.py data          100k rows instead of 300k. reproduces the
@@ -552,9 +562,10 @@ PART 6. WHERE THINGS LIVE
     flow.html                 an eight-stage walkthrough of the pipeline that
                               opens in a browser, following one real case from
                               docket to grading
-    console.html              the five-page console. same file as
-                              development/artifacts/dashboard.html, copied to
-                              the root so it is easy to find and open
+    console.html              the five-page console, a copy of
+                              development/artifacts/dashboard.html. usually
+                              easier to run `python run.py serve` and open
+                              localhost:4000
     knowledge.txt             this file
 
 A note on which documents are current. METRICS.md regenerates from code.

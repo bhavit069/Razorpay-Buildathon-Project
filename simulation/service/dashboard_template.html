@@ -1,191 +1,159 @@
 <title>Reclaimify Console</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
-
 <style>
 /* ---------------------------------------------------------------------------
-   Docket paper on India ink. One committed dark world, painted explicitly, so
-   the page holds on any host ground.
+   Same visual system as service/case_room.py: warm off-white, system sans,
+   hairline rules, 7px cards, one blue accent, and three status colours used
+   only as labelled tags. No webfont, so nothing loads from the network.
 
-   The three chart colours were snapped into the dark lightness band and run
-   through the palette validator against the #151A21 chart surface. Green and
-   red never appear as adjacent series on one chart, because that pair cannot
-   clear deuteranopia separation at any lightness; where both would be needed
-   the chart becomes single-series small multiples instead.
+   Those status colours are never adjacent series on a chart. Green and red
+   cannot clear deuteranopia separation as neighbours at any lightness, so
+   wherever both recovered and admitted are needed the chart is two
+   single-series panels. That also fixes a scale problem: recovery runs about
+   fifteen times fraud admitted, and on a shared axis the line that matters
+   most would sit flat on the baseline.
 --------------------------------------------------------------------------- */
-:root{
-  --ink:#0E1116; --ink-2:#151A21; --ink-3:#1C222B; --ink-4:#222A35;
-  --rule:#272E39; --rule-2:#333C49;
-  --paper:#E9E4D8; --muted:#868D99; --dim:#5C636E;
-  --ochre:#C99A3F;
-  --good:#42976A; --bad:#C74F4A; --hold:#BA8C33;
-  --good-soft:#16281E; --bad-soft:#251614; --hold-soft:#231C10;
-  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --serif:"Newsreader",Georgia,"Times New Roman",serif;
-}
-*,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--ink);color:var(--paper);
-  font-family:var(--mono);font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased}
-::selection{background:var(--ochre);color:var(--ink)}
-:focus-visible{outline:2px solid var(--ochre);outline-offset:2px}
+:root{--bg:#faf9f7;--fg:#1a1a1a;--mut:#6b6b6b;--line:#e2e0dc;--card:#fff;
+--good:#1a7f4b;--bad:#b3261e;--warn:#a16207;--accent:#2b4c7e;
+--soft:#f4f2ef;--sel:#eef2f8;--faint:#b6b2ab}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);
+font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* ---- shell ---- */
-.app{display:grid;grid-template-columns:246px 1fr;min-height:100dvh}
-.side{background:var(--ink-2);border-right:1px solid var(--rule);
-  display:flex;flex-direction:column;position:sticky;top:0;height:100dvh;overflow-y:auto}
-.brand{padding:18px 18px 14px;border-bottom:1px solid var(--rule)}
-.brand h1{font-family:var(--serif);font-size:19px;font-weight:600;margin:0;
-  letter-spacing:-.01em}
-.brand .tag{font-size:10px;text-transform:uppercase;letter-spacing:.14em;
-  color:var(--dim);margin-top:3px}
-nav{padding:8px 0;flex:1}
-.nav{display:flex;align-items:baseline;gap:9px;width:100%;background:none;border:0;
-  border-left:2px solid transparent;color:var(--muted);font-family:var(--mono);
-  font-size:12.5px;text-align:left;padding:8px 18px 8px 16px;cursor:pointer;
-  transition:background .14s,color .14s,border-color .14s}
-.nav:hover{background:var(--ink-3);color:var(--paper)}
-.nav[aria-current="page"]{background:var(--ink-3);color:var(--paper);
-  border-left-color:var(--ochre)}
-.nav .ix{font-size:10px;color:var(--dim)}
-.nav[aria-current="page"] .ix{color:var(--ochre)}
-.sidefoot{border-top:1px solid var(--rule);padding:12px 18px;font-size:10.5px;
-  color:var(--dim);line-height:1.55}
-main{min-width:0;padding:26px 30px 70px;max-width:1180px}
-.page[hidden]{display:none}
+header{padding:18px 24px;border-bottom:1px solid var(--line);background:var(--card);
+display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--mut);font-size:13px}
+.wrap{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 61px)}
+.list{border-right:1px solid var(--line);background:var(--card);
+overflow-y:auto;max-height:calc(100vh - 61px)}
+.row{display:block;width:100%;text-align:left;font:inherit;color:inherit;
+padding:11px 14px;border:0;border-bottom:1px solid var(--line);
+border-left:3px solid transparent;background:none;cursor:pointer}
+.row:hover{background:var(--soft)}
+.row.sel{background:var(--sel);border-left-color:var(--accent)}
+.row .t{font-weight:600;font-size:13.5px}
+.row .d{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+main{padding:24px 28px 64px;overflow-y:auto;max-height:calc(100vh - 61px);
+max-width:1060px}
 
-/* ---- type ---- */
-h2.title{font-family:var(--serif);font-size:29px;font-weight:600;margin:0;
-  letter-spacing:-.015em;text-wrap:balance}
-.lede{font-family:var(--serif);font-size:16px;color:var(--muted);
-  max-width:64ch;margin:8px 0 0;line-height:1.6}
-h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--dim);
-  font-weight:700;margin:34px 0 12px}
-h3.sec:first-of-type{margin-top:26px}
-p{max-width:70ch;margin:0 0 10px}
-p.note{color:var(--muted);font-size:12px}
-a{color:var(--ochre)}
-.label{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--dim);
-  font-weight:700}
+h2{margin:0;font-size:23px;font-weight:650;letter-spacing:-.02em;text-wrap:balance}
+.lede{color:var(--mut);font-size:15px;margin:8px 0 0;max-width:66ch}
+h3{margin:30px 0 11px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+color:var(--mut);font-weight:650}
+p{margin:0 0 10px;max-width:70ch}
+p.note{color:var(--mut);font-size:13px}
 .num{font-variant-numeric:tabular-nums}
 
-/* ---- pieces ---- */
-.card{background:var(--ink-2);border:1px solid var(--rule);border-radius:4px}
-.card-h{padding:11px 15px;border-bottom:1px solid var(--rule);
-  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.card-b{padding:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:7px}
+.card>h4{margin:0;padding:12px 16px;border-bottom:1px solid var(--line);
+font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);
+font-weight:650;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.card>.b{padding:14px 16px}
 .grid{display:grid;gap:14px}
-.tiles{grid-template-columns:repeat(auto-fit,minmax(178px,1fr))}
-.two{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(176px,1fr))}
 
-.tile{background:var(--ink-2);border:1px solid var(--rule);border-radius:4px;
-  padding:14px 15px}
-.tile .k{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);
-  font-weight:700;display:block;line-height:1.4}
-.tile .v{font-size:26px;font-weight:500;letter-spacing:-.02em;margin-top:7px;
-  font-variant-numeric:tabular-nums;line-height:1.1;display:block}
-.tile .s{font-size:11px;color:var(--muted);margin-top:5px;display:block;line-height:1.45}
-.tile.hi{border-color:var(--rule-2);box-shadow:inset 2px 0 0 var(--ochre)}
-.tile.hi .v{color:var(--ochre)}
-.tile.pos .v{color:var(--good)} .tile.neg .v{color:var(--bad)}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:7px;
+padding:13px 15px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--mut);font-weight:650;display:block;line-height:1.35}
+.tile .v{font-size:25px;font-weight:600;letter-spacing:-.02em;margin-top:6px;
+font-variant-numeric:tabular-nums;line-height:1.15;display:block}
+.tile .s{font-size:12px;color:var(--mut);margin-top:4px;display:block;line-height:1.4}
+.tile.hi{box-shadow:inset 3px 0 0 var(--accent)}
+.tile.hi .v{color:var(--accent)}
+.tile.pos .v{color:var(--good)}.tile.neg .v{color:var(--bad)}
 
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;
-  letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border-radius:2px;
-  border:1px solid;white-space:nowrap}
-.pill.g{color:var(--good);border-color:#2C5C42;background:var(--good-soft)}
-.pill.b{color:var(--bad);border-color:#6A322E;background:var(--bad-soft)}
-.pill.h{color:var(--hold);border-color:#5A461F;background:var(--hold-soft)}
-.pill.n{color:var(--muted);border-color:var(--rule-2);background:var(--ink-3)}
-.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;
+padding:1px 6px;border-radius:3px;font-weight:650;white-space:nowrap}
+.good{background:#e6f4ec;color:var(--good)}.bad{background:#fbeae9;color:var(--bad)}
+.warn{background:#fdf4e3;color:var(--warn)}
+.neut{background:var(--soft);color:var(--mut)}
+.blue{background:var(--sel);color:var(--accent)}
 
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;
-  color:var(--dim);font-weight:700;padding:7px 12px;border-bottom:1px solid var(--rule);
-  white-space:nowrap;background:var(--ink-2);position:sticky;top:0}
-td{padding:6px 12px;border-bottom:1px solid var(--ink-3);vertical-align:top}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--mut);font-weight:650;padding:6px 10px;border-bottom:1px solid var(--line);
+white-space:nowrap;background:var(--card);position:sticky;top:0}
+td{padding:5px 10px;border-bottom:1px solid var(--soft);vertical-align:top}
 td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 tr:last-child td{border-bottom:0}
-tr.mark td{background:var(--ink-3)}
-tr.mark td:first-child{box-shadow:inset 2px 0 0 var(--ochre)}
+tr.mark td{background:var(--sel)}
+tr.mark td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .scroll{overflow-x:auto}
 
-pre{background:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:11px 13px;
-  overflow-x:auto;font-size:11.5px;line-height:1.65;margin:0;color:var(--paper)}
-pre .c{color:var(--dim)} pre .k{color:var(--ochre)}
-pre .g{color:var(--good)} pre .r{color:var(--bad)}
-code{background:var(--ink-3);padding:1px 4px;border-radius:2px;font-size:.94em}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:6px;
+padding:11px 13px;overflow-x:auto;margin:0;
+font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre .c{color:var(--mut)}pre .k{color:var(--accent);font-weight:600}
+pre .g{color:var(--good);font-weight:600}pre .r{color:var(--bad);font-weight:600}
+code{background:var(--soft);padding:1px 4px;border-radius:3px;
+font:12.5px ui-monospace,Menlo,Consolas,monospace}
 
-textarea{width:100%;min-height:290px;background:var(--ink);color:var(--paper);
-  border:1px solid var(--rule);border-radius:4px;padding:11px 13px;
-  font-family:var(--mono);font-size:11.5px;line-height:1.6;resize:vertical}
-textarea:focus{outline:2px solid var(--ochre);outline-offset:-1px;border-color:transparent}
-button.btn{background:var(--ink-3);border:1px solid var(--rule-2);color:var(--paper);
-  font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:3px;cursor:pointer;
-  transition:border-color .14s,color .14s}
-button.btn:hover{border-color:var(--ochre);color:var(--ochre)}
-button.btn.go{background:var(--ochre);color:var(--ink);border-color:var(--ochre);
-  font-weight:700}
-button.btn.go:hover{background:#D8AC55;filter:brightness(1.08);color:var(--ink)}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{background:var(--ink-3);border:1px solid var(--rule-2);color:var(--muted);
-  font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:99px;cursor:pointer}
-.chip:hover{border-color:var(--ochre);color:var(--ochre)}
+textarea{width:100%;min-height:300px;background:var(--soft);color:var(--fg);
+border:1px solid var(--line);border-radius:6px;padding:11px 13px;resize:vertical;
+font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button.btn{background:var(--card);border:1px solid var(--line);color:var(--fg);
+font:inherit;font-size:13.5px;padding:7px 15px;border-radius:6px;cursor:pointer}
+button.btn:hover{border-color:var(--accent);color:var(--accent)}
+button.btn.go{background:var(--accent);color:#fff;border-color:var(--accent);
+font-weight:600}
+button.btn.go:hover{background:#23406c;color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{background:var(--card);border:1px solid var(--line);color:var(--mut);
+font:inherit;font-size:12px;padding:3px 10px;border-radius:99px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.flat{cursor:default;background:var(--soft);
+font:11.5px ui-monospace,Menlo,monospace}
+.chip.flat:hover{border-color:var(--line);color:var(--mut)}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
 
-input[type=range]{width:100%;accent-color:var(--ochre);cursor:pointer}
-
-.bars{display:flex;flex-direction:column;gap:9px}
-.bar-row{display:grid;grid-template-columns:132px 1fr 96px;gap:11px;align-items:center;
-  font-size:11.5px}
-.bar-track{background:var(--ink-3);border-radius:2px;height:16px;position:relative;
-  overflow:hidden}
-.bar-fill{height:100%;border-radius:0 2px 2px 0}
-.bar-row .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);
-  font-size:11px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:142px 1fr 104px;gap:11px;
+align-items:center;font-size:12.5px}
+.bar-track{background:var(--soft);border-radius:3px;height:15px;overflow:hidden}
+.bar-fill{height:100%;border-radius:0 3px 3px 0}
+.bar-row .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--mut);
+font-size:12px}
 
 figure{margin:0}
-figcaption{font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.55;
-  max-width:74ch}
-svg.chart{display:block;width:100%;height:auto;max-width:100%}
-.tip{position:fixed;pointer-events:none;background:var(--ink-4);
-  border:1px solid var(--rule-2);border-radius:3px;padding:6px 9px;font-size:11px;
-  color:var(--paper);z-index:50;opacity:0;transition:opacity .1s;
-  font-variant-numeric:tabular-nums;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:250px}
+figcaption{font-size:13px;color:var(--mut);margin-top:9px;line-height:1.5;max-width:76ch}
+svg.chart{display:block;width:100%;height:auto}
+.tip{position:fixed;pointer-events:none;background:#1a1a1a;color:#fff;
+border-radius:5px;padding:6px 9px;font-size:12px;z-index:50;opacity:0;
+transition:opacity .1s;font-variant-numeric:tabular-nums;max-width:250px;
+line-height:1.45;box-shadow:0 3px 12px rgba(0,0,0,.22)}
 .tip.on{opacity:1}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);
-  margin-bottom:10px}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.sw{width:10px;height:10px;border-radius:2px;flex:none}
+.note-box{background:var(--card);border:1px solid var(--line);
+border-left:3px solid var(--accent);border-radius:7px;padding:13px 16px;margin:14px 0}
+.note-box.w{border-left-color:var(--bad)}
+.note-box p:last-child{margin-bottom:0}
+.foot{color:var(--mut);font-size:12.5px;margin-top:26px;border-top:1px solid var(--line);
+padding-top:12px;max-width:78ch}
 
-.callout{border-left:2px solid var(--ochre);background:var(--ink-2);padding:12px 15px;
-  border-radius:0 4px 4px 0;margin:14px 0}
-.callout.warn{border-left-color:var(--bad)}
-.callout p:last-child{margin-bottom:0}
-
-@media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  *,*::before,*::after{transition-duration:.001ms!important;animation-duration:.001ms!important}
-}
-@media (max-width:920px){
-  .app{grid-template-columns:1fr}
-  .side{position:static;height:auto}
-  nav{display:flex;flex-wrap:wrap;padding:6px}
-  .nav{width:auto;border-left:0;border-bottom:2px solid transparent;padding:7px 12px}
-  .nav[aria-current="page"]{border-left:0;border-bottom-color:var(--ochre)}
-  main{padding:20px 16px 60px}
-  .bar-row{grid-template-columns:104px 1fr 76px}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
+@media(max-width:900px){
+  .wrap{grid-template-columns:1fr}
+  .list{max-height:none;border-right:0;border-bottom:1px solid var(--line);
+    display:flex;overflow-x:auto}
+  .row{width:auto;white-space:nowrap;border-bottom:0;border-left:0;
+    border-bottom:3px solid transparent}
+  .row.sel{border-left:0;border-bottom-color:var(--accent)}
+  .row .d{display:none}
+  main{max-height:none;padding:20px 16px 56px}
+  .bar-row{grid-template-columns:112px 1fr 86px}
 }
 </style>
 
-<div class="app">
-  <aside class="side">
-    <div class="brand">
-      <h1>Reclaimify</h1>
-      <div class="tag">false-decline review</div>
-    </div>
-    <nav id="nav"></nav>
-    <div class="sidefoot" id="sidefoot"></div>
-  </aside>
+<header>
+  <h1>Reclaimify</h1>
+  <span class="sub" id="hsub"></span>
+</header>
+<div class="wrap">
+  <div class="list" id="nav"></div>
   <main id="main"></main>
 </div>
 <div class="tip" id="tip"></div>
@@ -196,20 +164,19 @@ const B = __BUNDLE__;
 
 <script>
 /* ===================================================================== utils */
-const $ = (h) => { const t = document.createElement("template");
-  t.innerHTML = h.trim(); return t.content.firstElementChild; };
 const esc = (s) => String(s).replace(/[&<>"]/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 const n0 = (x) => Math.round(x).toLocaleString("en-IN");
 const pct = (x, d=1) => (100*x).toFixed(d) + "%";
 function cr(x){
   const a = Math.abs(x), s = x < 0 ? "-" : "";
-  if (a >= 1e7) return `${s}₹${(a/1e7).toFixed(2)} cr`;
-  if (a >= 1e5) return `${s}₹${(a/1e5).toFixed(2)} L`;
-  return `${s}₹${n0(a)}`;
+  if (a >= 1e7) return `${s}Rs ${(a/1e7).toFixed(2)} cr`;
+  if (a >= 1e5) return `${s}Rs ${(a/1e5).toFixed(2)} L`;
+  return `${s}Rs ${n0(a)}`;
 }
-const C = { good:"#42976A", bad:"#C74F4A", hold:"#BA8C33",
-            ochre:"#C99A3F", rule:"#272E39", dim:"#5C636E", muted:"#868D99" };
+const C = { good:"#1a7f4b", bad:"#b3261e", warn:"#a16207", accent:"#2b4c7e",
+            line:"#e2e0dc", mut:"#6b6b6b", faint:"#b6b2ab" };
+const SANS = "ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif";
 
 const tip = document.getElementById("tip");
 function showTip(e, html){
@@ -224,10 +191,10 @@ const hideTip = () => tip.classList.remove("on");
 addEventListener("scroll", hideTip, true);
 
 /* ============================================================ the real model */
-/* Transliterated from service/export_bundle.py. The exporter refuses to write
-   a bundle unless this produces the same probability as the fitted Python
-   model on all 1,775 holdout cases, so what runs here is the model, not an
-   approximation of it. */
+/* Transliterated from service/export_bundle.py. The exporter refuses to write a
+   bundle unless this reproduces the fitted Python model on every holdout case,
+   and service/check_dashboard.js re-runs these exact functions pulled out of
+   the built page, so what runs here is the model rather than a stand-in. */
 function rawScore(x){
   let total = 0;
   for (const tree of B.model.trees){
@@ -287,68 +254,61 @@ function decide(p, amount, orders, tenure, cap){
   }
   return { action, ev, reasons, sufficient, gate };
 }
-const TONE = { OVERTURN:"g", UPHOLD:"b", STEP_UP:"h", ESCALATE:"h" };
+const TONE = { OVERTURN:"good", UPHOLD:"bad", STEP_UP:"warn", ESCALATE:"warn" };
 
 /* ==================================================================== charts */
 function svgLine(series, opts){
-  /* One series per chart. No dual axis, no second series: where two measures
-     are needed they get two stacked panels instead, because the only pair the
-     data wants here is good-vs-bad and that pair cannot clear CVD separation. */
-  const W = 560, H = opts.h || 150, P = { l:58, r:14, t:12, b:26 };
+  const W = 560, H = opts.h || 156, P = { l:62, r:14, t:12, b:26 };
   const xs = series.map(d => d.x), ys = series.map(d => d.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
   let y0 = Math.min(0, ...ys), y1 = Math.max(...ys);
   if (y1 === y0) y1 = y0 + 1;
-  const pad = (y1 - y0) * 0.08; y1 += pad; if (y0 < 0) y0 -= pad;
+  y1 += (y1 - y0) * 0.08;
   const X = v => P.l + (v - x0) / (x1 - x0 || 1) * (W - P.l - P.r);
   const Y = v => H - P.b - (v - y0) / (y1 - y0) * (H - P.t - P.b);
   const pts = series.map(d => `${X(d.x).toFixed(1)},${Y(d.y).toFixed(1)}`).join(" ");
-  const area = `${P.l},${Y(Math.max(0,y0))} ${pts} ${X(x1)},${Y(Math.max(0,y0))}`;
-  const ticks = [y0, (y0+y1)/2, y1];
+  const area = `${X(x0).toFixed(1)},${Y(y0).toFixed(1)} ${pts} ${X(x1).toFixed(1)},${Y(y0).toFixed(1)}`;
   const id = "g" + Math.random().toString(36).slice(2, 8);
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"
-      aria-label="${esc(opts.aria || opts.name)}" preserveAspectRatio="none"
-      style="height:${H}px">
+      aria-label="${esc(opts.aria || "chart")}" style="height:${H}px">
     <defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="${opts.color}" stop-opacity=".26"/>
+      <stop offset="0" stop-color="${opts.color}" stop-opacity=".16"/>
       <stop offset="1" stop-color="${opts.color}" stop-opacity="0"/>
     </linearGradient></defs>
-    ${ticks.map(t => `<line x1="${P.l}" x2="${W-P.r}" y1="${Y(t).toFixed(1)}"
-        y2="${Y(t).toFixed(1)}" stroke="${C.rule}" stroke-width="1"/>
-      <text x="${P.l-8}" y="${(Y(t)+3.5).toFixed(1)}" text-anchor="end"
-        fill="${C.dim}" font-size="9.5" font-family="${"JetBrains Mono, monospace"}"
-        >${esc(opts.fmt ? opts.fmt(t) : t.toFixed(0))}</text>`).join("")}
-    ${opts.fill !== false ? `<polygon points="${area}" fill="url(#${id})"/>` : ""}
+    ${[y0, (y0+y1)/2, y1].map(t => `<line x1="${P.l}" x2="${W-P.r}"
+        y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="${C.line}"/>
+      <text x="${P.l-8}" y="${(Y(t)+4).toFixed(1)}" text-anchor="end" fill="${C.mut}"
+        font-size="10.5" font-family="${SANS}">${esc(opts.fmt ? opts.fmt(t) : t.toFixed(0))}</text>`
+      ).join("")}
+    <polygon points="${area}" fill="url(#${id})"/>
     <polyline points="${pts}" fill="none" stroke="${opts.color}" stroke-width="2"
       stroke-linejoin="round" stroke-linecap="round"/>
     ${series.map((d,i) => `<circle class="pt" cx="${X(d.x).toFixed(1)}"
-        cy="${Y(d.y).toFixed(1)}" r="${opts.dots === false ? 0 : 3.2}"
-        fill="${opts.color}" stroke="#151A21" stroke-width="2"
-        data-i="${i}"><title></title></circle>`).join("")}
-    ${opts.xlabels ? opts.xlabels.map(l => `<text x="${X(l.x).toFixed(1)}"
-        y="${H-8}" text-anchor="middle" fill="${C.dim}" font-size="9.5"
-        font-family="JetBrains Mono, monospace">${esc(l.t)}</text>`).join("") : ""}
+        cy="${Y(d.y).toFixed(1)}" r="3.2" fill="${opts.color}" stroke="#fff"
+        stroke-width="2" data-i="${i}"/>`).join("")}
+    ${(opts.xlabels||[]).map(l => `<text x="${X(l.x).toFixed(1)}" y="${H-8}"
+        text-anchor="middle" fill="${C.mut}" font-size="10.5"
+        font-family="${SANS}">${esc(l.t)}</text>`).join("")}
     ${opts.markX !== undefined ? `<line x1="${X(opts.markX).toFixed(1)}"
         x2="${X(opts.markX).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
-        stroke="${C.ochre}" stroke-width="1.5" stroke-dasharray="3 3"/>` : ""}
+        stroke="${C.accent}" stroke-width="1.5" stroke-dasharray="3 3"/>` : ""}
   </svg>`;
 }
 function wireChart(el, series, fmt){
   el.querySelectorAll("circle.pt").forEach(c => {
     const d = series[+c.dataset.i];
-    const enter = e => { c.setAttribute("r", 5); showTip(e, fmt(d)); };
-    c.addEventListener("mouseenter", enter);
+    c.addEventListener("mouseenter", e => { c.setAttribute("r", 5); showTip(e, fmt(d)); });
     c.addEventListener("mousemove", e => showTip(e, fmt(d)));
     c.addEventListener("mouseleave", () => { c.setAttribute("r", 3.2); hideTip(); });
   });
 }
-function barList(rows, opts){
+function barList(rows){
   const max = Math.max(...rows.map(r => r.v));
   return `<div class="bars">` + rows.map(r => `
     <div class="bar-row">
-      <span title="${esc(r.k)}">${esc(r.k)}</span>
+      <span>${esc(r.k)}</span>
       <span class="bar-track"><span class="bar-fill" style="width:${
-        (100*r.v/max).toFixed(1)}%;background:${r.color || C.ochre}"></span></span>
+        (100*r.v/max).toFixed(1)}%;background:${r.color || C.accent}"></span></span>
       <span class="n">${esc(r.n)}</span>
     </div>`).join("") + `</div>`;
 }
@@ -358,173 +318,176 @@ function barList(rows, opts){
 /* ===================================================================== pages */
 const PAGES = [];
 const S = B.stats, H = B.headline, O = B.outcome, SD = B.seeds;
-const avgDaily = S.payments / B.config.days;
+const impMap = Object.fromEntries(B.importance);
 
 /* --------------------------------------------------------------- 1. flow --- */
-PAGES.push({ id:"flow", nav:"How it works", render(){ return `
-  <h2 class="title">An appeals court for the decline pile</h2>
+PAGES.push({ id:"flow", nav:"How it works", sub:"the pipeline, end to end",
+  render(){ return `
+  <h2>An appeals court for the decline pile</h2>
   <p class="lede">A fraud system blocks an order and nothing ever looks at that
   decision again. This opens a case on every blocked order, gathers evidence the
   merchant could not see, and decides which blocks were wrong.</p>
 
-  <h3 class="sec">The pipeline</h3>
-  <div class="card"><div class="card-b">
+  <h3>The pipeline</h3>
+  <div class="card"><div class="b">
   <figure>
-    <svg class="chart" viewBox="0 0 980 300" role="img"
+    <svg class="chart" viewBox="0 0 960 292" role="img"
       aria-label="A blocked order flows through evidence assembly, a calibrated
       model, and an expected-value rule that emits one of four actions. The
-      language model sits outside that path and only writes the explanation.">
+      language model sits on a separate path and only writes the explanation.">
       <defs>
         <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
           markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="${C.muted}"/>
-        </marker>
-        <marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+          <path d="M0,0 L10,5 L0,10 z" fill="#6b6b6b"/></marker>
+        <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
           markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="${C.ochre}"/>
-        </marker>
+          <path d="M0,0 L10,5 L0,10 z" fill="#2b4c7e"/></marker>
       </defs>
-      <text x="0" y="14" font-size="10.5" fill="${C.dim}"
-        font-family="JetBrains Mono, monospace" letter-spacing="1.4">DECISION PATH</text>
+      <text x="0" y="13" font-size="11" fill="#6b6b6b" letter-spacing="1.1"
+        font-family="${SANS}">DECISION PATH</text>
 
-      <rect x="0" y="30" width="132" height="52" rx="3" fill="#1C222B" stroke="${C.rule}"/>
-      <text x="66" y="52" text-anchor="middle" font-size="12" fill="#E9E4D8"
-        font-family="JetBrains Mono, monospace">blocked</text>
-      <text x="66" y="68" text-anchor="middle" font-size="12" fill="#E9E4D8"
-        font-family="JetBrains Mono, monospace">order</text>
+      <rect x="0" y="28" width="126" height="50" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="63" y="49" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">blocked</text>
+      <text x="63" y="65" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">order</text>
 
-      <line x1="132" y1="56" x2="186" y2="56" stroke="${C.muted}" stroke-width="1.5"
+      <line x1="126" y1="53" x2="178" y2="53" stroke="#6b6b6b" stroke-width="1.4"
         marker-end="url(#ar)"/>
-      <text x="159" y="47" text-anchor="middle" font-size="9.5" fill="${C.dim}"
-        font-family="JetBrains Mono, monospace">docket</text>
+      <text x="152" y="44" text-anchor="middle" font-size="10.5" fill="#6b6b6b"
+        font-family="${SANS}">docket</text>
 
-      <rect x="188" y="30" width="168" height="52" rx="3" fill="#1C222B" stroke="${C.rule}"/>
-      <text x="272" y="52" text-anchor="middle" font-size="12" fill="#E9E4D8"
-        font-family="JetBrains Mono, monospace">evidence</text>
-      <text x="272" y="68" text-anchor="middle" font-size="10" fill="${C.muted}"
-        font-family="JetBrains Mono, monospace">14 local + 8 network</text>
+      <rect x="180" y="28" width="166" height="50" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="263" y="49" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">evidence</text>
+      <text x="263" y="65" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">14 local + 8 network</text>
 
-      <line x1="356" y1="56" x2="410" y2="56" stroke="${C.muted}" stroke-width="1.5"
+      <line x1="346" y1="53" x2="398" y2="53" stroke="#6b6b6b" stroke-width="1.4"
         marker-end="url(#ar)"/>
-      <rect x="412" y="30" width="168" height="52" rx="3" fill="#1C222B" stroke="${C.rule}"/>
-      <text x="496" y="52" text-anchor="middle" font-size="12" fill="#E9E4D8"
-        font-family="JetBrains Mono, monospace">calibrated model</text>
-      <text x="496" y="68" text-anchor="middle" font-size="10" fill="${C.muted}"
-        font-family="JetBrains Mono, monospace">p(block was correct)</text>
+      <rect x="400" y="28" width="166" height="50" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="483" y="49" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">calibrated model</text>
+      <text x="483" y="65" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">p(block was correct)</text>
 
-      <line x1="580" y1="56" x2="634" y2="56" stroke="${C.muted}" stroke-width="1.5"
+      <line x1="566" y1="53" x2="618" y2="53" stroke="#6b6b6b" stroke-width="1.4"
         marker-end="url(#ar)"/>
-      <text x="607" y="47" text-anchor="middle" font-size="9.5" fill="${C.dim}"
-        font-family="JetBrains Mono, monospace">p_bad</text>
+      <text x="592" y="44" text-anchor="middle" font-size="10.5" fill="#6b6b6b"
+        font-family="${SANS}">p_bad</text>
 
-      <rect x="636" y="24" width="188" height="64" rx="3" fill="#1C222B"
-        stroke="${C.ochre}" stroke-width="1.5"/>
-      <text x="730" y="47" text-anchor="middle" font-size="12" fill="${C.ochre}"
-        font-family="JetBrains Mono, monospace">expected value</text>
-      <text x="730" y="63" text-anchor="middle" font-size="10" fill="${C.muted}"
-        font-family="JetBrains Mono, monospace">(1-p)mA - p(A+f)</text>
-      <text x="730" y="78" text-anchor="middle" font-size="10" fill="${C.muted}"
-        font-family="JetBrains Mono, monospace">this decides</text>
+      <rect x="620" y="22" width="186" height="62" rx="6" fill="#eef2f8"
+        stroke="#2b4c7e" stroke-width="1.5"/>
+      <text x="713" y="44" text-anchor="middle" font-size="13" fill="#2b4c7e"
+        font-weight="600" font-family="${SANS}">expected value</text>
+      <text x="713" y="60" text-anchor="middle" font-size="11" fill="#2b4c7e"
+        font-family="ui-monospace,Menlo,monospace">(1-p)mA - p(A+f)</text>
+      <text x="713" y="75" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">this decides</text>
 
-      <line x1="824" y1="56" x2="866" y2="56" stroke="${C.muted}" stroke-width="1.5"/>
-      <g font-family="JetBrains Mono, monospace" font-size="11">
-        <line x1="866" y1="56" x2="898" y2="56" stroke="${C.muted}" stroke-width="1.5" marker-end="url(#ar)"/>
-        <text x="906" y="60" fill="${C.good}">OVERTURN</text>
-        <line x1="866" y1="86" x2="898" y2="86" stroke="${C.muted}" stroke-width="1.5" marker-end="url(#ar)"/>
-        <text x="906" y="90" fill="${C.bad}">UPHOLD</text>
-        <line x1="866" y1="116" x2="898" y2="116" stroke="${C.muted}" stroke-width="1.5" marker-end="url(#ar)"/>
-        <text x="906" y="120" fill="${C.hold}">STEP_UP</text>
-        <line x1="866" y1="146" x2="898" y2="146" stroke="${C.muted}" stroke-width="1.5" marker-end="url(#ar)"/>
-        <text x="906" y="150" fill="${C.hold}">ESCALATE</text>
+      <line x1="806" y1="53" x2="842" y2="53" stroke="#6b6b6b" stroke-width="1.4"/>
+      <line x1="842" y1="53" x2="842" y2="146" stroke="#6b6b6b" stroke-width="1.4"/>
+      <g font-family="${SANS}" font-size="12" font-weight="600">
+        <line x1="842" y1="53" x2="872" y2="53" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="57" fill="#1a7f4b">OVERTURN</text>
+        <line x1="842" y1="84" x2="872" y2="84" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="88" fill="#b3261e">UPHOLD</text>
+        <line x1="842" y1="115" x2="872" y2="115" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="119" fill="#a16207">STEP_UP</text>
+        <line x1="842" y1="146" x2="872" y2="146" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="150" fill="#a16207">ESCALATE</text>
       </g>
-      <line x1="866" y1="56" x2="866" y2="146" stroke="${C.muted}" stroke-width="1.5"/>
 
-      <line x1="0" y1="196" x2="980" y2="196" stroke="${C.rule}" stroke-dasharray="4 4"/>
-      <text x="0" y="220" font-size="10.5" fill="${C.dim}"
-        font-family="JetBrains Mono, monospace" letter-spacing="1.4">EXPLANATION PATH</text>
+      <line x1="0" y1="190" x2="960" y2="190" stroke="#e2e0dc" stroke-dasharray="4 4"/>
+      <text x="0" y="212" font-size="11" fill="#6b6b6b" letter-spacing="1.1"
+        font-family="${SANS}">EXPLANATION PATH</text>
 
-      <rect x="636" y="234" width="188" height="48" rx="3" fill="#1C222B"
-        stroke="${C.rule}" stroke-dasharray="4 3"/>
-      <text x="730" y="254" text-anchor="middle" font-size="12" fill="#E9E4D8"
-        font-family="JetBrains Mono, monospace">language model</text>
-      <text x="730" y="270" text-anchor="middle" font-size="10" fill="${C.muted}"
-        font-family="JetBrains Mono, monospace">writes the note</text>
+      <rect x="620" y="228" width="186" height="46" rx="6" fill="#fff"
+        stroke="#e2e0dc" stroke-dasharray="4 3"/>
+      <text x="713" y="248" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">language model</text>
+      <text x="713" y="264" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">writes the note</text>
 
-      <line x1="730" y1="234" x2="730" y2="94" stroke="${C.ochre}" stroke-width="1.5"
-        stroke-dasharray="4 3" marker-end="url(#ar-o)"/>
-      <text x="742" y="168" font-size="9.5" fill="${C.ochre}"
-        font-family="JetBrains Mono, monospace">reads the decision,</text>
-      <text x="742" y="182" font-size="9.5" fill="${C.ochre}"
-        font-family="JetBrains Mono, monospace">cannot change it</text>
+      <line x1="713" y1="228" x2="713" y2="92" stroke="#2b4c7e" stroke-width="1.4"
+        stroke-dasharray="4 3" marker-end="url(#arb)"/>
+      <text x="724" y="160" font-size="10.5" fill="#2b4c7e"
+        font-family="${SANS}">reads the decision,</text>
+      <text x="724" y="174" font-size="10.5" fill="#2b4c7e"
+        font-family="${SANS}">cannot change it</text>
 
-      <rect x="188" y="234" width="336" height="48" rx="3" fill="#1C222B" stroke="${C.rule}"/>
-      <text x="356" y="254" text-anchor="middle" font-size="12" fill="#E9E4D8"
-        font-family="JetBrains Mono, monospace">citation check, then hash-chained ledger</text>
-      <text x="356" y="270" text-anchor="middle" font-size="10" fill="${C.muted}"
-        font-family="JetBrains Mono, monospace">every figure verified against the evidence</text>
-      <line x1="636" y1="258" x2="528" y2="258" stroke="${C.muted}" stroke-width="1.5"
+      <rect x="180" y="228" width="330" height="46" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="345" y="248" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">citation check, then hash-chained ledger</text>
+      <text x="345" y="264" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">every figure verified against the evidence</text>
+      <line x1="620" y1="251" x2="514" y2="251" stroke="#6b6b6b" stroke-width="1.4"
         marker-end="url(#ar)"/>
     </svg>
-    <figcaption>The model sits on the explanation path, not the decision path.
-    It reads the action after the expected-value rule has already produced it,
-    and the only thing it emits is prose that then has every number checked
-    against the evidence. Three tests enforce the separation: the tools it can
-    reach accept no free text, the extraction schema has no field for an action,
-    and the verdict function is handed a decision that already exists.</figcaption>
+    <figcaption>The model sits on the explanation path, not the decision path. It
+    reads the action after the expected-value rule has already produced it, and
+    all it emits is prose that then has every number checked against the
+    evidence. Three tests enforce the separation: the tools it can reach accept
+    no free text, the extraction schema has no field for an action, and the
+    verdict function is handed a decision that already exists.</figcaption>
   </figure>
   </div></div>
 
-  <h3 class="sec">Why a payment platform and not the merchant</h3>
+  <h3>Why a payment platform and not the merchant</h3>
   <div class="grid two">
-    <div class="card"><div class="card-h"><span class="label">The merchant's view</span></div>
-      <div class="card-b"><p style="margin:0">One customer, at one shop, never seen
-      before. Thin file, high risk, block. That inference is correct given what it
-      can see, which is why the risk stack is not the thing to fix.</p></div></div>
-    <div class="card"><div class="card-h"><span class="label">The network's view</span></div>
-      <div class="card-b"><p style="margin:0">The same identity across every
-      merchant on the rails. Years of tenure, hundreds of completed orders, one
-      device throughout. A single merchant cannot buy this at any price.</p></div></div>
+    <div class="card"><h4>What the merchant sees</h4><div class="b">
+      <p style="margin:0">One customer, at one shop, never seen before. Thin file,
+      high risk, block. That inference is correct given what it can see, which is
+      why the risk stack is not the thing to fix.</p></div></div>
+    <div class="card"><h4>What the network sees</h4><div class="b">
+      <p style="margin:0">The same identity across every merchant on the rails.
+      Years of tenure, hundreds of completed orders, one device throughout. A
+      single merchant cannot buy this at any price.</p></div></div>
   </div>
 
-  <div class="callout"><p><b>The naive version does not work.</b> "Long clean
+  <div class="note-box"><p><b>The naive version does not work.</b> "Long clean
   history means safe" is the obvious rule, and it is the rule professional abuse
-  is built to beat. ${pct(0.42,0)} of the fraudster population in this data farms a
-  clean record first. The test is not whether the system releases obviously good
+  is built to beat. 42% of the fraudster population in this data farms a clean
+  record first. The test is not whether the system releases obviously good
   customers. It is whether it refuses someone whose record looks perfect.</p></div>
 
-  <h3 class="sec">The four actions</h3>
+  <h3>The four actions</h3>
   <div class="grid tiles">
-    ${[["OVERTURN","g",O.counts.OVERTURN,"Release it. The block was wrong."],
-       ["UPHOLD","b",O.counts.UPHOLD,"The block was right. Leave it."],
-       ["STEP_UP","h",O.counts.STEP_UP,"Unsure, and enough money at stake to ask a question."],
-       ["ESCALATE","h",O.counts.ESCALATE,"Unsure, and no question would settle it."]]
-      .map(([a,t,c,d]) => `<div class="tile">
-        <span class="pill ${t}"><span class="dot"></span>${a}</span>
-        <span class="v">${n0(c)}</span>
-        <span class="s">${d}</span></div>`).join("")}
+    ${[["OVERTURN","good",O.counts.OVERTURN,"Release it. The block was wrong."],
+       ["UPHOLD","bad",O.counts.UPHOLD,"The block was right. Leave it."],
+       ["STEP_UP","warn",O.counts.STEP_UP,"Unsure, and enough money at stake to ask a question."],
+       ["ESCALATE","warn",O.counts.ESCALATE,"Unsure, and no question would settle it."]]
+      .map(([a,t,c,d]) => `<div class="tile"><span class="tag ${t}">${a}</span>
+        <span class="v">${n0(c)}</span><span class="s">${d}</span></div>`).join("")}
   </div>
-  <p class="note" style="margin-top:12px">Counts are the ${n0(O.n_cases)} holdout
+  <p class="note" style="margin-top:11px">Counts are the ${n0(O.n_cases)} holdout
   cases. The two on the right are the ones that matter: the system refuses to
-  decide on ${pct(O.abstention)} of cases and reports that rate rather than
-  hiding it.</p>`; }});
+  decide on ${pct(O.abstention)} of cases and reports that rate rather than hiding
+  it.</p>`; }});
 
 /* ---------------------------------------------------------- 2. portfolio --- */
-PAGES.push({ id:"portfolio", nav:"Portfolio & signals", render(){
+PAGES.push({ id:"portfolio", nav:"Portfolio & signals",
+  sub:"what is in the pile, and what we read",
+  render(){
   const outMix = Object.entries(S.true_outcome_mix).sort((a,b)=>b[1]-a[1]);
   const outTot = outMix.reduce((s,[,v])=>s+v,0);
   const fp = Object.entries(S.false_positives_by_persona).sort((a,b)=>b[1]-a[1]);
   const fpTot = fp.reduce((s,[,v])=>s+v,0);
   const local = B.model.features.filter(f => !f.startsWith("network_"));
   const net = B.model.features.filter(f => f.startsWith("network_"));
-  const impMap = Object.fromEntries(B.importance);
   const impMax = Math.max(...B.importance.map(r=>r[1]));
-  const daily = B.dist.daily;
+  const featRow = (f, col) => `<tr><td>${esc(f)}</td><td class="r">${
+    impMap[f] !== undefined
+      ? `<span style="display:inline-block;width:${(56*impMap[f]/impMax).toFixed(0)}px;
+         height:7px;background:${col};border-radius:2px;vertical-align:middle;
+         margin-right:8px"></span>${impMap[f].toFixed(3)}`
+      : `<span style="color:${C.faint}">0.000</span>`}</td></tr>`;
   return `
-  <h2 class="title">What is in the pile</h2>
+  <h2>What is in the pile</h2>
   <p class="lede">One generated year of traffic across ${S.merchants} merchants.
   The blocked orders are the input; the good ones inside them are the opportunity.</p>
 
-  <h3 class="sec">Portfolio</h3>
+  <h3>Portfolio</h3>
   <div class="grid tiles">
     <div class="tile"><span class="k">Transactions</span>
       <span class="v">${n0(S.payments)}</span>
@@ -533,7 +496,7 @@ PAGES.push({ id:"portfolio", nav:"Portfolio & signals", render(){
       <span class="v">${S.merchants}</span>
       <span class="s">${n0(S.customers)} customers</span></div>
     <div class="tile"><span class="k">Avg daily transactions</span>
-      <span class="v">${n0(avgDaily)}</span>
+      <span class="v">${n0(S.payments / B.config.days)}</span>
       <span class="s">${pct(S.block_rate,2)} of them blocked</span></div>
     <div class="tile"><span class="k">Blocked for risk</span>
       <span class="v">${n0(S.blocked)}</span>
@@ -553,190 +516,161 @@ PAGES.push({ id:"portfolio", nav:"Portfolio & signals", render(){
       <span class="v">${cr(O.recovered)}</span>
       <span class="s">against ${cr(O.admitted)} of fraud admitted, on ${n0(O.n_cases)} cases</span></div>
   </div>
-  <div class="callout"><p style="margin:0"><b>False positives are never injected
+  <div class="note-box"><p style="margin:0"><b>False positives are never injected
   into this data. They emerge.</b> The generator builds a true world first, then
   runs a merchant scorecard that never sees persona or outcome. Honest-atypical
   customers emit the same observable signals as fraudsters, so the scorecard
   blocks some of them. That mismatch is the false-positive population, and no
   parameter anywhere sets its rate.</p></div>
 
-  <h3 class="sec">Types of transaction in the blocked pile</h3>
+  <h3>Types of transaction in the blocked pile</h3>
   <div class="grid two">
-    <div class="card"><div class="card-h"><span class="label">True outcome, whole portfolio</span>
-      <span class="note" style="margin:0">what the order would have done if allowed</span></div>
-      <div class="card-b">${barList(outMix.map(([k,v]) => ({
+    <div class="card"><h4>True outcome, whole portfolio</h4>
+      <div class="b">${barList(outMix.map(([k,v]) => ({
         k, v, n: `${n0(v)}  ${pct(v/outTot,1)}`,
-        color: k === "clean" ? C.good : C.bad })), {})}
-      <div class="legend" style="margin:14px 0 0">
-        <span><span class="sw" style="background:${C.good}"></span>completed cleanly</span>
-        <span><span class="sw" style="background:${C.bad}"></span>a loss of some kind</span>
-      </div></div></div>
-    <div class="card"><div class="card-h"><span class="label">Who gets wrongly blocked</span>
-      <span class="note" style="margin:0">${n0(fpTot)} false positives by persona</span></div>
-      <div class="card-b">${barList(fp.map(([k,v]) => ({
-        k, v, n: `${n0(v)}  ${pct(v/fpTot,1)}` })), {})}
-      <p class="note" style="margin:14px 0 0">The last two are the hard part.
-      A friendly fraudster or an abuser who behaved on this particular order is
-      indistinguishable from an honest atypical buyer, because the evidence is
-      the same evidence.</p></div></div>
+        color: k === "clean" ? C.good : C.bad })))}
+      <p class="note" style="margin:13px 0 0">What the order would have done if
+      allowed. Green completed cleanly; red is a loss of some kind, a chargeback,
+      a return, or a stolen instrument that never got disputed.</p></div></div>
+    <div class="card"><h4>Who gets wrongly blocked</h4>
+      <div class="b">${barList(fp.map(([k,v]) => ({
+        k, v, n: `${n0(v)}  ${pct(v/fpTot,1)}` })))}
+      <p class="note" style="margin:13px 0 0">${n0(fpTot)} false positives by
+      persona. The last two are the hard part: a friendly fraudster or an abuser
+      who behaved on this particular order is indistinguishable from an honest
+      atypical buyer, because the evidence is the same evidence.</p></div></div>
   </div>
 
   <div class="grid two" style="margin-top:14px">
-    <div class="card"><div class="card-h"><span class="label">Blocked by payment method</span>
-      <span class="note" style="margin:0">bar length is volume, number is the good share</span></div>
-      <div class="card-b">${barList(B.dist.method.map(d => ({
-        k: d.key, v: d.blocked, n: `${n0(d.blocked)}  ${pct(d.good_share,0)} good` })), {})}
-      <p class="note" style="margin:14px 0 0">Cash on delivery is the outlier:
-      the same volume as UPI but a much lower good share, because a return costs
-      the merchant real money and the scorecard is right to be nervous.</p></div></div>
-    <div class="card"><div class="card-h"><span class="label">Reason the merchant gave</span>
-      <span class="note" style="margin:0">bar length is volume, number is the good share</span></div>
-      <div class="card-b">${barList(B.dist.block_reason.map(d => ({
-        k: d.key, v: d.blocked, n: `${n0(d.blocked)}  ${pct(d.good_share,0)} good` })), {})}
-      <p class="note" style="margin:14px 0 0">A velocity burst is usually a real
+    <div class="card"><h4>Blocked by payment method</h4><div class="b">
+      ${barList(B.dist.method.map(d => ({
+        k: d.key, v: d.blocked, n: `${n0(d.blocked)}  ${pct(d.good_share,0)} good` })))}
+      <p class="note" style="margin:13px 0 0">Bar length is volume, the number is
+      the share that were good. Cash on delivery is the outlier: about the same
+      volume as UPI but a much lower good share, because a return costs the
+      merchant real money and the scorecard is right to be nervous.</p></div></div>
+    <div class="card"><h4>Reason the merchant gave</h4><div class="b">
+      ${barList(B.dist.block_reason.map(d => ({
+        k: d.key, v: d.blocked, n: `${n0(d.blocked)}  ${pct(d.good_share,0)} good` })))}
+      <p class="note" style="margin:13px 0 0">A velocity burst is usually a real
       one. A return-history flag is wrong nine times in ten. The reason the
       merchant gave is itself evidence.</p></div></div>
   </div>
 
-  <h3 class="sec">Signals used to judge a block</h3>
+  <h3>Signals used to judge a block</h3>
   <div class="grid two">
-    <div class="card"><div class="card-h"><span class="label">Merchant-local</span>
-      <span class="note" style="margin:0">${local.length} features the merchant already had</span></div>
-      <div class="card-b scroll"><table><tbody>
-      ${local.map(f => `<tr><td>${esc(f)}</td><td class="r">${
-        impMap[f] !== undefined
-          ? `<span style="display:inline-block;width:${(58*impMap[f]/impMax).toFixed(0)}px;
-             height:7px;background:${C.dim};border-radius:1px;vertical-align:middle;
-             margin-right:7px"></span>${impMap[f].toFixed(3)}`
-          : '<span style="color:#5C636E">0.000</span>'}</td></tr>`).join("")}
-      </tbody></table></div></div>
-    <div class="card"><div class="card-h"><span class="label">Cross-merchant network</span>
-      <span class="note" style="margin:0">${net.length} features only a platform holds</span></div>
-      <div class="card-b scroll"><table><tbody>
-      ${net.map(f => `<tr><td>${esc(f)}</td><td class="r">${
-        impMap[f] !== undefined
-          ? `<span style="display:inline-block;width:${(58*impMap[f]/impMax).toFixed(0)}px;
-             height:7px;background:${C.ochre};border-radius:1px;vertical-align:middle;
-             margin-right:7px"></span>${impMap[f].toFixed(3)}`
-          : '<span style="color:#5C636E">0.000</span>'}</td></tr>`).join("")}
-      </tbody></table></div></div>
+    <div class="card"><h4>Merchant-local
+      <span class="tag neut">${local.length} the merchant already had</span></h4>
+      <div class="b scroll"><table><tbody>
+      ${local.map(f => featRow(f, C.faint)).join("")}</tbody></table></div></div>
+    <div class="card"><h4>Cross-merchant network
+      <span class="tag blue">${net.length} only a platform holds</span></h4>
+      <div class="b scroll"><table><tbody>
+      ${net.map(f => featRow(f, C.accent)).join("")}</tbody></table></div></div>
   </div>
-  <p class="note" style="margin-top:11px">Importance is gain, not split count.
-  The two disagree sharply here: by split count <code>network_clean_rate</code>
-  ranks sixth, by gain it is first at ${impMap["network_clean_rate"].toFixed(3)}.
-  Split count measures how often a feature was convenient; gain measures how much
-  it was worth.</p>
+  <p class="note" style="margin-top:11px">Importance is gain, not split count. The
+  two disagree sharply here: by split count <code>network_clean_rate</code> ranks
+  sixth, by gain it is first at ${impMap["network_clean_rate"].toFixed(3)}. Split
+  count measures how often a feature was convenient; gain measures how much it was
+  worth.</p>
 
-  <h3 class="sec">Chronological replay of the holdout</h3>
+  <h3>Chronological replay of the holdout</h3>
   <div class="grid two">
-    <div class="card"><div class="card-h"><span class="label">Recovered per day</span>
-      <span class="pill g"><span class="dot"></span>good releases</span></div>
-      <div class="card-b" id="ch-rec"></div></div>
-    <div class="card"><div class="card-h"><span class="label">Fraud admitted per day</span>
-      <span class="pill b"><span class="dot"></span>bad releases</span></div>
-      <div class="card-b" id="ch-adm"></div></div>
+    <div class="card"><h4>Recovered per day <span class="tag good">good releases</span></h4>
+      <div class="b" id="ch-rec"></div></div>
+    <div class="card"><h4>Fraud admitted per day <span class="tag bad">bad releases</span></h4>
+      <div class="b" id="ch-adm"></div></div>
   </div>
   <p class="note" style="margin-top:11px">Two panels rather than two lines on one
   chart. Recovery runs roughly fifteen times the size of fraud admitted, so on a
-  shared axis the line that matters most would sit flat against the baseline, and
-  a second axis would be worse than useless.</p>`;
+  shared axis the line that matters most would sit flat against the baseline, and a
+  second axis would be worse than useless.</p>`;
   },
   after(){
     const daily = B.dist.daily;
-    const rec = daily.map(d => ({ x: d.day, y: d.recovered, d }));
-    const adm = daily.map(d => ({ x: d.day, y: d.admitted, d }));
     const xl = [{x:0,t:"day 1"},{x:Math.floor(daily.length/2),t:`day ${Math.floor(daily.length/2)}`},
                 {x:daily.length-1,t:`day ${daily.length}`}];
-    const a = document.getElementById("ch-rec");
-    a.innerHTML = svgLine(rec, { color:C.good, h:158, fmt:cr, xlabels:xl,
-      aria:"Revenue recovered per day across the holdout window" });
-    wireChart(a, rec, d => `<b>day ${d.d.day+1}</b><br>recovered ${cr(d.d.recovered)}<br>
-      ${d.d.released} of ${d.d.blocked} released`);
-    const b = document.getElementById("ch-adm");
-    b.innerHTML = svgLine(adm, { color:C.bad, h:158, fmt:cr, xlabels:xl,
-      aria:"Fraud admitted per day across the holdout window" });
-    wireChart(b, adm, d => `<b>day ${d.d.day+1}</b><br>fraud admitted ${cr(d.d.admitted)}<br>
-      ${d.d.released} of ${d.d.blocked} released`);
+    for (const [id, key, color, name] of [
+        ["ch-rec","recovered",C.good,"recovered"],
+        ["ch-adm","admitted",C.bad,"fraud admitted"]]){
+      const s = daily.map(d => ({ x:d.day, y:d[key], d }));
+      const node = document.getElementById(id);
+      node.innerHTML = svgLine(s, { color, h:160, fmt:cr, xlabels:xl,
+        aria:`${name} per day across the holdout window` });
+      wireChart(node, s, d => `<b>day ${d.d.day+1}</b><br>${name} ${cr(d.y)}<br>
+        ${d.d.released} of ${d.d.blocked} released`);
+    }
   }});
 
 /* -------------------------------------------------------------- 3. agent --- */
-PAGES.push({ id:"agent", nav:"Run the agent", render(){ return `
-  <h2 class="title">Give it a transaction</h2>
+PAGES.push({ id:"agent", nav:"Run the agent", sub:"paste a transaction, get a decision",
+  render(){ return `
+  <h2>Give it a transaction</h2>
   <p class="lede">This runs the real model. The ${B.model.n_trees} fitted trees and
   the isotonic calibrator were exported from Python, and the exporter refuses to
   write them out unless this JavaScript reproduces the Python probability on all
   ${n0(O.n_cases)} holdout cases. Nothing here is a lookup or a guess.</p>
 
-  <div class="grid" style="grid-template-columns:minmax(320px,1fr) minmax(340px,1.15fr);
-       align-items:start;margin-top:22px">
-    <div class="card">
-      <div class="card-h"><span class="label">Transaction JSON</span></div>
-      <div class="card-b">
-        <div class="chips" style="margin-bottom:11px">
-          <span class="label" style="align-self:center;margin-right:2px">Load</span>
-          ${B.samples.map((s,i) => `<button class="chip" data-s="${i}">${
-            esc(s.json.payment_id.slice(4,12))}</button>`).join("")}
-          <button class="chip" data-blank="1">blank</button>
-        </div>
-        <textarea id="inp" spellcheck="false" aria-label="Transaction JSON"></textarea>
-        <div style="display:flex;gap:9px;margin-top:11px;align-items:center;flex-wrap:wrap">
-          <button class="btn go" id="run">Adjudicate</button>
-          <span class="note" id="hint" style="margin:0"></span>
-        </div>
+  <div class="grid" style="grid-template-columns:minmax(300px,1fr) minmax(330px,1.1fr);
+       align-items:start;margin-top:20px">
+    <div class="card"><h4>Transaction JSON</h4><div class="b">
+      <div class="chips" style="margin-bottom:10px">
+        <span class="sub">Load</span>
+        ${B.samples.map((s,i) => `<button class="chip" data-s="${i}">${
+          esc(s.json.payment_id.slice(4,12))}</button>`).join("")}
+        <button class="chip" data-blank="1">blank</button>
       </div>
-    </div>
+      <textarea id="inp" spellcheck="false" aria-label="Transaction JSON"></textarea>
+      <div class="chips" style="margin-top:11px">
+        <button class="btn go" id="run">Adjudicate</button>
+        <span class="sub" id="hint"></span>
+      </div>
+    </div></div>
     <div id="out"></div>
   </div>
 
-  <h3 class="sec">What it needs</h3>
+  <h3>What it needs</h3>
   <p class="note">Any missing field is treated as zero and listed in the output, so
-  a partial paste still runs but tells you what it had to assume. <code>amount_inr</code>
-  is used for the expected-value arithmetic; the ${B.model.features.length} model
-  features are below.</p>
-  <div class="card"><div class="card-b scroll"><table>
+  a partial paste still runs but tells you what it had to assume.
+  <code>amount_inr</code> drives the expected-value arithmetic; the
+  ${B.model.features.length} model features are below.</p>
+  <div class="card"><div class="b scroll"><table>
     <thead><tr><th>Field</th><th>Block</th><th class="r">Gain</th></tr></thead>
-    <tbody>${B.model.features.map(f => {
-      const im = Object.fromEntries(B.importance)[f];
-      const isNet = f.startsWith("network_");
-      return `<tr><td>${esc(f)}</td><td><span class="pill n">${
-        isNet ? "network" : "local"}</span></td><td class="r">${
-        im !== undefined ? im.toFixed(3) : "0.000"}</td></tr>`;
-    }).join("")}</tbody></table></div></div>`;
+    <tbody>${B.model.features.map(f => `<tr><td>${esc(f)}</td>
+      <td><span class="tag ${f.startsWith("network_") ? "blue" : "neut"}">${
+        f.startsWith("network_") ? "network" : "local"}</span></td>
+      <td class="r">${impMap[f] !== undefined ? impMap[f].toFixed(3) : "0.000"}</td>
+      </tr>`).join("")}</tbody></table></div></div>`;
   },
   after(){
     const inp = document.getElementById("inp"), out = document.getElementById("out");
     const hint = document.getElementById("hint");
     function load(i){
       inp.value = JSON.stringify(B.samples[i].json, null, 2);
-      hint.textContent = B.samples[i].role;
-      run();
+      hint.textContent = B.samples[i].role; run();
     }
     function blank(){
-      const o = {}; B.model.features.forEach(f => o[f] = 0);
-      o.payment_id = "pay_example"; o.merchant = "Aurum Jewels"; o.amount_inr = 250000;
+      const o = { payment_id:"pay_example", merchant:"Aurum Jewels", amount_inr:250000 };
+      B.model.features.forEach(f => { if (f !== "amount") o[f] = 0; });
       o.network_orders_prior = 40; o.network_tenure_days = 900;
       o.network_clean_rate = 0.95; o.network_merchants_prior = 3;
-      delete o.amount;
       inp.value = JSON.stringify(o, null, 2);
-      hint.textContent = "edit any field and adjudicate again";
-      run();
+      hint.textContent = "edit any field and adjudicate again"; run();
     }
-    document.querySelectorAll("[data-s]").forEach(b =>
-      b.onclick = () => load(+b.dataset.s));
+    document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => load(+b.dataset.s));
     document.querySelector("[data-blank]").onclick = blank;
     document.getElementById("run").onclick = run;
     inp.addEventListener("keydown", e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run();
-    });
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(); });
 
     function run(){
       let o;
       try { o = JSON.parse(inp.value); }
       catch (e){
-        out.innerHTML = `<div class="card"><div class="card-b">
-          <span class="pill b"><span class="dot"></span>cannot read the JSON</span>
-          <p class="note" style="margin:11px 0 0">${esc(e.message)}. Fix the syntax
-          and adjudicate again, or load one of the samples above.</p></div></div>`;
+        out.innerHTML = `<div class="card"><div class="b">
+          <span class="tag bad">cannot read the JSON</span>
+          <p class="note" style="margin:10px 0 0">${esc(e.message)}. Fix the syntax
+          and adjudicate again, or load one of the samples.</p></div></div>`;
         return;
       }
       const { x, missing } = vectorise(o);
@@ -750,31 +684,27 @@ PAGES.push({ id:"agent", nav:"Run the agent", render(){ return `
 
       out.innerHTML = `
       <div class="card">
-        <div class="card-h">
-          <span class="pill ${TONE[d.action]}"><span class="dot"></span>${d.action}</span>
-          <span class="label">${esc(o.payment_id || "unnamed")}</span>
+        <h4><span class="tag ${TONE[d.action]}">${d.action}</span>
+          <span style="font:12.5px ui-monospace,Menlo,monospace;text-transform:none;
+            letter-spacing:0">${esc(o.payment_id || "unnamed")}</span>
           <span style="flex:1"></span>
-          <span class="note num" style="margin:0">${cr(amount)}</span>
-        </div>
-        <div class="card-b">
+          <span class="num" style="text-transform:none;letter-spacing:0">${cr(amount)}</span></h4>
+        <div class="b">
           <div class="grid tiles" style="gap:11px">
-            <div class="tile" style="padding:11px 12px">
-              <span class="k">p(block was correct)</span>
-              <span class="v" style="font-size:23px">${p.toFixed(4)}</span>
+            <div class="tile" style="padding:11px 13px"><span class="k">p(block was correct)</span>
+              <span class="v" style="font-size:22px">${p.toFixed(4)}</span>
               <span class="s">uncalibrated ${raw.toFixed(4)}</span></div>
-            <div class="tile" style="padding:11px 12px">
-              <span class="k">EV of releasing</span>
-              <span class="v" style="font-size:23px;color:${d.ev > 0 ? C.good : C.bad}"
+            <div class="tile" style="padding:11px 13px"><span class="k">EV of releasing</span>
+              <span class="v" style="font-size:22px;color:${d.ev > 0 ? C.good : C.bad}"
                 >${d.ev >= 0 ? "+" : ""}${cr(d.ev)}</span>
               <span class="s">at ${pct(B.margin,0)} margin</span></div>
-            <div class="tile" style="padding:11px 12px">
-              <span class="k">Evidence gate</span>
-              <span class="v" style="font-size:23px;color:${d.sufficient ? C.good : C.hold}"
+            <div class="tile" style="padding:11px 13px"><span class="k">Evidence gate</span>
+              <span class="v" style="font-size:22px;color:${d.sufficient ? C.good : C.warn}"
                 >${d.sufficient ? "pass" : "thin"}</span>
               <span class="s">${orders} orders, ${tenure} days</span></div>
           </div>
 
-          <h3 class="sec" style="margin:20px 0 9px">The arithmetic</h3>
+          <h3 style="margin:19px 0 9px">The arithmetic</h3>
           <pre><span class="c"># releasing is worth money only while p &lt; m/(1+m) = ${ceil.toFixed(2)}</span>
 EV = (1 - p) &middot; m &middot; A  -  p &middot; (A + f)
    = (1 - ${p.toFixed(4)}) &middot; ${B.margin} &middot; ${n0(amount)}  -  ${p.toFixed(4)} &middot; (${n0(amount)} + ${n0(B.dispute_overhead_inr)})
@@ -784,16 +714,16 @@ cap        ${B.cap}     <span class="c">the shipped operating point</span>
 p_bad      ${p.toFixed(4)}${p < B.cap ? '  <span class="g">under cap</span>' : '  <span class="r">over cap</span>'}
 action     <span class="${d.action === "OVERTURN" ? "g" : d.action === "UPHOLD" ? "r" : "k"}">${d.action}</span></pre>
 
-          <h3 class="sec" style="margin:20px 0 9px">Why</h3>
+          <h3 style="margin:19px 0 9px">Why</h3>
           <div class="chips">${d.reasons.map(r =>
-            `<span class="chip" style="cursor:default">${esc(r)}</span>`).join("")}</div>
+            `<span class="chip flat">${esc(r)}</span>`).join("")}</div>
 
-          ${missing.length ? `<div class="callout warn" style="margin:16px 0 0">
+          ${missing.length ? `<div class="note-box w" style="margin:15px 0 0">
             <p style="margin:0"><b>${missing.length} field${missing.length>1?"s":""}
             missing, treated as zero:</b> ${missing.map(esc).join(", ")}. The result
             above is what the model makes of that, not of the real order.</p></div>` : ""}
 
-          ${sample ? `<div class="callout" style="margin:16px 0 0">
+          ${sample ? `<div class="note-box" style="margin:15px 0 0">
             <p style="margin:0 0 6px"><b>${esc(sample.role)}.</b> ${esc(sample.why)}</p>
             <p class="note" style="margin:0">Answer key for this one:
             <b style="color:${sample.truth === "clean" ? C.good : C.bad}">${
@@ -802,18 +732,18 @@ action     <span class="${d.action === "OVERTURN" ? "g" : d.action === "UPHOLD" 
         </div>
       </div>
 
-      <div class="card" style="margin-top:14px">
-        <div class="card-h"><span class="label">Evidence the decision used</span></div>
-        <div class="card-b scroll"><table>
+      <div class="card" style="margin-top:14px"><h4>Evidence the decision used</h4>
+        <div class="b scroll"><table>
           <thead><tr><th>Feature</th><th class="r">Value</th><th>Block</th></tr></thead>
           <tbody>${B.model.features.map((f,i) => {
-            const isNet = f.startsWith("network_");
             const miss = missing.includes(f);
-            return `<tr><td style="${miss?"color:#5C636E":""}">${esc(f)}</td>
-              <td class="r" style="${miss?"color:#5C636E":""}">${
+            const dim = miss ? `color:${C.faint}` : "";
+            return `<tr><td style="${dim}">${esc(f)}</td>
+              <td class="r" style="${dim}">${
                 Number.isInteger(x[i]) ? x[i] : x[i].toFixed(3)}${
-                miss ? ' <span class="pill n">assumed</span>' : ""}</td>
-              <td><span class="pill n">${isNet ? "network" : "local"}</span></td></tr>`;
+                miss ? ' <span class="tag neut">assumed</span>' : ""}</td>
+              <td><span class="tag ${f.startsWith("network_") ? "blue" : "neut"}">${
+                f.startsWith("network_") ? "network" : "local"}</span></td></tr>`;
           }).join("")}</tbody></table></div>
       </div>`;
     }
@@ -821,40 +751,35 @@ action     <span class="${d.action === "OVERTURN" ? "g" : d.action === "UPHOLD" 
   }});
 
 /* ----------------------------------------------------- 4. operating point --- */
-PAGES.push({ id:"frontier", nav:"Operating point", render(){ return `
-  <h2 class="title">Where to sit on the trade curve</h2>
+PAGES.push({ id:"frontier", nav:"Operating point", sub:"the trade curve, on a slider",
+  render(){ return `
+  <h2>Where to sit on the trade curve</h2>
   <p class="lede">Releasing wrongly blocked orders admits some fraud. There is no
   version of this that does not. The only honest way to present that is the whole
   curve, with both numbers on every row.</p>
 
-  <div class="card" style="margin-top:22px"><div class="card-b">
-    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px">
-      <span class="label">Cap, the highest tolerable p(block was correct)</span>
+  <div class="card" style="margin-top:20px"><div class="b">
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:7px">
+      <span class="sub">Cap, the highest tolerable p(block was correct)</span>
       <span style="flex:1"></span>
-      <span class="num" id="capv" style="font-size:19px;color:${C.ochre}"></span>
+      <span class="num" id="capv" style="font-size:17px;font-weight:650;color:var(--accent)"></span>
     </div>
     <input type="range" id="cap" min="0" max="${B.frontier.length-1}" step="1"
       value="${B.frontier.length-1}" aria-label="Operating point cap">
-    <div class="grid tiles" style="margin-top:16px" id="capstats"></div>
+    <div class="grid tiles" style="margin-top:15px" id="capstats"></div>
   </div></div>
 
   <div class="grid two" style="margin-top:14px">
-    <div class="card"><div class="card-h"><span class="label">Revenue recovered</span>
-      <span class="pill g"><span class="dot"></span>higher is better</span></div>
-      <div class="card-b" id="f-rec"></div></div>
-    <div class="card"><div class="card-h"><span class="label">Fraud admitted</span>
-      <span class="pill b"><span class="dot"></span>lower is better</span></div>
-      <div class="card-b" id="f-adm"></div></div>
+    <div class="card"><h4>Revenue recovered <span class="tag good">higher is better</span></h4>
+      <div class="b" id="f-rec"></div></div>
+    <div class="card"><h4>Fraud admitted <span class="tag bad">lower is better</span></h4>
+      <div class="b" id="f-adm"></div></div>
   </div>
   <div class="card" style="margin-top:14px">
-    <div class="card-h"><span class="label">Net contribution</span>
-      <span class="pill h"><span class="dot"></span>what actually reaches the P&amp;L</span>
-      <span style="flex:1"></span>
-      <span class="note" style="margin:0">margin on recovery, minus the whole basket
-      on every bad release</span></div>
-    <div class="card-b" id="f-net"></div></div>
+    <h4>Net contribution <span class="tag warn">what reaches the P&amp;L</span></h4>
+    <div class="b" id="f-net"></div></div>
 
-  <div class="callout"><p style="margin:0"><b>The shipped point is cap ${B.cap},
+  <div class="note-box"><p style="margin:0"><b>The shipped point is cap ${B.cap},
   and it is not tuned.</b> Releasing is expected-value positive only while
   <code>p &lt; m/(1+m)</code>, which at a ${pct(B.margin,0)} margin is
   ${(B.margin/(1+B.margin)).toFixed(2)}. Dragging the slider left buys a
@@ -862,24 +787,24 @@ PAGES.push({ id:"frontier", nav:"Operating point", render(){ return `
   flatters the table is the behaviour this project exists to criticise, so the
   headline uses the point where the arithmetic stops working.</p></div>
 
-  <h3 class="sec">The whole curve</h3>
-  <div class="card"><div class="card-b scroll"><table id="ftab">
+  <h3>The whole curve</h3>
+  <div class="card"><div class="b scroll"><table id="ftab">
     <thead><tr><th>cap</th><th class="r">Released</th><th class="r">Precision</th>
       <th class="r">Recall</th><th class="r">Recovered</th><th class="r">Fraud admitted</th>
       <th class="r">Net contribution</th><th class="r">Abstained</th></tr></thead>
-    <tbody>${B.frontier.map((r,i) => `<tr data-r="${i}">
-      <td class="num">${r.cap}${r.cap === B.cap ? ' <span class="pill h">shipped</span>' : ""}</td>
+    <tbody>${B.frontier.map((r,i) => `<tr data-r="${i}" style="cursor:pointer">
+      <td class="num">${r.cap}${r.cap === B.cap ? ' <span class="tag blue">shipped</span>' : ""}</td>
       <td class="r">${n0(r.released)}</td><td class="r">${pct(r.precision)}</td>
       <td class="r">${pct(r.recall)}</td><td class="r">${cr(r.recovered)}</td>
       <td class="r">${cr(r.admitted)}</td><td class="r">${cr(r.contribution)}</td>
       <td class="r">${pct(r.abstention)}</td></tr>`).join("")}</tbody>
   </table></div></div>
 
-  <h3 class="sec">Where it runs changes what it is worth</h3>
+  <h3>Where it runs changes what it is worth</h3>
   <p>Everything above assumes the review runs inline at checkout, where a released
   order converts at full value because the customer is still in session. As a queue
   review they have already gone elsewhere and only some come back when invited.</p>
-  <div class="callout"><p style="margin:0 0 8px"><b>Breakeven is a
+  <div class="note-box"><p style="margin:0 0 8px"><b>Breakeven is a
   ${pct(B.queue.breakeven)} return rate.</b> That is the figure to quote, because it
   is the only one here that does not depend on guessing a parameter. Above it the
   programme makes money as a queue review; below it, it costs money to run.</p>
@@ -888,7 +813,7 @@ PAGES.push({ id:"frontier", nav:"Operating point", render(){ return `
   order is more motivated to return than an honest customer who already bought
   elsewhere, so fraud admitted is booked in full at every rate. That is asserted,
   and asserted in the pessimistic direction.</p></div>
-  <div class="card"><div class="card-b scroll"><table>
+  <div class="card"><div class="b scroll"><table>
     <thead><tr><th>Deployment</th><th class="r">Recovered</th>
       <th class="r">Fraud admitted</th><th class="r">Net contribution</th></tr></thead>
     <tbody>${B.queue.rows.map(r => `<tr${r.rate === 1 ? ' class="mark"' : ""}>
@@ -906,20 +831,18 @@ PAGES.push({ id:"frontier", nav:"Operating point", render(){ return `
   },
   after(){
     const F = B.frontier;
-    const mk = (key, color, el, name) => {
-      const s = F.map((r,i) => ({ x: r.cap, y: r[key], r }));
+    const xl = [0, Math.floor(F.length/2), F.length-1].map(i => ({x:F[i].cap, t:String(F[i].cap)}));
+    for (const [key, color, el, name] of [
+        ["recovered", C.good, "f-rec", "recovered"],
+        ["admitted", C.bad, "f-adm", "fraud admitted"],
+        ["contribution", C.warn, "f-net", "net contribution"]]){
+      const s = F.map(r => ({ x:r.cap, y:r[key], r }));
       const node = document.getElementById(el);
-      node.innerHTML = svgLine(s, { color, h:168, fmt:cr, markX:B.cap, aria:name,
-        xlabels:[{x:F[0].cap,t:String(F[0].cap)},
-                 {x:F[Math.floor(F.length/2)].cap,t:String(F[Math.floor(F.length/2)].cap)},
-                 {x:F[F.length-1].cap,t:String(F[F.length-1].cap)}] });
+      node.innerHTML = svgLine(s, { color, h:168, fmt:cr, markX:B.cap, xlabels:xl,
+        aria:`${name} across the operating-point curve` });
       wireChart(node, s, d => `<b>cap ${d.r.cap}</b><br>${name} ${cr(d.y)}<br>
         ${n0(d.r.released)} released, ${pct(d.r.precision)} precision`);
-    };
-    mk("recovered", C.good, "f-rec", "recovered");
-    mk("admitted", C.bad, "f-adm", "fraud admitted");
-    mk("contribution", C.hold, "f-net", "net contribution");
-
+    }
     const slider = document.getElementById("cap");
     const capv = document.getElementById("capv");
     const stats = document.getElementById("capstats");
@@ -928,16 +851,16 @@ PAGES.push({ id:"frontier", nav:"Operating point", render(){ return `
       const r = F[+slider.value];
       capv.textContent = `cap ${r.cap}` + (r.cap === B.cap ? "  (shipped)" : "");
       stats.innerHTML = `
-        <div class="tile" style="padding:12px 13px"><span class="k">Recall of recoverable</span>
-          <span class="v" style="font-size:23px">${pct(r.recall)}</span></div>
-        <div class="tile" style="padding:12px 13px"><span class="k">Precision</span>
-          <span class="v" style="font-size:23px">${pct(r.precision)}</span></div>
-        <div class="tile pos" style="padding:12px 13px"><span class="k">Recovered</span>
-          <span class="v" style="font-size:23px">${cr(r.recovered)}</span></div>
-        <div class="tile neg" style="padding:12px 13px"><span class="k">Fraud admitted</span>
-          <span class="v" style="font-size:23px">${cr(r.admitted)}</span></div>
-        <div class="tile hi" style="padding:12px 13px"><span class="k">Net contribution</span>
-          <span class="v" style="font-size:23px">${cr(r.contribution)}</span></div>`;
+        <div class="tile" style="padding:11px 13px"><span class="k">Recall of recoverable</span>
+          <span class="v" style="font-size:22px">${pct(r.recall)}</span></div>
+        <div class="tile" style="padding:11px 13px"><span class="k">Precision</span>
+          <span class="v" style="font-size:22px">${pct(r.precision)}</span></div>
+        <div class="tile pos" style="padding:11px 13px"><span class="k">Recovered</span>
+          <span class="v" style="font-size:22px">${cr(r.recovered)}</span></div>
+        <div class="tile neg" style="padding:11px 13px"><span class="k">Fraud admitted</span>
+          <span class="v" style="font-size:22px">${cr(r.admitted)}</span></div>
+        <div class="tile hi" style="padding:11px 13px"><span class="k">Net contribution</span>
+          <span class="v" style="font-size:22px">${cr(r.contribution)}</span></div>`;
       rows.forEach((tr,i) => tr.classList.toggle("mark", i === +slider.value));
     }
     slider.addEventListener("input", paint);
@@ -946,174 +869,156 @@ PAGES.push({ id:"frontier", nav:"Operating point", render(){ return `
   }});
 
 /* ----------------------------------------------------------- 5. evidence --- */
-PAGES.push({ id:"evidence", nav:"How honest is it", render(){
+PAGES.push({ id:"evidence", nav:"How honest is it", sub:"the numbers that got worse",
+  render(){
   const hr = B.human.rationed;
-  const covs = Object.keys(hr).sort((a,b)=>+a-+b);
+  const covs = Object.keys(hr).sort((a,b)=>+b-+a);
   return `
-  <h2 class="title">Everything on this page makes us look worse</h2>
+  <h2>Everything on this page makes us look worse</h2>
   <p class="lede">Four numbers moved against us and we took all four. This page
   exists because a metrics table where the model always looks good is the least
   informative artifact a project can ship.</p>
 
-  <h3 class="sec">A human reviewer beats this system</h3>
-  <div class="card"><div class="card-b scroll"><table>
+  <h3>A human reviewer beats this system</h3>
+  <div class="card"><div class="b scroll"><table>
     <thead><tr><th>Reviewer coverage</th><th class="r">Cases reviewed</th>
       <th class="r">Recall of recoverable</th><th class="r">Net contribution</th></tr></thead>
     <tbody>
       <tr><td>A person reviewing all ${n0(O.n_cases)}</td>
-        <td class="r">${n0(O.n_cases)}</td>
-        <td class="r">${pct(B.human.full.recall)}</td>
-        <td class="r" style="color:${C.good}">${cr(B.human.full.contribution)}</td></tr>
-      ${covs.slice().reverse().map(k => `<tr>
-        <td>A person reviewing the top ${pct(+k,0)} by value</td>
-        <td class="r">${n0(hr[k].reviewed)}</td>
-        <td class="r">${pct(hr[k].recall)}</td>
+        <td class="r">${n0(O.n_cases)}</td><td class="r">${pct(B.human.full.recall)}</td>
+        <td class="r" style="color:${C.good};font-weight:600">${cr(B.human.full.contribution)}</td></tr>
+      ${covs.map(k => `<tr><td>A person reviewing the top ${pct(+k,0)} by value</td>
+        <td class="r">${n0(hr[k].reviewed)}</td><td class="r">${pct(hr[k].recall)}</td>
         <td class="r">${cr(hr[k].contribution)}</td></tr>`).join("")}
       <tr class="mark"><td><b>This system, all ${n0(O.n_cases)}</b></td>
-        <td class="r"><b>${n0(O.n_cases)}</b></td>
-        <td class="r"><b>${pct(O.recall)}</b></td>
+        <td class="r"><b>${n0(O.n_cases)}</b></td><td class="r"><b>${pct(O.recall)}</b></td>
         <td class="r"><b>${cr(O.contribution)}</b></td></tr>
     </tbody></table></div></div>
   <p style="margin-top:11px">On judgment alone a competent reviewer wins, by
-  ${cr(B.human.full.contribution - O.contribution)}, and that row stays in the
-  table because it is true. What does not survive is its assumption: that a person
-  reviews every case. Manual review costs ${cr(150)} and about four hours each, so
-  real queues are ranked by value and worked down until the day runs out.
-  <b>The gap is not intelligence. It is reach.</b></p>
+  ${cr(B.human.full.contribution - O.contribution)}, and that row stays in the table
+  because it is true. What does not survive is its assumption: that a person reviews
+  every case. Manual review costs about Rs 150 and four hours each, so real queues
+  are ranked by value and worked down until the day runs out. <b>The gap is not
+  intelligence. It is reach.</b></p>
 
-  <h3 class="sec">The numbers move between generated worlds</h3>
-  <div class="card"><div class="card-b scroll"><table>
+  <h3>The numbers move between generated worlds</h3>
+  <div class="card"><div class="b scroll"><table>
     <thead><tr><th>seed</th><th class="r">Holdout</th><th class="r">Precision</th>
       <th class="r">Recall</th><th class="r">Fraud admitted</th>
       <th class="r">Net contribution</th></tr></thead>
     <tbody>${SD.rows.map(r => `<tr${r.seed === 42 ? ' class="mark"' : ""}>
-      <td class="num">${r.seed}${r.seed === 42 ? ' <span class="pill h">quoted</span>' : ""}</td>
-      <td class="r">${n0(r.n_holdout)}</td>
-      <td class="r">${pct(r.shipped_precision)}</td>
+      <td class="num">${r.seed}${r.seed === 42 ? ' <span class="tag blue">quoted</span>' : ""}</td>
+      <td class="r">${n0(r.n_holdout)}</td><td class="r">${pct(r.shipped_precision)}</td>
       <td class="r">${pct(r.shipped_recall)}</td>
       <td class="r">${cr(r.shipped_fraud_admitted)}</td>
       <td class="r">${cr(r.shipped_contribution)}</td></tr>`).join("")}</tbody>
   </table></div></div>
   <div class="grid tiles" style="margin-top:14px">
     <div class="tile pos"><span class="k">Recall, the steady one</span>
-      <span class="v" style="font-size:21px">${pct(SD.recall_min)} to ${pct(SD.recall_max)}</span>
+      <span class="v" style="font-size:19px">${pct(SD.recall_min)} to ${pct(SD.recall_max)}</span>
       <span class="s">depends on how well the model ranks</span></div>
     <div class="tile"><span class="k">Precision</span>
-      <span class="v" style="font-size:21px">${pct(SD.precision_min)} to ${pct(SD.precision_max)}</span>
+      <span class="v" style="font-size:19px">${pct(SD.precision_min)} to ${pct(SD.precision_max)}</span>
       <span class="s">${(100*(SD.precision_max-SD.precision_min)).toFixed(1)} points.
       depends on where a fixed threshold happens to land</span></div>
     <div class="tile"><span class="k">Net contribution</span>
-      <span class="v" style="font-size:21px">${cr(SD.contribution_min)} to ${cr(SD.contribution_max)}</span>
+      <span class="v" style="font-size:19px">${cr(SD.contribution_min)} to ${cr(SD.contribution_max)}</span>
       <span class="s">about ${(SD.contribution_max/SD.contribution_min).toFixed(1)}x.
       depends on that world's value distribution</span></div>
   </div>
-  <div class="callout warn"><p style="margin:0"><b>An earlier revision called
-  precision the stable number at ${pct(SD.tuned_precision_min)} to
-  ${pct(SD.tuned_precision_max)}.</b> That range came from a sweep that re-picked
-  the threshold on every seed, which absorbs exactly the variation it was meant to
+  <div class="note-box w"><p style="margin:0"><b>An earlier revision called precision
+  the stable number at ${pct(SD.tuned_precision_min)} to
+  ${pct(SD.tuned_precision_max)}.</b> That range came from a sweep that re-picked the
+  threshold on every seed, which absorbs exactly the variation it was meant to
   measure. At a fixed operating point the variation shows up. The claim is
   withdrawn.</p></div>
 
-  <h3 class="sec">A merchant the model never trained on</h3>
+  <h3>A merchant the model never trained on</h3>
   <div class="grid tiles">
     <div class="tile"><span class="k">AUC cost of dropping ${esc(H.unseen_merchant.merchant)}</span>
       <span class="v">${H.unseen_merchant.auc_drop.toFixed(4)}</span>
       <span class="s">ranking transfers essentially free</span></div>
     <div class="tile neg"><span class="k">Precision at the same cap</span>
-      <span class="v" style="font-size:21px">${pct(H.unseen_merchant.precision_full)} to ${pct(H.unseen_merchant.precision_lomo)}</span>
+      <span class="v" style="font-size:19px">${pct(H.unseen_merchant.precision_full)} to ${pct(H.unseen_merchant.precision_lomo)}</span>
       <span class="s">pricing does not transfer</span></div>
   </div>
   <p style="margin-top:11px">The expensive part, learning what fraud looks like
-  across merchants, comes free. The cheap part, calibrating to one merchant's
-  baskets and margins, needs a few hundred of their own cases. That is the shape of
-  a platform product, and the precision drop is what makes it credible rather than
-  a slogan.</p>
+  across merchants, comes free. The cheap part, calibrating to one merchant's baskets
+  and margins, needs a few hundred of their own cases. That is the shape of a
+  platform product, and the precision drop is what makes it credible rather than a
+  slogan.</p>
 
-  <h3 class="sec">Value is concentrated</h3>
-  <div class="card"><div class="card-b scroll"><table>
+  <h3>Value is concentrated</h3>
+  <div class="card"><div class="b scroll"><table>
     <thead><tr><th>Merchant</th><th class="r">Blocked</th><th class="r">Good</th>
-      <th class="r">Value blocked</th><th class="r">Released</th>
-      <th class="r">Precision</th><th class="r">Recovered</th>
-      <th class="r">Fraud admitted</th></tr></thead>
-    <tbody>${B.merchants.map(m => `<tr>
-      <td>${esc(m.merchant)}</td><td class="r">${n0(m.blocked)}</td>
-      <td class="r">${pct(m.good/m.blocked,0)}</td>
+      <th class="r">Value blocked</th><th class="r">Released</th><th class="r">Precision</th>
+      <th class="r">Recovered</th><th class="r">Fraud admitted</th></tr></thead>
+    <tbody>${B.merchants.map(m => `<tr><td>${esc(m.merchant)}</td>
+      <td class="r">${n0(m.blocked)}</td><td class="r">${pct(m.good/m.blocked,0)}</td>
       <td class="r">${cr(m.value_blocked)}</td><td class="r">${n0(m.released)}</td>
       <td class="r">${m.released ? pct(m.released_good/m.released) : "n/a"}</td>
-      <td class="r">${cr(m.recovered)}</td>
-      <td class="r">${cr(m.admitted)}</td></tr>`).join("")}</tbody>
+      <td class="r">${cr(m.recovered)}</td><td class="r">${cr(m.admitted)}</td></tr>`).join("")}</tbody>
   </table></div></div>
   <p class="note" style="margin-top:11px">${esc(B.merchants[0].merchant)} alone is
   ${pct(B.merchants[0].value_blocked / B.merchants.reduce((s,m)=>s+m.value_blocked,0),0)}
-  of the holdout's blocked value, so most of the rupee figures on this site are
-  substantially a measurement of one merchant's pile.</p>
+  of the holdout's blocked value, so most of the rupee figures here are substantially
+  a measurement of one merchant's pile.</p>
 
-  <h3 class="sec">Two things that were silently broken</h3>
+  <h3>Two things that were silently broken</h3>
   <p>Neither threw. Neither failed a test. Both had green tests sitting on top of
   them that were measuring nothing, and both were found by reading real output
   instead of a pass count.</p>
   <div class="grid two">
-    <div class="card"><div class="card-h"><span class="label">The citation checker
-      read payment ids as evidence</span></div><div class="card-b">
-      <p class="note" style="margin:0 0 9px">Every verdict is checked: any number in
-      it has to be derivable from the evidence. The extraction regex also matched
-      digits inside payment ids, so <code>pay_5E72cODtQrmZkn</code> contributed
-      "72", which appears nowhere in the evidence. Every correctly cited model
-      verdict failed three times and fell back to a template.</p>
+    <div class="card"><h4>The citation checker read payment ids as evidence</h4>
+      <div class="b"><p class="note" style="margin:0 0 9px">Every verdict is checked:
+      any number in it has to be derivable from the evidence. The extraction regex
+      also matched digits inside payment ids, so <code>pay_5E72cODtQrmZkn</code>
+      contributed "72", which appears nowhere in the evidence. Every correctly cited
+      model verdict failed three times and fell back to a template.</p>
       <p class="note" style="margin:0">Offline runs never caught it because the
       template does not print the payment id. "300 of 300 verdicts audit clean" was
       true, and was measuring a checker that would have rejected every real verdict
       it ever saw.</p></div></div>
-    <div class="card"><div class="card-h"><span class="label">The demo screen
-      contained no demo cases</span></div><div class="card-b">
-      <p class="note" style="margin:0 0 9px">The case room ran the agent over the
-      first 400 blocked orders in date order, then tagged whichever matched a
-      showcase role. Five of the six sit past position 400. One tagged case
+    <div class="card"><h4>The demo screen contained no demo cases</h4>
+      <div class="b"><p class="note" style="margin:0 0 9px">The case room ran the
+      agent over the first 400 blocked orders in date order, then tagged whichever
+      matched a showcase role. Five of the six sit past position 400. One tagged case
       rendered out of six, and every verdict on the demo screen was a template.</p>
       <p class="note" style="margin:0">The page looked completely normal. Found by
       counting verdict sources in the generated HTML.</p></div></div>
   </div>
-  <div class="callout"><p style="margin:0">A test that passes tells you the code did
+  <div class="note-box"><p style="margin:0">A test that passes tells you the code did
   what the test asked. It does not tell you the test asked for anything.</p></div>
 
-  <h3 class="sec">Standing caveats</h3>
-  <p class="note">The data is synthetic. We wrote the world, so in a real sense we
-  wrote the answers; calibrating the generator against published industry figures
-  and sweeping its parameters reduces the circularity but does not remove it. The
-  holdout is ${n0(O.n_cases)} cases and the intervals are wide. Cross-merchant data
-  has real privacy implications; the features are aggregate behavioural counts
-  rather than shared personal information, and a payment processor already holds
-  this data, which is an argument rather than a dismissal. This does not replace a
-  fraud system. It reviews one.</p>`;
+  <div class="foot">The data is synthetic. We wrote the world, so in a real sense we
+  wrote the answers; calibrating the generator against published industry figures and
+  sweeping its parameters reduces the circularity but does not remove it. The holdout
+  is ${n0(O.n_cases)} cases and the intervals are wide. Cross-merchant data has real
+  privacy implications; the features are aggregate behavioural counts rather than
+  shared personal information, and a payment processor already holds this data, which
+  is an argument rather than a dismissal. This does not replace a fraud system. It
+  reviews one.</div>`;
   }});
 
 /* ====================================================================== boot */
 const nav = document.getElementById("nav"), mainEl = document.getElementById("main");
-nav.innerHTML = PAGES.map((p,i) => `<button class="nav" data-p="${i}"
-  aria-current="${i === 0 ? "page" : "false"}"><span class="ix">${
-  String(i+1).padStart(2,"0")}</span><span>${esc(p.nav)}</span></button>`).join("");
-document.getElementById("sidefoot").innerHTML =
-  `Holdout ${n0(O.n_cases)} cases at cap ${B.cap}<br>
-   Recall <b style="color:#E9E4D8">${pct(O.recall)}</b> &middot;
-   fraud admitted <b>${cr(O.admitted)}</b><br>
-   <span style="color:${C.dim}">${B.model.learner}, ${B.model.n_trees} trees,
-   isotonic on ${n0(B.model.n_calib)}</span>`;
+nav.innerHTML = PAGES.map((p,i) => `<button class="row${i===0?" sel":""}" data-p="${i}">
+  <span class="t">${esc(p.nav)}</span><span class="d">${esc(p.sub)}</span></button>`).join("");
+document.getElementById("hsub").innerHTML =
+  `${n0(O.n_cases)} blocked orders reviewed at cap ${B.cap} &middot; recall
+   <b>${pct(O.recall)}</b> &middot; fraud admitted <b>${cr(O.admitted)}</b>
+   &middot; ${esc(B.model.learner)}, ${B.model.n_trees} trees`;
 
 function go(i){
-  PAGES.forEach((p,j) => {
-    const b = nav.querySelector(`[data-p="${j}"]`);
-    b.setAttribute("aria-current", j === i ? "page" : "false");
-  });
+  nav.querySelectorAll(".row").forEach((b,j) => b.classList.toggle("sel", j === i));
   const p = PAGES[i];
-  mainEl.innerHTML = `<div class="page">${p.render()}</div>`;
+  mainEl.innerHTML = p.render();
   hideTip();
   if (p.after) p.after();
-  mainEl.scrollTop = 0; scrollTo(0, 0);
+  mainEl.scrollTop = 0;
   location.hash = p.id;
 }
 nav.addEventListener("click", e => {
-  const b = e.target.closest(".nav"); if (b) go(+b.dataset.p);
-});
-const start = Math.max(0, PAGES.findIndex(p => "#" + p.id === location.hash));
-go(start);
+  const b = e.target.closest(".row"); if (b) go(+b.dataset.p); });
+go(Math.max(0, PAGES.findIndex(p => "#" + p.id === location.hash)));
 </script>
