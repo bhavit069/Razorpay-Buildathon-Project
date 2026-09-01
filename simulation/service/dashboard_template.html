@@ -1159,6 +1159,9 @@ PAGES.push({ id:"agent", nav:"Run the agent", sub:"one order, and how it was dec
       document.querySelectorAll("[data-f]").forEach(el => {
         el.oninput = () => {
           const d = FBY[el.dataset.f];
+          // clearing a number field to retype it leaves "", which Number() reads
+          // as 0. Re-scoring at zero mid-keystroke looks like the page guessing.
+          if (el.type === "number" && el.value === "") return;
           cur[d.f] = d.kind === "flag" ? (el.checked ? 1 : 0)
             : (d.kind === "text" || d.kind === "pick") ? el.value : Number(el.value);
           if (d.f === "amount_inr") cur.amount = Number(el.value) * 100;
