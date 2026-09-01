@@ -3,7 +3,7 @@ Five beats, about five minutes. Every number here is in development/METRICS.md.
 
 BEFORE YOU RECORD
   cd development
-  python run.py dry          # 13 checks, network cut. must be 13 of 13.
+  python run.py dry          # 14 checks, network cut. must be 14 of 14.
   python run.py room         # writes artifacts/case_room.html
   python run.py serve        # builds the console, serves localhost:4000
 
@@ -224,8 +224,8 @@ If you have the console open, that whole closing argument is one table on the
 -------------------------------------------------------------------------------
 IF ASKED "DOES IT ACTUALLY RUN, OR IS THAT A MOCKUP"
 -------------------------------------------------------------------------------
-Open the console, Run the agent page. Edit a number in the JSON, anything, and
-hit Adjudicate. Watch the probability and the action change.
+Open the console, Run the agent page. Change any field and hit Adjudicate.
+Watch the probability and the action change.
 
   That is the model. The 300 fitted trees and the calibrator are exported into
   the page and evaluated in the browser. The exporter refuses to write them out
@@ -233,22 +233,36 @@ hit Adjudicate. Watch the probability and the action change.
   cases, and a separate check pulls those functions out of the built page and
   runs them again. Worst disagreement is five times ten to the minus fifteen.
 
-Three edits that land, all verified on the shipped page:
+Then scroll the trace. Step 2 walks three of the 300 trees in full and shows
+the branch taken at every split, against this order's own values. Step 7 is the
+policy ladder with all four rungs evaluated and the one that fired marked.
 
-  network_orders_prior 75 -> 1
+  That last step is the argument. The model contributed one number. Everything
+  after it is arithmetic you can check by hand, and no language model is
+  anywhere near it.
+
+Four edits that land, all verified on the shipped page. Start from the first
+holdout chip, pay_5E72cOD:
+
+  Prior orders, every merchant   214 -> 1
       OVERTURN becomes STEP_UP. The probability does not move at all, 0.0031
-      either way. The evidence gate fired, not the model. Worth saying out
-      loud: the system is not less confident, it has decided it does not have
-      enough record to act on, which is a different thing.
+      either way. Rung 2 fired, not rung 3. Worth saying out loud: the system
+      is not less confident, it has decided it does not have enough record to
+      act on, which is a different thing.
 
-  network_clean_rate 0.96 -> 0.20 and network_disputes_prior 1 -> 6
+  Orders that completed cleanly 0.96 -> 0.20, Prior disputes 1 -> 6
       p goes 0.0031 to 0.2317 and the action becomes STEP_UP, ambiguous.
       That is the model, not the gate.
 
-  network_orders_prior -> 1 and amount_inr -> 3000
+  Prior orders -> 1 and Amount -> 3,000
       ESCALATE instead of STEP_UP. Same thin file, but it is not worth a
       verification exchange on a three thousand rupee order, so it goes to a
       person. The policy spends effort where the money is.
+
+  On the "Correctly blocked" chip, Distinct merchants shopped 6 -> 2
+      p falls 0.9449 by 0.3735, the largest single move on that case, and step
+      3 says so before you touch it. A clean record spread thin across many
+      merchants in ten weeks is the signal, not the clean record.
 
 
 -------------------------------------------------------------------------------

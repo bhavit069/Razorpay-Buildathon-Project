@@ -263,6 +263,22 @@ def main():
     except FileNotFoundError:
         print("  [skip] console layout is responsive (no node on PATH)")
 
+    def agent_page():
+        """The agent page is the one a judge will actually poke at, and
+        check_pages.js barely touches it: it calls render(), which emits an
+        empty shell, and after(), which wires handlers to a stub DOM that
+        no-ops. This drives the decision path itself over every case the page
+        can load and reads the HTML back."""
+        r = subprocess.run(["node", "service/check_agent.js"], cwd=ROOT,
+                           capture_output=True, text=True)
+        if r.returncode:
+            raise AssertionError(r.stdout.strip()[-500:])
+        return f"{r.stdout.count('[ok]')} agent checks pass over 12 cases"
+    try:
+        c("the agent page decides correctly", agent_page)
+    except FileNotFoundError:
+        print("  [skip] the agent page decides correctly (no node on PATH)")
+
     # --- replay strictness ---------------------------------------------------
     def replay_serves_demo_cases():
         store, vault, model = state["store"], state["vault"], state["model"]

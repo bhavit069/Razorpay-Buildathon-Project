@@ -32,6 +32,7 @@ from core.policy import PolicyConfig
 from core.showcase import ROLES
 from core.showcase import pick as pick_showcase
 from core.truth import TruthVault
+from service.typical import typical_values
 
 OUT = os.path.join("artifacts", "bundle.json")
 CAP = 0.20
@@ -266,6 +267,8 @@ def build(data_dir="data300k", out=OUT):
         "merchants": merchants,
         "importance": imp,
         "dist": dist,
+        # reference point for the agent page's counterfactuals
+        "typical": typical_values(data_dir),
         "samples": samples,
         "roles": [{"key": r.key, "title": r.title, "why": r.why} for r in ROLES],
     }

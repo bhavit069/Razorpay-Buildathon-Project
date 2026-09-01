@@ -263,7 +263,7 @@ python run.py room        # build the case room, then open artifacts/case_room.h
 python run.py serve       # build the console and serve it on http://localhost:4000
 python run.py agent       # run the agent over the blocked pile
 python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
-python run.py dry         # pre-demo check, network cut, 13 checks
+python run.py dry         # pre-demo check, network cut, 14 checks
 python run.py seeds       # how much it moves between worlds, ~6 min
 ```
 
@@ -278,10 +278,20 @@ network.
 
 `python run.py serve` puts the whole system on http://localhost:4000: the
 pipeline, the portfolio, the operating-point curve, the honest-metrics page,
-and an agent page you can paste a transaction into. `/case` on the same server
-is the case room. That agent page evaluates the 300 fitted trees in the
-browser, and the build refuses to write it unless the JavaScript reproduces the
-Python probability on all 1,775 holdout cases.
+and an agent page you can adjudicate one order on. `/case` on the same server
+is the case room.
+
+On the agent page, pick a case or edit any field, as a labelled control or as
+raw JSON. What comes back is the verdict and then how it got there in seven
+steps: the fields it read, three of the 300 trees walked in full with the
+branch taken at every split, what one field at a time would have done to the
+score, the isotonic bracket, the evidence gate, the expected-value line, and
+the four-rung policy ladder with every rung evaluated and the one that fired
+marked. The action is arithmetic; the model contributes one number to it.
+
+That page evaluates the 300 fitted trees in the browser, and the build refuses
+to write it unless the JavaScript reproduces the Python probability on all
+1,775 holdout cases.
 
 Nothing on either page loads from the network, so opening the files straight
 off disk works too.

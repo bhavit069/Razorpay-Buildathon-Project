@@ -148,6 +148,105 @@ border-left:3px solid var(--accent);border-radius:7px;padding:13px 16px;margin:1
 .foot{color:var(--mut);font-size:12.5px;margin-top:26px;border-top:1px solid var(--line);
 padding-top:12px;max-width:78ch}
 
+/* ---- the agent page ------------------------------------------------------ */
+/* case pickers */
+.pick{margin-top:18px;display:flex;flex-direction:column;gap:7px}
+.pickrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+font-weight:650;min-width:9.5em}
+.chip.s{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:4px 11px}
+.chip.s .dot{width:7px;height:7px;border-radius:99px;flex:none}
+.dot.good{background:var(--good)}.dot.bad{background:var(--bad)}.dot.warn{background:var(--warn)}
+
+/* fields / json tabs */
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tb{background:var(--card);border:0;border-right:1px solid var(--line);color:var(--mut);
+font:inherit;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;
+font-weight:650;padding:4px 11px;cursor:pointer}
+.tb:last-child{border-right:0}
+.tb.sel{background:var(--sel);color:var(--accent)}
+
+/* one field */
+.fg{margin-bottom:20px}
+.fg:last-of-type{margin-bottom:4px}
+.fg h5{margin:0 0 3px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+color:var(--fg);font-weight:650}
+.fg .note{margin:0 0 10px;max-width:60ch}
+.fields{display:grid;gap:8px 16px;
+grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr))}
+.f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,124px);gap:10px;
+align-items:center;padding:4px 0;border-bottom:1px solid var(--soft)}
+.f label{cursor:pointer;min-width:0}
+.fl{display:block;font-size:13px;line-height:1.35}
+.fl i{color:var(--mut);font-style:normal;font-size:11.5px}
+.fk{display:block;font:10.5px ui-monospace,Menlo,Consolas,monospace;color:var(--faint);
+overflow:hidden;text-overflow:ellipsis}
+.fc{display:flex;align-items:center;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+.f input[type=number],.f input[type=text],.f select{width:100%;min-width:0;
+background:var(--card);border:1px solid var(--line);border-radius:5px;color:var(--fg);
+font:12.5px ui-monospace,Menlo,Consolas,monospace;padding:4px 7px;text-align:right}
+.f select,.f input[type=text]{text-align:left;font-family:inherit;font-size:12.5px}
+.f input:focus,.f select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.money{display:flex;align-items:center;gap:4px;width:100%}
+.money span{font-size:11.5px;color:var(--mut)}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut)}
+.sw input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.fc .tag{flex:none}
+
+/* verdict */
+.verdict{border-left:3px solid var(--line)}
+.verdict.good{border-left-color:var(--good)}
+.verdict.bad{border-left-color:var(--bad)}
+.verdict.warn{border-left-color:var(--warn)}
+.vhead{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
+.va{font-size:25px;font-weight:650;letter-spacing:-.02em}
+.va.good{color:var(--good)}.va.bad{color:var(--bad)}.va.warn{color:var(--warn)}
+.vw{color:var(--mut);font-size:13.5px}
+
+/* the trace */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;
+padding:0 0 18px;position:relative}
+.step:before{content:"";position:absolute;left:12.5px;top:24px;bottom:0;
+width:1px;background:var(--line)}
+.step:last-child:before{display:none}
+.sn{width:26px;height:26px;border-radius:99px;background:var(--sel);color:var(--accent);
+font-size:12px;font-weight:650;display:flex;align-items:center;justify-content:center;
+z-index:1}
+.sb{min-width:0}
+.sb h5{margin:4px 0 8px;font-size:13.5px;font-weight:650}
+.sb pre{font-size:12px;line-height:1.55}
+.sb .note{max-width:64ch}
+
+/* what moved it */
+.movers{display:flex;flex-direction:column;gap:5px}
+.mv{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.3fr) 62px;
+gap:9px;align-items:center;font-size:12px}
+.mf{font:11.5px ui-monospace,Menlo,Consolas,monospace;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap}
+.mn{color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis}
+.mn i{font-style:normal;color:var(--faint)}
+.mt{background:var(--soft);border-radius:3px;height:11px;overflow:hidden}
+.mb{display:block;height:100%;border-radius:0 3px 3px 0}
+.mb.up{background:var(--bad)}.mb.dn{background:var(--good)}
+.md{text-align:right;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600}
+.md.r{color:var(--bad)}.md.g{color:var(--good)}
+
+/* the policy ladder */
+.ladder{display:flex;flex-direction:column;gap:1px;border:1px solid var(--line);
+border-radius:6px;overflow:hidden;background:var(--line)}
+.rung{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:9px;
+align-items:start;padding:9px 12px;background:var(--card);font-size:12.5px}
+.rung.fired{background:var(--sel)}
+.rung.skip{color:var(--faint)}
+.rung.skip .rt,.rung.skip .rs{color:var(--faint)}
+.ri{color:var(--accent);font-size:13px;line-height:1.5}
+.rung.reached .ri{color:var(--mut)}
+.rt{font:12px ui-monospace,Menlo,Consolas,monospace;display:block}
+.rs{display:block;font-size:11.5px;color:var(--mut);margin-top:2px}
+.rung.fired .rt{font-weight:600;color:var(--accent)}
+
 @media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
 
 /* the sidebar plus two 320px cards needs about 1000px; below that give the
@@ -170,6 +269,7 @@ padding-top:12px;max-width:78ch}
   main{overflow:visible;padding:20px 16px 56px}
   header{padding:14px 16px;gap:10px}
   .bar-row{grid-template-columns:minmax(88px,34%) 1fr auto}
+  .pl{min-width:0;width:100%}
 }
 @media(max-width:560px){
   h2{font-size:20px}
@@ -182,6 +282,17 @@ padding-top:12px;max-width:78ch}
   .bar-row .n{font-size:11px}
   textarea{min-height:220px}
   .foot,figcaption,p{max-width:none}
+  /* the agent page: the bar and the before/after values are the first things
+     to go, because the field name and the size of the move are the content */
+  .mv{grid-template-columns:minmax(0,1fr) 58px}
+  .mn,.mt{display:none}
+  .va{font-size:21px}
+  .step{grid-template-columns:22px minmax(0,1fr);gap:10px}
+  .step:before{left:10.5px;top:22px}
+  .sn{width:22px;height:22px;font-size:11px}
+  .rung{grid-template-columns:16px minmax(0,1fr);row-gap:5px}
+  .rung .tag{grid-column:2}
+  .f{grid-template-columns:minmax(0,1fr) minmax(0,104px)}
 }
 </style>
 
@@ -254,7 +365,10 @@ function vectorise(o){
   const missing = [];
   const x = B.model.features.map(f => {
     let v = o[f];
-    if (v === undefined && f === "amount") v = o.amount_inr;
+    // `amount` is paise; amount_inr is rupees. Deriving one from the other
+    // without the factor of 100 quietly scores the order at 1/100th its size.
+    if (v === undefined && f === "amount" && o.amount_inr != null)
+      v = Number(o.amount_inr) * 100;
     if (v === undefined || v === null || v === "" || Number.isNaN(Number(v))){
       missing.push(f); return 0;
     }
@@ -644,150 +758,477 @@ PAGES.push({ id:"portfolio", nav:"Portfolio & signals",
   }});
 
 /* -------------------------------------------------------------- 3. agent --- */
-PAGES.push({ id:"agent", nav:"Run the agent", sub:"paste a transaction, get a decision",
-  render(){ return `
-  <h2>Give it a transaction</h2>
-  <p class="lede">This runs the real model. The ${B.model.n_trees} fitted trees and
-  the isotonic calibrator were exported from Python, and the exporter refuses to
-  write them out unless this JavaScript reproduces the Python probability on all
-  ${n0(O.n_cases)} holdout cases. Nothing here is a lookup or a guess.</p>
+/* Every editable field, in the order a person reads a case rather than the
+   order the model wants them. `kind` picks the control: a flag gets a checkbox,
+   a count gets a stepper, a rate is 0..1. `lo`/`hi` are the range actually
+   present in the holdout, so a value outside them is extrapolation and the
+   field says so rather than quietly accepting it. */
+const GROUPS = [
+  { key:"order",   title:"The order",
+    note:"Amount drives the expected-value arithmetic. The model reads it in paise; you type rupees." },
+  { key:"local",   title:"What the merchant's own system saw",
+    note:"Each of these is a correct description of unusual behaviour. None of them is evidence about intent." },
+  { key:"network", title:"What only the payment network can see",
+    note:"The same identity across every merchant on the rails. A single merchant cannot buy this view at any price." },
+];
+const FIELDS = [
+  { f:"merchant",     g:"order", kind:"text",  label:"Merchant" },
+  { f:"amount_inr",   g:"order", kind:"money", label:"Amount", lo:105, hi:686716 },
+  { f:"method",       g:"order", kind:"pick",  label:"Method",
+    opts:["upi","card","cod","netbanking","wallet","emi"] },
+  { f:"block_reason", g:"order", kind:"pick",  label:"Why the stack blocked it",
+    opts:["amount_anomaly","rto_history","device_change","velocity","thin_file","geo_risk"] },
 
-  <div class="grid io" style="margin-top:20px">
-    <div class="card"><h4>Transaction JSON</h4><div class="b">
-      <div class="chips" style="margin-bottom:10px">
-        <span class="sub">Load</span>
-        ${B.samples.map((s,i) => `<button class="chip" data-s="${i}">${
-          esc(s.json.payment_id.slice(4,12))}</button>`).join("")}
-        <button class="chip" data-blank="1">blank</button>
+  { f:"f_device_is_new",          g:"local", kind:"flag",  label:"New device" },
+  { f:"f_device_account_fanout",  g:"local", kind:"count", label:"Accounts on this device", lo:1, hi:8 },
+  { f:"f_address_mismatch",       g:"local", kind:"flag",  label:"Delivery differs from billing" },
+  { f:"f_orders_last_24h",        g:"local", kind:"count", label:"Orders in the last 24 hours", lo:0, hi:5 },
+  { f:"f_amount_z",               g:"local", kind:"num",   label:"Basket vs this merchant's norm", unit:"sd", step:0.1, lo:-2.62, hi:5.73 },
+  { f:"f_pincode_rto_propensity", g:"local", kind:"num",   label:"Pincode return index", step:0.05, lo:0.85, hi:1.45 },
+  { f:"f_is_night",               g:"local", kind:"flag",  label:"Placed overnight" },
+  { f:"f_thin_file_flag",         g:"local", kind:"flag",  label:"Merchant sees no history" },
+  { f:"f_disposable_email",       g:"local", kind:"flag",  label:"Disposable email domain" },
+  { f:"f_international",          g:"local", kind:"flag",  label:"International" },
+  { f:"f_merchant_prior_rto",     g:"local", kind:"count", label:"Past returns at this merchant", lo:0, hi:6 },
+  { f:"f_is_cod",                 g:"local", kind:"flag",  label:"Cash on delivery" },
+  { f:"risk_score",               g:"local", kind:"rate",  label:"The stack's own risk score", lo:0.38, hi:1 },
+
+  { f:"network_orders_prior",         g:"network", kind:"count", label:"Prior orders, every merchant", lo:0, hi:262 },
+  { f:"network_merchants_prior",      g:"network", kind:"count", label:"Distinct merchants shopped", lo:0, hi:8 },
+  { f:"network_tenure_days",          g:"network", kind:"count", label:"Days since first seen", lo:0, hi:1762 },
+  { f:"network_clean_rate",           g:"network", kind:"rate",  label:"Orders that completed cleanly", lo:0, hi:1 },
+  { f:"network_disputes_prior",       g:"network", kind:"count", label:"Prior disputes", lo:0, hi:34 },
+  { f:"network_rto_prior",            g:"network", kind:"count", label:"Prior returns", lo:0, hi:22 },
+  { f:"network_device_fanout",        g:"network", kind:"count", label:"Devices used", lo:1, hi:8 },
+  { f:"network_instrument_merchants", g:"network", kind:"count", label:"Merchants for this card or VPA", lo:0, hi:8 },
+];
+const FBY = Object.fromEntries(FIELDS.map(d => [d.f, d]));
+
+/* Three written scenarios in front of the six real holdout cases. The written
+   ones exist because a demo needs a case whose story you can follow; the real
+   ones exist because a case you wrote yourself proves nothing. Which is which
+   is on the chip. */
+const WRITTEN = [
+  { key:"wrong", tone:"good", chip:"Wrongly blocked",
+    story:"Four years, 214 orders across three shops, never a dispute. Today they order from a new phone, ship it to their office, at eleven at night. Every signal the merchant can see is unusual, and every one of them is about the phone rather than the person.",
+    json:{ payment_id:"pay_demo_wrongly_blocked", merchant:"Aurum Jewels",
+      amount_inr:189500, method:"upi", block_reason:"device_change", merchant_threshold:0.38,
+      f_device_is_new:1, f_device_account_fanout:1, f_address_mismatch:1, f_orders_last_24h:0,
+      f_amount_z:3.9, f_pincode_rto_propensity:1.4, f_is_night:1, f_thin_file_flag:0,
+      f_disposable_email:0, f_international:0, f_merchant_prior_rto:0, f_is_cod:0,
+      risk_score:0.62, network_orders_prior:214, network_merchants_prior:3,
+      network_tenure_days:1680, network_clean_rate:0.99, network_disputes_prior:0,
+      network_rto_prior:1, network_device_fanout:1, network_instrument_merchants:1 } },
+  { key:"right", tone:"bad", chip:"Correctly blocked",
+    story:"A perfect record: clean rate 1.000, zero disputes, zero returns. It is also ten weeks old, spread across six merchants, on one card that has appeared at seven. Nothing has come back yet because nothing has had time to. This is the shape a bust-out makes on the way up.",
+    json:{ payment_id:"pay_demo_correctly_blocked", merchant:"VoltEdge Electronics",
+      amount_inr:174900, method:"cod", block_reason:"velocity", merchant_threshold:0.38,
+      f_device_is_new:1, f_device_account_fanout:4, f_address_mismatch:1, f_orders_last_24h:3,
+      f_amount_z:5.2, f_pincode_rto_propensity:1.45, f_is_night:1, f_thin_file_flag:0,
+      f_disposable_email:1, f_international:0, f_merchant_prior_rto:0, f_is_cod:1,
+      risk_score:0.88, network_orders_prior:6, network_merchants_prior:6,
+      network_tenure_days:74, network_clean_rate:1, network_disputes_prior:0,
+      network_rto_prior:0, network_device_fanout:5, network_instrument_merchants:7 } },
+  { key:"thin", tone:"warn", chip:"No record either way",
+    story:"Two lakh ninety-two thousand rupees and an empty network file. There is no exculpatory evidence because there is no evidence. The honest output here is a question, not a probability.",
+    json:{ payment_id:"pay_demo_no_record", merchant:"Aurum Jewels",
+      amount_inr:292000, method:"card", block_reason:"thin_file", merchant_threshold:0.38,
+      f_device_is_new:1, f_device_account_fanout:1, f_address_mismatch:0, f_orders_last_24h:0,
+      f_amount_z:4, f_pincode_rto_propensity:1, f_is_night:0, f_thin_file_flag:1,
+      f_disposable_email:0, f_international:0, f_merchant_prior_rto:0, f_is_cod:0,
+      risk_score:0.71, network_orders_prior:0, network_merchants_prior:0,
+      network_tenure_days:335, network_clean_rate:0, network_disputes_prior:0,
+      network_rto_prior:0, network_device_fanout:1, network_instrument_merchants:1 } },
+];
+
+/* ---- the trace ----------------------------------------------------------- */
+/* Everything the decision touched, in the order it touched it. None of this is
+   narration written after the fact: every step reports what the same functions
+   the page scores with actually produced. */
+function treePath(tree, x){
+  const steps = []; let n = tree;
+  while (Array.isArray(n)){
+    const fi = n[0], thr = n[1], v = x[fi], left = v <= thr;
+    steps.push({ f:B.model.features[fi], v, thr, left });
+    n = left ? n[2] : n[3];
+  }
+  return { steps, leaf:n };
+}
+function trace(o){
+  const vr = vectorise(o), x = vr.x, missing = vr.missing;
+  const paths = B.model.trees.slice(0, 3).map(t => treePath(t, x));
+  let logit = 0;
+  for (const t of B.model.trees){
+    let n = t; while (Array.isArray(n)) n = x[n[0]] <= n[1] ? n[2] : n[3]; logit += n;
+  }
+  const uncal = 1 / (1 + Math.exp(-logit));
+  const p = calibrate(uncal);
+
+  /* which isotonic step the raw score landed on */
+  const xs = B.model.iso_x, ys = B.model.iso_y;
+  let lo = 0, hi = xs.length - 1, clamp = null;
+  if (uncal <= xs[0]) clamp = "below the first knot";
+  else if (uncal >= xs[xs.length-1]) clamp = "above the last knot";
+  else { while (hi - lo > 1){ const m = (lo+hi) >> 1; if (xs[m] <= uncal) lo = m; else hi = m; } }
+
+  /* one field at a time reset to its median over the blocked pile, everything
+     else held. Not an attribution. A counterfactual, and labelled as one. */
+  const movers = [];
+  if (B.typical){
+    B.model.features.forEach((f, i) => {
+      const t = B.typical[f];
+      if (t === undefined || Math.abs(t - x[i]) < 1e-12) return;
+      const y = x.slice(); y[i] = t;
+      const dd = calibrate(rawScore(y)) - p;
+      if (Math.abs(dd) > 1e-9) movers.push({ f, from:x[i], to:t, d:dd });
+    });
+    movers.sort((a,b) => Math.abs(b.d) - Math.abs(a.d));
+  }
+
+  const amount = Number(o.amount_inr != null ? o.amount_inr
+                        : (o.amount != null ? o.amount / 100 : 0)) || 0;
+  const orders = Number(o.network_orders_prior || 0);
+  const tenure = Number(o.network_tenure_days || 0);
+  const d = decide(p, amount, orders, tenure);
+  const big = amount >= B.stepup_floor_inr;
+
+  /* the policy ladder: every rung, evaluated whether or not it fired */
+  const rungs = [
+    { t:`p_bad > ${B.uphold_floor}`, hit:p > B.uphold_floor, out:"UPHOLD",
+      saw:`p_bad = ${p.toFixed(4)}`,
+      why:"Confidently bad. Nothing else needs checking, because upholding a block needs no exculpatory evidence." },
+    { t:"evidence gate fails", hit:!d.sufficient, out:big ? "STEP_UP" : "ESCALATE",
+      saw:d.sufficient ? "gate passed" : d.gate.join(", "),
+      why:"Too little record to act on. Big enough to be worth asking a question, otherwise a person reads it." },
+    { t:`EV > 0 and p_bad < ${B.cap}`, hit:d.ev > 0 && p < B.cap, out:"OVERTURN",
+      saw:`EV = ${d.ev >= 0 ? "+" : ""}${n0(d.ev)}, p_bad = ${p.toFixed(4)}`,
+      why:"Releasing is worth money, and the model is confident enough for that price to mean something." },
+    { t:"otherwise", hit:true, out:big ? "STEP_UP" : "UPHOLD",
+      saw:`amount ${big ? "at or above" : "below"} ${n0(B.stepup_floor_inr)}`,
+      why:"Ambiguous. Worth a verification exchange if the money justifies one, otherwise the block stands." },
+  ];
+  const fired = rungs.findIndex(r => r.hit);
+  rungs.forEach((r, i) => { r.reached = i <= fired; r.fired = i === fired; });
+
+  return { x, missing, paths, logit, uncal, p, iso:{ lo, hi, clamp }, movers,
+           amount, orders, tenure, d, rungs, big };
+}
+
+/* ---- rendering one field ------------------------------------------------- */
+function fieldHTML(d, v){
+  const id = "fld_" + d.f;
+  const warn = (d.lo !== undefined && (v < d.lo || v > d.hi))
+    ? `<span class="tag warn" title="outside the range present in the holdout">outside range</span>` : "";
+  let ctrl;
+  if (d.kind === "flag")
+    ctrl = `<label class="sw"><input type="checkbox" id="${id}" data-f="${d.f}"${
+      Number(v) ? " checked" : ""}><span>${Number(v) ? "yes" : "no"}</span></label>`;
+  else if (d.kind === "pick")
+    ctrl = `<select id="${id}" data-f="${d.f}">${d.opts.map(o =>
+      `<option${o === v ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+  else if (d.kind === "text")
+    ctrl = `<input type="text" id="${id}" data-f="${d.f}" value="${esc(v == null ? "" : v)}">`;
+  else if (d.kind === "money")
+    ctrl = `<div class="money"><span>Rs</span><input type="number" id="${id}" data-f="${d.f}"
+      value="${v}" step="100" min="0"></div>`;
+  else
+    ctrl = `<input type="number" id="${id}" data-f="${d.f}" value="${v}"
+      step="${d.kind === "rate" ? "0.01" : d.step || 1}"${
+      d.kind === "rate" ? ` min="0" max="1"` : d.kind === "count" ? ` min="0"` : ""}>`;
+  return `<div class="f">
+    <label for="${id}"><span class="fl">${esc(d.label)}${d.unit ? ` <i>${d.unit}</i>` : ""}</span>
+    <span class="fk">${esc(d.f)}</span></label>
+    <div class="fc">${ctrl}${warn}</div></div>`;
+}
+
+/* ---- the output --------------------------------------------------------- */
+/* The output is a pure function of the case so service/check_agent.js can run
+   it over every scenario and read the HTML. run() below only moves it into the
+   DOM: anything that renders wrong renders wrong here too, where it is checked. */
+/* A comparison is arithmetic, so print the number. fmt() turns a flag into
+   yes/no, which reads as nonsense beside "<= 0.00". LightGBM's sentinel
+   threshold for "is this zero" is 1e-35, which rounds to 0.00 and then looks
+   like a value sitting exactly on its own split. */
+function num(v){
+  const n = +v;
+  if (n !== 0 && Math.abs(n) < 0.005) return n > 0 ? "0.00+" : "-0.00";
+  return Number.isInteger(n) ? String(n) : n.toFixed(Math.abs(n) >= 1000 ? 2 : 3);
+}
+function fmt(f, v){
+  const d = FBY[f];
+  if (!d) return Number.isInteger(v) ? v : (+v).toFixed(3);
+  if (d.kind === "flag") return v ? "yes" : "no";
+  if (d.kind === "rate") return (+v).toFixed(3);
+  return Number.isInteger(+v) ? String(+v) : (+v).toFixed(2);
+}
+function verdictHTML(cur, last){
+  const r = trace(cur), p = r.p, d = r.d;
+  const ceil = B.margin / (1 + B.margin);
+  const known = B.model.features.length - r.missing.length;
+  const changed = last !== null && Math.abs(last - p) > 1e-12;
+  const delta = changed
+    ? `<span class="tag ${p > last ? "bad" : "good"}">${p > last ? "+" : ""}${
+        (p - last).toFixed(4)} from the last run</span>` : "";
+  last = p;
+
+  const step = (n, title, body, note) => `<div class="step">
+    <div class="sn">${n}</div>
+    <div class="sb"><h5>${title}</h5>${body}
+    ${note ? `<p class="note" style="margin:7px 0 0">${note}</p>` : ""}</div></div>`;
+
+  return { p, html:`
+  <div class="card verdict ${TONE[d.action]}">
+    <h4>Verdict <span style="flex:1"></span>
+      <span style="font:12.5px ui-monospace,Menlo,monospace;text-transform:none;
+        letter-spacing:0">${esc(cur.payment_id || "unnamed")}</span></h4>
+    <div class="b">
+      <div class="vhead">
+        <span class="va ${TONE[d.action]}">${d.action}</span>
+        <span class="vw">${esc({
+          OVERTURN:"release it, the block was wrong",
+          UPHOLD:"the block stands",
+          STEP_UP:"ask the customer one question first",
+          ESCALATE:"hand it to a reviewer with a brief" }[d.action])}</span>
       </div>
-      <textarea id="inp" spellcheck="false" aria-label="Transaction JSON"></textarea>
-      <div class="chips" style="margin-top:11px">
-        <button class="btn go" id="run">Adjudicate</button>
-        <span class="sub" id="hint"></span>
+      <div class="grid tiles" style="gap:11px;margin-top:13px">
+        <div class="tile" style="padding:11px 13px"><span class="k">p(block was correct)</span>
+          <span class="v" style="font-size:22px">${p.toFixed(4)}</span>
+          <span class="s">${delta || `cap ${B.cap}`}</span></div>
+        <div class="tile" style="padding:11px 13px"><span class="k">EV of releasing</span>
+          <span class="v" style="font-size:22px;color:${d.ev > 0 ? C.good : C.bad}"
+            >${d.ev >= 0 ? "+" : ""}${cr(d.ev)}</span>
+          <span class="s">on ${cr(r.amount)} at ${pct(B.margin,0)} margin</span></div>
+        <div class="tile" style="padding:11px 13px"><span class="k">Evidence gate</span>
+          <span class="v" style="font-size:22px;color:${d.sufficient ? C.good : C.warn}"
+            >${d.sufficient ? "pass" : "thin"}</span>
+          <span class="s">${r.orders} orders, ${r.tenure} days</span></div>
       </div>
-    </div></div>
-    <div id="out"></div>
+      ${r.missing.length ? `<div class="note-box w" style="margin:14px 0 0">
+        <p style="margin:0"><b>${r.missing.length} field${r.missing.length > 1 ? "s" : ""}
+        missing, treated as zero:</b> ${r.missing.map(esc).join(", ")}. What you see
+        is what the model makes of that, not of the real order.</p></div>` : ""}
+    </div>
   </div>
 
-  <h3>What it needs</h3>
-  <p class="note">Any missing field is treated as zero and listed in the output, so
-  a partial paste still runs but tells you what it had to assume.
-  <code>amount_inr</code> drives the expected-value arithmetic; the
-  ${B.model.features.length} model features are below.</p>
-  <div class="card"><div class="b scroll"><table>
-    <thead><tr><th>Field</th><th>Block</th><th class="r">Gain</th></tr></thead>
-    <tbody>${B.model.features.map(f => `<tr><td>${esc(f)}</td>
-      <td><span class="tag ${f.startsWith("network_") ? "blue" : "neut"}">${
-        f.startsWith("network_") ? "network" : "local"}</span></td>
-      <td class="r">${impMap[f] !== undefined ? impMap[f].toFixed(3) : "0.000"}</td>
-      </tr>`).join("")}</tbody></table></div></div>`;
+  <h3>How it got there</h3>
+  <div class="steps">
+    ${step(1, "Read the order",
+      `<p class="note" style="margin:0">${known} of ${B.model.features.length}
+       model features present${r.missing.length ? `, ${r.missing.length} assumed zero` : ""}.
+       <code>amount</code> = ${n0(r.amount * 100)} paise, from ${cr(r.amount)}.</p>`,
+      "Nothing about the outcome is in here. The answer key is quarantined behind a test suite and the model has never been shown it for this case.")}
+
+    ${step(2, `Walk ${B.model.n_trees} trees`,
+      `<pre>${r.paths.map((pp, i) =>
+        `<span class="c">tree ${i}</span>\n` + pp.steps.map(s =>
+          `  ${esc(s.f).padEnd(30)} ${num(s.v).padStart(9)} ${
+            s.left ? "&lt;=" : "&nbsp;&gt;"} ${num(s.thr).padStart(9)}  <span class="c">${
+            s.left ? "left" : "right"}</span>`).join("\n") +
+        `\n  <span class="k">leaf ${pp.leaf >= 0 ? "+" : ""}${pp.leaf.toFixed(4)}</span>`
+        ).join("\n")}
+<span class="c">... ${B.model.n_trees - 3} more trees</span>
+
+sum of leaves   <span class="k">${r.logit >= 0 ? "+" : ""}${r.logit.toFixed(4)}</span>
+sigmoid         <span class="k">${r.uncal.toFixed(6)}</span>  <span class="c">uncalibrated</span></pre>`,
+      "Three of the trees shown in full, with the branch actually taken at every split. The other " + (B.model.n_trees - 3) + " work the same way.")}
+
+    ${r.movers.length ? step(3, "What moved it",
+      `<div class="movers">${r.movers.slice(0, 6).map(m => {
+        const w = Math.min(100, 100 * Math.abs(m.d) / Math.abs(r.movers[0].d));
+        return `<div class="mv"><span class="mf">${esc(m.f)}</span>
+          <span class="mn">${fmt(m.f, m.from)} <i>&rarr;</i> ${fmt(m.f, m.to)}</span>
+          <span class="mt"><span class="mb ${m.d > 0 ? "up" : "dn"}"
+            style="width:${w}%"></span></span>
+          <span class="md ${m.d > 0 ? "r" : "g"}">${m.d > 0 ? "+" : ""}${m.d.toFixed(4)}</span>
+          </div>`; }).join("")}</div>`,
+      "Each row is this case re-scored with that one field set to its median over the blocked pile and everything else held. A counterfactual, not an attribution: the fields interact, so these do not sum to the score.") : ""}
+
+    ${step(r.movers.length ? 4 : 3, "Calibrate",
+      `<pre>raw     ${r.uncal.toFixed(6)}
+${r.iso.clamp
+  ? `        <span class="c">${r.iso.clamp}, clamped to the end value</span>`
+  : `bracket [${B.model.iso_x[r.iso.lo].toFixed(6)}, ${B.model.iso_x[r.iso.hi].toFixed(6)}]
+    <span class="c">-&gt; [${B.model.iso_y[r.iso.lo].toFixed(4)}, ${B.model.iso_y[r.iso.hi].toFixed(4)}]</span>`}
+p_bad   <span class="k">${p.toFixed(4)}</span></pre>`,
+      `A tree ensemble's raw output is a ranking, not a probability, and the arithmetic below needs a probability. Isotonic regression fitted on a chronological slice before the holdout supplies one. It has ${B.model.iso_x.length} knots, so p lands on one of ${new Set(B.model.iso_y).size} steps rather than moving smoothly.`)}
+
+    ${step(r.movers.length ? 5 : 4, "Check the evidence gate",
+      `<pre>orders  ${String(r.orders).padStart(6)} ${r.orders < B.min_orders
+        ? `<span class="r">&lt; ${B.min_orders}</span>  needs ${B.min_orders}`
+        : `<span class="g">&gt;= ${B.min_orders}</span>`}
+tenure  ${String(r.tenure).padStart(6)} ${r.tenure < B.min_tenure_days
+        ? `<span class="r">&lt; ${B.min_tenure_days}</span>  needs ${B.min_tenure_days} days`
+        : `<span class="g">&gt;= ${B.min_tenure_days}</span>`}
+gate    <span class="${d.sufficient ? "g" : "r"}">${d.sufficient ? "pass" : "thin"}</span></pre>`,
+      "Separate from the score on purpose. A confident number computed from an empty file is still a number computed from an empty file, and this is the test that says so out loud.")}
+
+    ${step(r.movers.length ? 6 : 5, "Price it",
+      `<pre><span class="c"># releasing pays only while p &lt; m/(1+m) = ${ceil.toFixed(2)}</span>
+EV = (1 - p) &middot; m &middot; A  -  p &middot; (A + f)
+   = (1 - ${p.toFixed(4)}) &middot; ${B.margin} &middot; ${n0(r.amount)}  -  ${p.toFixed(4)} &middot; (${n0(r.amount)} + ${n0(B.dispute_overhead_inr)})
+   = <span class="${d.ev > 0 ? "g" : "r"}">${d.ev >= 0 ? "+" : ""}${n0(d.ev)}</span></pre>`,
+      "You earn margin on a good order and lose the whole basket plus a dispute fee on a bad one. That asymmetry, not the score, is what makes the ceiling 0.20 rather than 0.50.")}
+
+    ${step(r.movers.length ? 7 : 6, "Walk the policy ladder",
+      `<div class="ladder">${r.rungs.map((rg, i) => `<div class="rung${
+        rg.fired ? " fired" : rg.reached ? "" : " skip"}">
+        <span class="ri">${rg.fired ? "&#9656;" : rg.reached ? "&times;" : ""}</span>
+        <div><span class="rt">${esc(rg.t)}</span>
+          <span class="rs">${esc(rg.saw)}</span>
+          ${rg.fired ? `<p class="note" style="margin:5px 0 0">${esc(rg.why)}</p>` : ""}
+        </div>
+        <span class="tag ${rg.fired ? TONE[rg.out] : "neut"}">${rg.out}</span>
+        </div>`).join("")}</div>`,
+      "Four rungs, tested top to bottom, first match wins. This is the whole decision: no model output reaches it except the one number, and no language model touches it at all.")}
+  </div>
+
+  <div class="note-box" style="margin:16px 0 0"><p style="margin:0">
+    <b>The model did not decide this.</b> It produced ${p.toFixed(4)}. The action
+    came from the ladder above, which is arithmetic. A language model writes the
+    note the customer and the reviewer read, and three tests stop it doing anything
+    else: the tools it can reach take no free text, the extraction schema has no
+    field for a decision, and the verdict is handed a decision already made.</p></div>` };
+}
+
+PAGES.push({ id:"agent", nav:"Run the agent", sub:"one order, and how it was decided",
+  render(){ return `
+  <h2>Adjudicate one order</h2>
+  <p class="lede">Pick a case or edit any field. This runs the real model: the
+  ${B.model.n_trees} fitted trees and the isotonic calibrator were exported from
+  Python, and the exporter refuses to write them out unless this JavaScript
+  reproduces the Python probability on all ${n0(O.n_cases)} holdout cases.
+  Nothing here is a lookup table.</p>
+
+  <div class="pick">
+    <div class="pickrow"><span class="pl">Written for the demo</span>
+      ${WRITTEN.map((s,i) => `<button class="chip s" data-w="${i}">
+        <span class="dot ${s.tone}"></span>${esc(s.chip)}</button>`).join("")}
+    </div>
+    <div class="pickrow"><span class="pl">Real holdout cases</span>
+      ${B.samples.map((s,i) => `<button class="chip s" data-s="${i}"
+        title="${esc(s.role)}">${esc(s.json.payment_id.slice(4, 12))}</button>`).join("")}
+    </div>
+  </div>
+  <div id="story"></div>
+
+  <div class="grid io" style="margin-top:16px">
+    <div class="card" id="incard">
+      <h4>The case
+        <span style="flex:1"></span>
+        <span class="tabs"><button class="tb sel" data-tab="fields">Fields</button
+          ><button class="tb" data-tab="json">JSON</button></span>
+      </h4>
+      <div class="b">
+        <div id="tab-fields">
+          ${GROUPS.map(g => `<div class="fg">
+            <h5>${esc(g.title)}</h5><p class="note">${esc(g.note)}</p>
+            <div class="fields" data-g="${g.key}"></div></div>`).join("")}
+        </div>
+        <div id="tab-json" hidden>
+          <textarea id="inp" spellcheck="false" aria-label="Transaction JSON"></textarea>
+          <p class="note" style="margin:8px 0 0">Any field you leave out is treated as
+          zero and listed in the output. <code>amount</code> is in paise and is derived
+          from <code>amount_inr</code> if you omit it.</p>
+        </div>
+        <div class="chips" style="margin-top:13px">
+          <button class="btn go" id="run">Adjudicate</button>
+          <button class="btn" id="reset">Reset</button>
+          <span class="sub" id="hint"></span>
+        </div>
+      </div>
+    </div>
+    <div id="out"></div>
+  </div>`;
   },
   after(){
-    const inp = document.getElementById("inp"), out = document.getElementById("out");
-    const hint = document.getElementById("hint");
-    function load(i){
-      inp.value = JSON.stringify(B.samples[i].json, null, 2);
-      hint.textContent = B.samples[i].role; run();
-    }
-    function blank(){
-      const o = { payment_id:"pay_example", merchant:"Aurum Jewels", amount_inr:250000 };
-      B.model.features.forEach(f => { if (f !== "amount") o[f] = 0; });
-      o.network_orders_prior = 40; o.network_tenure_days = 900;
-      o.network_clean_rate = 0.95; o.network_merchants_prior = 3;
-      inp.value = JSON.stringify(o, null, 2);
-      hint.textContent = "edit any field and adjudicate again"; run();
-    }
-    document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => load(+b.dataset.s));
-    document.querySelector("[data-blank]").onclick = blank;
-    document.getElementById("run").onclick = run;
-    inp.addEventListener("keydown", e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(); });
+    const out = document.getElementById("out"), hint = document.getElementById("hint");
+    const inp = document.getElementById("inp"), story = document.getElementById("story");
+    let cur = {}, last = null;
 
-    function run(){
-      let o;
-      try { o = JSON.parse(inp.value); }
+    /* ---- the two views of one object ------------------------------------- */
+    function paintFields(){
+      GROUPS.forEach(g => {
+        const host = document.querySelector(`.fields[data-g="${g.key}"]`);
+        host.innerHTML = FIELDS.filter(d => d.g === g.key)
+          .map(d => fieldHTML(d, cur[d.f] !== undefined ? cur[d.f]
+            : (d.kind === "text" || d.kind === "pick" ? "" : 0))).join("");
+      });
+      host_wire();
+    }
+    function host_wire(){
+      document.querySelectorAll("[data-f]").forEach(el => {
+        el.oninput = () => {
+          const d = FBY[el.dataset.f];
+          cur[d.f] = d.kind === "flag" ? (el.checked ? 1 : 0)
+            : (d.kind === "text" || d.kind === "pick") ? el.value : Number(el.value);
+          if (d.f === "amount_inr") cur.amount = Number(el.value) * 100;
+          if (d.kind === "flag") el.parentNode.querySelector("span").textContent =
+            el.checked ? "yes" : "no";
+          syncJSON(); run();
+        };
+      });
+    }
+    const syncJSON = () => { inp.value = JSON.stringify(cur, null, 2); };
+    function readJSON(){
+      try { cur = JSON.parse(inp.value); }
       catch (e){
         out.innerHTML = `<div class="card"><div class="b">
           <span class="tag bad">cannot read the JSON</span>
-          <p class="note" style="margin:10px 0 0">${esc(e.message)}. Fix the syntax
-          and adjudicate again, or load one of the samples.</p></div></div>`;
-        return;
+          <p class="note" style="margin:10px 0 0">${esc(e.message)}. Fix the syntax, or
+          switch back to Fields.</p></div></div>`;
+        return false;
       }
-      const { x, missing } = vectorise(o);
-      const raw = rawScore(x), p = calibrate(raw);
-      const amount = Number(o.amount_inr ?? o.amount ?? 0);
-      const orders = Number(o.network_orders_prior ?? 0);
-      const tenure = Number(o.network_tenure_days ?? 0);
-      const d = decide(p, amount, orders, tenure);
-      const sample = B.samples.find(s => s.json.payment_id === o.payment_id);
-      const ceil = B.margin / (1 + B.margin);
-
-      out.innerHTML = `
-      <div class="card">
-        <h4><span class="tag ${TONE[d.action]}">${d.action}</span>
-          <span style="font:12.5px ui-monospace,Menlo,monospace;text-transform:none;
-            letter-spacing:0">${esc(o.payment_id || "unnamed")}</span>
-          <span style="flex:1"></span>
-          <span class="num" style="text-transform:none;letter-spacing:0">${cr(amount)}</span></h4>
-        <div class="b">
-          <div class="grid tiles" style="gap:11px">
-            <div class="tile" style="padding:11px 13px"><span class="k">p(block was correct)</span>
-              <span class="v" style="font-size:22px">${p.toFixed(4)}</span>
-              <span class="s">uncalibrated ${raw.toFixed(4)}</span></div>
-            <div class="tile" style="padding:11px 13px"><span class="k">EV of releasing</span>
-              <span class="v" style="font-size:22px;color:${d.ev > 0 ? C.good : C.bad}"
-                >${d.ev >= 0 ? "+" : ""}${cr(d.ev)}</span>
-              <span class="s">at ${pct(B.margin,0)} margin</span></div>
-            <div class="tile" style="padding:11px 13px"><span class="k">Evidence gate</span>
-              <span class="v" style="font-size:22px;color:${d.sufficient ? C.good : C.warn}"
-                >${d.sufficient ? "pass" : "thin"}</span>
-              <span class="s">${orders} orders, ${tenure} days</span></div>
-          </div>
-
-          <h3 style="margin:19px 0 9px">The arithmetic</h3>
-          <pre><span class="c"># releasing is worth money only while p &lt; m/(1+m) = ${ceil.toFixed(2)}</span>
-EV = (1 - p) &middot; m &middot; A  -  p &middot; (A + f)
-   = (1 - ${p.toFixed(4)}) &middot; ${B.margin} &middot; ${n0(amount)}  -  ${p.toFixed(4)} &middot; (${n0(amount)} + ${n0(B.dispute_overhead_inr)})
-   = <span class="${d.ev > 0 ? "g" : "r"}">${d.ev >= 0 ? "+" : ""}${n0(d.ev)}</span>
-
-cap        ${B.cap}     <span class="c">the shipped operating point</span>
-p_bad      ${p.toFixed(4)}${p < B.cap ? '  <span class="g">under cap</span>' : '  <span class="r">over cap</span>'}
-action     <span class="${d.action === "OVERTURN" ? "g" : d.action === "UPHOLD" ? "r" : "k"}">${d.action}</span></pre>
-
-          <h3 style="margin:19px 0 9px">Why</h3>
-          <div class="chips">${d.reasons.map(r =>
-            `<span class="chip flat">${esc(r)}</span>`).join("")}</div>
-
-          ${missing.length ? `<div class="note-box w" style="margin:15px 0 0">
-            <p style="margin:0"><b>${missing.length} field${missing.length>1?"s":""}
-            missing, treated as zero:</b> ${missing.map(esc).join(", ")}. The result
-            above is what the model makes of that, not of the real order.</p></div>` : ""}
-
-          ${sample ? `<div class="note-box" style="margin:15px 0 0">
-            <p style="margin:0 0 6px"><b>${esc(sample.role)}.</b> ${esc(sample.why)}</p>
-            <p class="note" style="margin:0">Answer key for this one:
-            <b style="color:${sample.truth === "clean" ? C.good : C.bad}">${
-              esc(sample.truth)}</b>, persona <code>${esc(sample.persona)}</code>.
-            The decision above was made without it.</p></div>` : ""}
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:14px"><h4>Evidence the decision used</h4>
-        <div class="b scroll"><table>
-          <thead><tr><th>Feature</th><th class="r">Value</th><th>Block</th></tr></thead>
-          <tbody>${B.model.features.map((f,i) => {
-            const miss = missing.includes(f);
-            const dim = miss ? `color:${C.faint}` : "";
-            return `<tr><td style="${dim}">${esc(f)}</td>
-              <td class="r" style="${dim}">${
-                Number.isInteger(x[i]) ? x[i] : x[i].toFixed(3)}${
-                miss ? ' <span class="tag neut">assumed</span>' : ""}</td>
-              <td><span class="tag ${f.startsWith("network_") ? "blue" : "neut"}">${
-                f.startsWith("network_") ? "network" : "local"}</span></td></tr>`;
-          }).join("")}</tbody></table></div>
-      </div>`;
+      return true;
     }
-    load(0);
+
+    /* ---- loading a case --------------------------------------------------- */
+    function load(json, note){
+      cur = JSON.parse(JSON.stringify(json));
+      if (cur.amount == null && cur.amount_inr != null) cur.amount = cur.amount_inr * 100;
+      story.innerHTML = note || "";
+      paintFields(); syncJSON(); run();
+    }
+    document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => {
+      const s = WRITTEN[+b.dataset.w];
+      hint.textContent = "written for the demo, not a holdout case";
+      load(s.json, `<div class="note-box" style="margin:14px 0 0">
+        <p style="margin:0"><b>${esc(s.chip)}.</b> ${esc(s.story)}</p></div>`);
+    });
+    document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+      const s = B.samples[+b.dataset.s];
+      hint.textContent = "a real holdout case, with an answer key";
+      load(s.json, `<div class="note-box" style="margin:14px 0 0">
+        <p style="margin:0 0 6px"><b>${esc(s.role)}.</b> ${esc(s.why)}</p>
+        <p class="note" style="margin:0">Answer key:
+        <b style="color:${s.truth === "clean" ? C.good : C.bad}">${esc(s.truth)}</b>,
+        persona <code>${esc(s.persona)}</code>. The decision below was made without it.</p>
+        </div>`);
+    });
+    document.getElementById("reset").onclick = () =>
+      document.querySelector("[data-w='0']").click();
+
+    document.querySelectorAll(".tb").forEach(b => b.onclick = () => {
+      const json = b.dataset.tab === "json";
+      if (!json && !readJSON()) return;
+      if (!json) paintFields();
+      document.querySelectorAll(".tb").forEach(t => t.classList.toggle("sel", t === b));
+      document.getElementById("tab-fields").hidden = json;
+      document.getElementById("tab-json").hidden = !json;
+      if (json) syncJSON();
+    });
+    document.getElementById("run").onclick = () => {
+      if (!document.getElementById("tab-json").hidden && !readJSON()) return;
+      run();
+    };
+    inp.addEventListener("keydown", e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter"){ if (readJSON()) run(); } });
+
+    function run(){
+      const v = verdictHTML(cur, last);
+      last = v.p; out.innerHTML = v.html;
+    }
+
+    document.querySelector("[data-w='0']").click();
   }});
 
 /* ----------------------------------------------------- 4. operating point --- */
@@ -1049,7 +1490,9 @@ document.getElementById("hsub").innerHTML =
    <b>${pct(O.recall)}</b> &middot; fraud admitted <b>${cr(O.admitted)}</b>
    &middot; ${esc(B.model.learner)}, ${B.model.n_trees} trees`;
 
+let at = -1;
 function go(i){
+  at = i;
   nav.querySelectorAll(".row").forEach((b,j) => b.classList.toggle("sel", j === i));
   const p = PAGES[i];
   mainEl.innerHTML = p.render();
@@ -1060,5 +1503,9 @@ function go(i){
 }
 nav.addEventListener("click", e => {
   const b = e.target.closest(".row"); if (b) go(+b.dataset.p); });
-go(Math.max(0, PAGES.findIndex(p => "#" + p.id === location.hash)));
+/* go() writes the hash, so read it back too: without this the address bar and
+   the back button were decorative and a deep link only worked on a cold load. */
+const fromHash = () => Math.max(0, PAGES.findIndex(p => "#" + p.id === location.hash));
+addEventListener("hashchange", () => { const i = fromHash(); if (i !== at) go(i); });
+go(fromHash());
 </script>

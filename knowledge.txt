@@ -61,14 +61,27 @@ run it once before anything else works.
    `python run.py console` and opening artifacts/dashboard.html straight off
    disk works too if you would rather not run a server.
 
-   The agent page is the one to show. Paste a transaction JSON, or click one of
-   the six samples, and it returns the probability, the expected-value
-   arithmetic line by line, the action, and the reasons. It runs the real
-   model: the 300 fitted trees and the isotonic calibrator are exported into
-   the page and evaluated in JavaScript. The exporter refuses to write unless
-   that reproduces Python on all 1,775 holdout cases, and a separate check
-   pulls the functions out of the built HTML and runs them against every case.
-   Worst disagreement is 5e-15 and all 1,775 actions match the backtest.
+   The agent page is the one to show. Pick a case, edit any field, hit
+   Adjudicate. Three written scenarios sit in front of the six real holdout
+   cases: one that gets released, one that stays blocked, one it refuses to
+   judge. Every field is editable as a labelled control or as raw JSON, and the
+   two views stay in sync.
+
+   What comes back is the verdict and then how it got there, in seven steps:
+   the fields it read, three of the 300 trees walked in full with the branch
+   taken at every split, what one field at a time would have done to the score,
+   the isotonic bracket the raw score landed in, the evidence gate, the
+   expected-value line, and the four-rung policy ladder with every rung
+   evaluated and the one that fired marked. The point of the last step is that
+   the action is arithmetic: the model contributes one number to it.
+
+   It runs the real model. The 300 fitted trees and the isotonic calibrator are
+   exported into the page and evaluated in JavaScript. The exporter refuses to
+   write unless that reproduces Python on all 1,775 holdout cases, and a
+   separate check pulls the functions out of the built HTML and runs them
+   against every case. Worst disagreement is 5e-15 and all 1,775 actions match
+   the backtest. `node service/check_agent.js` drives the decision path over
+   every case the page can load and reads the HTML back.
 
    The operating point page has the cap slider. Drag it and watch recovery,
    fraud admitted and contribution move together. That is the trade curve, and
@@ -137,7 +150,7 @@ run it once before anything else works.
 
 7. THE DRY RUN. Do this before any recording.
 
-       python run.py dry           # 13 checks, network cut, about 40s
+       python run.py dry           # 14 checks, network cut, about 40s
 
    It blocks the socket module and then does everything the demo does: checks
    the generated doc blocks are current, runs the suite, fits the model, picks
