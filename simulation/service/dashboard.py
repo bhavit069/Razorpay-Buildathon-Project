@@ -11,8 +11,6 @@ from __future__ import annotations
 import json
 import os
 
-from . import export_bundle
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "dashboard_template.html")
 OUT = os.path.join("artifacts", "dashboard.html")
@@ -20,7 +18,12 @@ BUNDLE = os.path.join("artifacts", "bundle.json")
 
 
 def build(out: str = OUT, data_dir: str = "data300k", rebuild: bool = True) -> str:
+    # Imported here, not at module scope: re-exporting the bundle needs
+    # LightGBM, but rewriting the page around an existing bundle does not, and
+    # a template change should not be blocked by the ML stack being
+    # unavailable.
     if rebuild or not os.path.exists(BUNDLE):
+        from . import export_bundle
         export_bundle.build(data_dir=data_dir, out=BUNDLE)
 
     with open(BUNDLE, encoding="utf-8") as fh:

@@ -147,7 +147,7 @@ def test_case_room_contains_every_showcase_case(store, vault, model, data_dir):
     assert all(c["roles"] for c in got[:len(want)])
 
 
-def test_recorded_model_verdicts_reach_the_demo(data_dir):
+def test_recorded_model_verdicts_reach_the_demo(needs_model, data_dir):
     """Whatever is in the replay cache should show up as model output on the
     screen. If this drops to zero the demo is all templates again."""
     from service.case_room import collect
@@ -155,11 +155,12 @@ def test_recorded_model_verdicts_reach_the_demo(data_dir):
     assert any(c["verdict_source"] == "cache" for c in got)
 
 
-def test_every_rendered_case_declares_its_provenance(data_dir):
+def test_every_rendered_case_declares_its_provenance(needs_model, data_dir):
     """Item 3 of the review: a screenshot must not imply model output that is
     not there. Every case on the page carries a provenance string, and the
     model/template split is stated in the header, not buried."""
     import re
+
     from service.case_room import build
     out = build(out="artifacts/_provenance_check.html", data_dir=data_dir, limit=12)
     html = open(out, encoding="utf-8").read()
@@ -179,7 +180,7 @@ def test_every_rendered_case_declares_its_provenance(data_dir):
 # ---------------------------------------------------------------------------
 # The browser console
 # ---------------------------------------------------------------------------
-def test_exported_model_reproduces_the_fitted_one(data_dir, tmp_path):
+def test_exported_model_reproduces_the_fitted_one(needs_model, data_dir, tmp_path):
     """The agent page runs the exported trees. If they drift from the fitted
     model the page is confidently wrong, which is worse than being broken, so
     the exporter refuses to write and this asserts it stays that way."""
@@ -200,7 +201,11 @@ def test_console_is_self_contained(data_dir, tmp_path):
     """It has to open from disk with the network unplugged, like the case room."""
     import re
     from service.dashboard import build
-    out = build(out=str(tmp_path / "dashboard.html"), data_dir=data_dir)
+    # rebuild=False: this checks how the page is assembled, which does not need
+    # the model re-exported, and re-exporting drags in a native library that is
+    # not always loadable.
+    out = build(out=str(tmp_path / "dashboard.html"), data_dir=data_dir,
+                rebuild=not os.path.exists(os.path.join("artifacts", "bundle.json")))
     html = open(out, encoding="utf-8").read()
     assert "__BUNDLE__" not in html
     refs = re.findall(r'(?:src|href)="((?:https?:)?//[^"]+)', html)
@@ -248,3 +253,21 @@ def test_local_server_serves_every_route(data_dir):
     finally:
         httpd.shutdown()
         httpd.server_close()
+
+
+def test_console_layout_is_responsive():
+    """The layout shipped with a hardcoded 61px header height, a two-column
+    grid that could not collapse below 630px, and a 960px diagram with no
+    scroll container. This audit finds five problems on that version and none
+    on this one."""
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node not on PATH")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if not os.path.exists(os.path.join(root, "artifacts", "dashboard.html")):
+        pytest.skip("no built console; run `python run.py console`")
+    r = subprocess.run([node, "service/check_responsive.js"], cwd=root,
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout

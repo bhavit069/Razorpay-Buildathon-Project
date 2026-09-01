@@ -16,18 +16,24 @@
 --good:#1a7f4b;--bad:#b3261e;--warn:#a16207;--accent:#2b4c7e;
 --soft:#f4f2ef;--sel:#eef2f8;--faint:#b6b2ab}
 *{box-sizing:border-box}
-html,body{height:100%}
+/* The shell is a flex column rather than three boxes each subtracting a
+   hardcoded header height. The header wraps to two or three lines on a narrow
+   window, and calc(100vh - 61px) then left the panes taller than the space,
+   which produced a page scrollbar next to an inner one and cut the bottom off
+   every page. dvh, not vh, so mobile browser chrome does not do the same. */
+html{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);
-font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif}
+font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif;
+display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-header{padding:18px 24px;border-bottom:1px solid var(--line);background:var(--card);
-display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+header{flex:none;padding:18px 24px;border-bottom:1px solid var(--line);
+background:var(--card);display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
 h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.01em}
 .sub{color:var(--mut);font-size:13px}
-.wrap{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 61px)}
+.wrap{flex:1;min-height:0;display:grid;grid-template-columns:236px minmax(0,1fr)}
 .list{border-right:1px solid var(--line);background:var(--card);
-overflow-y:auto;max-height:calc(100vh - 61px)}
+overflow-y:auto;min-height:0}
 .row{display:block;width:100%;text-align:left;font:inherit;color:inherit;
 padding:11px 14px;border:0;border-bottom:1px solid var(--line);
 border-left:3px solid transparent;background:none;cursor:pointer}
@@ -35,8 +41,8 @@ border-left:3px solid transparent;background:none;cursor:pointer}
 .row.sel{background:var(--sel);border-left-color:var(--accent)}
 .row .t{font-weight:600;font-size:13.5px}
 .row .d{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.4}
-main{padding:24px 28px 64px;overflow-y:auto;max-height:calc(100vh - 61px);
-max-width:1060px}
+main{padding:24px 28px 64px;overflow-y:auto;min-width:0;min-height:0}
+main>*{max-width:1060px}
 
 h2{margin:0;font-size:23px;font-weight:650;letter-spacing:-.02em;text-wrap:balance}
 .lede{color:var(--mut);font-size:15px;margin:8px 0 0;max-width:66ch}
@@ -52,8 +58,12 @@ font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);
 font-weight:650;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .card>.b{padding:14px 16px}
 .grid{display:grid;gap:14px}
-.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.tiles{grid-template-columns:repeat(auto-fit,minmax(176px,1fr))}
+.two{grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(min(176px,100%),1fr))}
+/* input beside output on the agent page. min(...,100%) so it collapses to one
+   column instead of forcing a 630px floor and scrolling the whole body. */
+.io{grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));
+align-items:start}
 
 .tile{background:var(--card);border:1px solid var(--line);border-radius:7px;
 padding:13px 15px}
@@ -122,6 +132,10 @@ font-size:12px}
 figure{margin:0}
 figcaption{font-size:13px;color:var(--mut);margin-top:9px;line-height:1.5;max-width:76ch}
 svg.chart{display:block;width:100%;height:auto}
+/* the wide pipeline diagram keeps its own width and scrolls, rather than
+   scaling its 11px labels down to something nobody can read on a phone */
+.wide{overflow-x:auto}
+.wide>svg{min-width:720px}
 .tip{position:fixed;pointer-events:none;background:#1a1a1a;color:#fff;
 border-radius:5px;padding:6px 9px;font-size:12px;z-index:50;opacity:0;
 transition:opacity .1s;font-variant-numeric:tabular-nums;max-width:250px;
@@ -135,16 +149,39 @@ border-left:3px solid var(--accent);border-radius:7px;padding:13px 16px;margin:1
 padding-top:12px;max-width:78ch}
 
 @media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
-@media(max-width:900px){
+
+/* the sidebar plus two 320px cards needs about 1000px; below that give the
+   cards the whole width before anything has to overflow */
+@media(max-width:1040px){
+  .wrap{grid-template-columns:196px minmax(0,1fr)}
+  main{padding:22px 20px 60px}
+}
+/* nav becomes a scrolling tab strip across the top */
+@media(max-width:820px){
+  body{height:auto;overflow:visible}
   .wrap{grid-template-columns:1fr}
-  .list{max-height:none;border-right:0;border-bottom:1px solid var(--line);
-    display:flex;overflow-x:auto}
-  .row{width:auto;white-space:nowrap;border-bottom:0;border-left:0;
-    border-bottom:3px solid transparent}
+  .list{border-right:0;border-bottom:1px solid var(--line);
+    display:flex;overflow-x:auto;overflow-y:hidden;
+    position:sticky;top:0;z-index:20;-webkit-overflow-scrolling:touch}
+  .row{flex:none;width:auto;white-space:nowrap;padding:10px 14px;
+    border-bottom:0;border-left:0;border-bottom:3px solid transparent}
   .row.sel{border-left:0;border-bottom-color:var(--accent)}
   .row .d{display:none}
-  main{max-height:none;padding:20px 16px 56px}
-  .bar-row{grid-template-columns:112px 1fr 86px}
+  main{overflow:visible;padding:20px 16px 56px}
+  header{padding:14px 16px;gap:10px}
+  .bar-row{grid-template-columns:minmax(88px,34%) 1fr auto}
+}
+@media(max-width:560px){
+  h2{font-size:20px}
+  .lede{font-size:14.5px}
+  .tile .v{font-size:21px}
+  .card>h4{padding:10px 13px}
+  .card>.b{padding:12px 13px}
+  th,td{padding:5px 8px}
+  .bar-row{grid-template-columns:minmax(76px,38%) 1fr auto;gap:8px;font-size:11.5px}
+  .bar-row .n{font-size:11px}
+  textarea{min-height:220px}
+  .foot,figcaption,p{max-width:none}
 }
 </style>
 
@@ -269,8 +306,10 @@ function svgLine(series, opts){
   const pts = series.map(d => `${X(d.x).toFixed(1)},${Y(d.y).toFixed(1)}`).join(" ");
   const area = `${X(x0).toFixed(1)},${Y(y0).toFixed(1)} ${pts} ${X(x1).toFixed(1)},${Y(y0).toFixed(1)}`;
   const id = "g" + Math.random().toString(36).slice(2, 8);
+  // no fixed pixel height: width:100% plus the viewBox scales it to whatever
+  // the card is, and an inline height would letterbox it instead.
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"
-      aria-label="${esc(opts.aria || "chart")}" style="height:${H}px">
+      preserveAspectRatio="xMidYMid meet" aria-label="${esc(opts.aria || "chart")}">
     <defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="${opts.color}" stop-opacity=".16"/>
       <stop offset="1" stop-color="${opts.color}" stop-opacity="0"/>
@@ -331,6 +370,7 @@ PAGES.push({ id:"flow", nav:"How it works", sub:"the pipeline, end to end",
   <h3>The pipeline</h3>
   <div class="card"><div class="b">
   <figure>
+    <div class="wide">
     <svg class="chart" viewBox="0 0 960 292" role="img"
       aria-label="A blocked order flows through evidence assembly, a calibrated
       model, and an expected-value rule that emits one of four actions. The
@@ -424,6 +464,7 @@ PAGES.push({ id:"flow", nav:"How it works", sub:"the pipeline, end to end",
       <line x1="620" y1="251" x2="514" y2="251" stroke="#6b6b6b" stroke-width="1.4"
         marker-end="url(#ar)"/>
     </svg>
+    </div>
     <figcaption>The model sits on the explanation path, not the decision path. It
     reads the action after the expected-value rule has already produced it, and
     all it emits is prose that then has every number checked against the
@@ -611,8 +652,7 @@ PAGES.push({ id:"agent", nav:"Run the agent", sub:"paste a transaction, get a de
   write them out unless this JavaScript reproduces the Python probability on all
   ${n0(O.n_cases)} holdout cases. Nothing here is a lookup or a guess.</p>
 
-  <div class="grid" style="grid-template-columns:minmax(300px,1fr) minmax(330px,1.1fr);
-       align-items:start;margin-top:20px">
+  <div class="grid io" style="margin-top:20px">
     <div class="card"><h4>Transaction JSON</h4><div class="b">
       <div class="chips" style="margin-bottom:10px">
         <span class="sub">Load</span>

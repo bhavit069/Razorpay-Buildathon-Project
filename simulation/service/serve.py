@@ -90,11 +90,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 def build_pages():
-    from . import case_room, dashboard
+    from . import dashboard
+    have_bundle = os.path.exists(os.path.join(ARTIFACTS, "bundle.json"))
     print("building the console")
-    dashboard.build(out=os.path.join("artifacts", "dashboard.html"))
+    try:
+        dashboard.build(out=os.path.join("artifacts", "dashboard.html"))
+    except Exception as e:
+        # Re-exporting the model needs LightGBM. If that is unavailable, still
+        # rebuild the page around the bundle already on disk rather than
+        # refusing to serve anything.
+        if not have_bundle:
+            raise
+        print(f"  could not re-export the model ({type(e).__name__}), "
+              f"rebuilding the page from the existing bundle")
+        dashboard.build(out=os.path.join("artifacts", "dashboard.html"),
+                        rebuild=False)
     if not os.path.exists(os.path.join(ARTIFACTS, "case_room.html")):
         print("building the case room")
+        from . import case_room
         case_room.build()
 
 

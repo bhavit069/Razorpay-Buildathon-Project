@@ -3,14 +3,20 @@
 :root{--bg:#faf9f7;--fg:#1a1a1a;--mut:#6b6b6b;--line:#e2e0dc;--card:#fff;
 --good:#1a7f4b;--bad:#b3261e;--warn:#a16207;--accent:#2b4c7e}
 *{box-sizing:border-box}
+/* Flex column rather than three panes each subtracting a guessed header
+   height. The header wraps to two or three lines on a narrow window, and
+   calc(100vh - 61px) then made the panes taller than the space, which put a
+   page scrollbar beside an inner one and cut off the bottom of the case. */
+html{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);
-font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif}
-header{padding:18px 24px;border-bottom:1px solid var(--line);background:var(--card);
-display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif;
+display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+header{flex:none;padding:18px 24px;border-bottom:1px solid var(--line);
+background:var(--card);display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
 h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.01em}
 .sub{color:var(--mut);font-size:13px}
-.wrap{display:grid;grid-template-columns:290px 1fr;min-height:calc(100vh - 61px)}
-.list{border-right:1px solid var(--line);overflow-y:auto;max-height:calc(100vh - 61px);
+.wrap{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr)}
+.list{border-right:1px solid var(--line);overflow-y:auto;min-height:0;
 background:var(--card)}
 .row{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:hover{background:#f4f2ef}
@@ -22,12 +28,13 @@ padding:1px 6px;border-radius:3px;font-weight:650}
 .good{background:#e6f4ec;color:var(--good)}.bad{background:#fbeae9;color:var(--bad)}
 .warn{background:#fdf4e3;color:var(--warn)}
 .role{font-size:11px;color:var(--accent);margin-top:2px}
-main{padding:24px 28px;overflow-y:auto;max-height:calc(100vh - 61px)}
+main{padding:24px 28px;overflow-y:auto;min-width:0;min-height:0}
 .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
 flex-wrap:wrap;margin-bottom:6px}
 .hd h2{margin:0;font-size:22px;letter-spacing:-.02em}
 .meta{color:var(--mut);font-size:13px;margin-bottom:18px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));
+gap:18px;margin:18px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:14px 16px}
 .card h3{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
 color:var(--mut);font-weight:650}
@@ -56,8 +63,23 @@ overflow-x:auto;font:12px ui-monospace,Menlo,monospace;margin:0}
 .chat div{margin-bottom:7px}.chat b{color:var(--accent)}
 .foot{color:var(--mut);font-size:12px;margin-top:22px;border-top:1px solid var(--line);
 padding-top:12px}
-@media(max-width:860px){.wrap{grid-template-columns:1fr}.cols{grid-template-columns:1fr}
-.list{max-height:220px}}
+@media(max-width:1000px){.wrap{grid-template-columns:236px minmax(0,1fr)}
+main{padding:20px 18px}}
+@media(max-width:860px){
+  body{height:auto;overflow:visible}
+  .wrap{grid-template-columns:1fr}
+  .list{border-right:0;border-bottom:1px solid var(--line);max-height:230px;
+    position:sticky;top:0;z-index:20}
+  main{overflow:visible;padding:20px 16px 48px}
+  header{padding:14px 16px;gap:10px}
+  .hd h2{font-size:19px}
+}
+@media(max-width:520px){
+  .hd h2{font-size:17px}
+  .card{padding:12px 13px}
+  table.data{font-size:12px}
+  pre{font-size:11px}
+}
 </style>
 <header><h1>Case room</h1>
 <span class="sub">400 blocked orders reviewed at cap 0.2.

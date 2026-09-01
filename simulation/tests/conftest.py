@@ -38,3 +38,54 @@ def vault(data_dir):
 def model(store, vault):
     from core.model import Adjudicator
     return Adjudicator().fit(store, vault)
+
+
+def _lightgbm_error():
+    """None if the model stack loads. LightGBM ships a native library and this
+    machine's Application Control policy can refuse it; when that happens every
+    test touching the model fails with the same OSError, which buries the ones
+    that still say something."""
+    try:
+        import lightgbm  # noqa: F401
+    except Exception as e:
+        return f"lightgbm unavailable: {type(e).__name__}: {str(e)[:70]}"
+    return None
+
+
+LGB_ERROR = _lightgbm_error()
+# these import the model at module scope, so they have to be skipped before
+# collection rather than marked afterwards
+_NEEDS_MODEL = {"test_agent.py", "test_leakage.py", "test_policy.py",
+                "test_replay_determinism.py"}
+
+
+@pytest.fixture
+def needs_model():
+    """Skip when the model stack will not load. pytest.importorskip is no help
+    here: lightgbm raises OSError from its native loader, not ImportError."""
+    if LGB_ERROR:
+        pytest.skip(LGB_ERROR)
+
+
+def pytest_ignore_collect(collection_path, config):
+    if LGB_ERROR and collection_path.name in _NEEDS_MODEL:
+        return True
+    return None
+
+
+def pytest_collection_modifyitems(config, items):
+    if not LGB_ERROR:
+        return
+    # data_dir only locates the dataset, so tests that take just that still run
+    needs = {"store", "vault", "model"}
+    mark = pytest.mark.skip(reason=LGB_ERROR)
+    for item in items:
+        if needs & set(getattr(item, "fixturenames", ())):
+            item.add_marker(mark)
+
+
+def pytest_report_header(config):
+    if LGB_ERROR:
+        return ("NOTE: " + LGB_ERROR
+                + "; model-dependent tests are skipped, the rest still run")
+    return None

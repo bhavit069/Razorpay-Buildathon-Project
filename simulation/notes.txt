@@ -542,3 +542,57 @@ renaming was already done, 0 ACQUIT left anywhere.
     60/60 with a worst case of 49ms. a browser uses keep-alive. so the fix was
     to measure the right thing, not to change the server, and the note is in
     serve.py so nobody re-debugs it.
+
+26. "the frontend is not responsive". two separate things, both real.
+
+    first, the server was dead. i had started it as a background task and
+    those die when the session ends, so localhost:4000 was refusing
+    connections. it needs to run in its own terminal.
+
+    second, the layout genuinely was not responsive, and the console and the
+    case room had the same bug:
+
+      .wrap{min-height:calc(100vh - 61px)}
+      .list{max-height:calc(100vh - 61px)}
+      main {max-height:calc(100vh - 61px)}
+
+    61px is the header height measured once on a wide window. the header has
+    flex-wrap and a long subtitle, so it wraps to two or three lines on
+    anything narrower and then every pane is taller than the space it has. you
+    get a page scrollbar next to an inner scrollbar and the bottom of the page
+    is cut off. the fix is a flex column, so nothing has to know how tall the
+    header is, and 100dvh instead of 100vh so mobile browser chrome does not
+    reintroduce it.
+
+    four more: the agent page had an inline grid of
+    minmax(300px,1fr) minmax(330px,1.1fr) which never collapses and forces a
+    630px floor; the mobile nav rows had no flex:none so they squashed; the
+    charts carried an inline pixel height that letterboxed them inside their
+    cards; and the 960px pipeline diagram scaled its 11px labels down to
+    nothing instead of scrolling.
+
+    one breakpoint at 900px before, now 1040/820/560 on the console and
+    1000/860/520 on the case room.
+
+27. wrote service/check_responsive.js because i had no browser to look at it
+    in. eight static checks for exactly the bugs above. the important part:
+    ran it against the version that shipped before the fix and it finds five
+    of them, so it is a check rather than a rubber stamp. one of the five only
+    showed up after i widened check 5, because the charts are built by script
+    at runtime and the literal in the page is style="height:${H}px", which
+    does not match \d+px.
+
+28. lightgbm stopped loading partway through today:
+    OSError [WinError 4551] An Application Control policy has blocked this
+    file. machine policy, not us. it blocks refitting the model, which blocks
+    regenerating the bundle, METRICS.md, the case room and most of the tests.
+
+    made three things degrade instead of dying. dashboard.py imports
+    export_bundle lazily, so rebuilding the page around an existing bundle no
+    longer drags in the ml stack. serve.py falls back to that path with a
+    message rather than refusing to start. and conftest skips the
+    model-dependent tests with a stated reason instead of erroring out of
+    collection, so the ones that still say something still run.
+
+    note pytest.importorskip does not help here: lightgbm raises OSError from
+    its native loader, not ImportError.

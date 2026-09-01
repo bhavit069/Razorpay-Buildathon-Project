@@ -248,6 +248,21 @@ def main():
                 f"{len(b['samples'])} demo cases, fonts are the only external ref")
     c("browser console builds and is self-contained", build_console)
 
+    def responsive():
+        """A static audit for the layout bugs that shipped once: a hardcoded
+        header height, a grid floor wider than a phone, a wide diagram with no
+        scroll container. Verified against the pre-fix page, where it finds
+        five, so it is not a rubber stamp."""
+        r = subprocess.run(["node", "service/check_responsive.js"], cwd=ROOT,
+                           capture_output=True, text=True)
+        if r.returncode:
+            raise AssertionError(r.stdout.strip()[-400:])
+        return f"{r.stdout.count('[ok]')} responsive checks pass"
+    try:
+        c("console layout is responsive", responsive)
+    except FileNotFoundError:
+        print("  [skip] console layout is responsive (no node on PATH)")
+
     # --- replay strictness ---------------------------------------------------
     def replay_serves_demo_cases():
         store, vault, model = state["store"], state["vault"], state["model"]
