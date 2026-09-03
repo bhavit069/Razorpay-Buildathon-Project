@@ -56,8 +56,16 @@ run it once before anything else works.
        /case        the case room
        /artifacts/  everything else that got generated
 
-   How it works, portfolio and signals, run the agent, operating point, how
-   honest is it. The page itself loads nothing from the network, so
+   Seven pages. It opens on LIVE: real blocked orders arriving at the rate
+   they actually arrived, each scored, decided and then chased down an
+   outreach ladder, with the money adding up as it goes. The cases, the
+   scores, the actions and the ladder are all the shipped ones; arrival
+   timing and whether a contacted customer answered are simulated from a
+   seeded draw, and the page says so. Whether a returning order turns out to
+   be fraud is the answer key, not a coin.
+
+   Then: how it works, portfolio and signals, run the agent, getting them
+   back, operating point, how honest is it. The page itself loads nothing from the network, so
    `python run.py console` and opening artifacts/dashboard.html straight off
    disk works too if you would rather not run a server.
 
@@ -82,6 +90,16 @@ run it once before anything else works.
    against every case. Worst disagreement is 5e-15 and all 1,775 actions match
    the backtest. `node service/check_agent.js` drives the decision path over
    every case the page can load and reads the HTML back.
+
+   The "getting them back" page is the second thing to show. Reversing a
+   block recovers nothing on its own, so there is a second expected-value
+   decision: which channel, at what cost, how long it takes. SMS, email,
+   agentic voice call, human callback. A Rs 1,195 order gets an SMS and an
+   email for 37 paise; a Rs 21,711 one earns a person. Nobody wrote a
+   severity table - the ladder tracks severity because case value is on one
+   side of the inequality. The line worth saying out loud: a voice agent is
+   not a better nudge than an SMS, it is the cheapest channel that can ask a
+   question, and a step-up is a question.
 
    The operating point page has the cap slider. Drag it and watch recovery,
    fraud admitted and contribution move together. That is the trade curve, and
@@ -150,7 +168,7 @@ run it once before anything else works.
 
 7. THE DRY RUN. Do this before any recording.
 
-       python run.py dry           # 15 checks, network cut, about 40s
+       python run.py dry           # 16 checks, network cut, about 60s
 
    It blocks the socket module and then does everything the demo does: checks
    the generated doc blocks are current, runs the suite, fits the model, picks

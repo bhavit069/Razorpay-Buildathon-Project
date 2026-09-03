@@ -3,12 +3,16 @@ Five beats, about five minutes. Every number here is in development/METRICS.md.
 
 BEFORE YOU RECORD
   cd development
-  python run.py dry          # 15 checks, network cut. must be 15 of 15.
+  python run.py dry          # 16 checks, network cut. must be 16 of 16.
   python run.py room         # writes artifacts/case_room.html
   python run.py serve        # builds the console, serves localhost:4000
 
   Leave the server running. Open two tabs: localhost:4000 for the console and
   localhost:4000/case for the case room.
+
+  The console opens on the live board. Start it before you start talking and
+  leave it running: by Beat 5 it has a few hundred real orders on it and the
+  totals have moved, which is worth more than any slide of the same numbers.
 
   Pull the network cable, or turn wifi off. The page is one file and the demo
   cases replay from disk. If anything reaches for a network it fails loudly,
@@ -140,6 +144,53 @@ Say:
   lying.
 
 Do not oversell this. Thirty seconds, then move.
+
+
+-------------------------------------------------------------------------------
+BEAT 4b  AND THEN WE ACTUALLY GO AND GET THEM                        (60 sec)
+-------------------------------------------------------------------------------
+On screen: the console, "Getting them back". Then flip to Live and leave it
+running behind you for the rest of the demo.
+
+Say:
+
+  Everything so far decides whether a block was wrong. That recovers nothing.
+  A corrected row in a database is not a sale. The customer left twenty
+  minutes ago and somebody has to go and get them.
+
+  So there is a second decision, and it is the same arithmetic as the first.
+  Probability they come back, times what the conversion is worth, minus what
+  the channel costs. Five channels. An SMS is thirty-five paise and arrives
+  in two minutes. A human callback is a hundred and fifty rupees and four
+  hours.
+
+  [point at the three worked cases]
+
+  A twelve hundred rupee order gets an SMS, then an email. Thirty-seven paise
+  all in. A twenty-two thousand rupee order earns a human callback as its
+  second rung. Nobody wrote a severity table. The ladder tracks severity
+  because the case value is sitting on one side of that inequality.
+
+  Now the part that surprised us. The agentic voice call is not a better
+  nudge than an SMS. It converts worse and it costs forty times more, and
+  there is no order large enough to change that. It is in the product for one
+  reason: it is the cheapest channel that can ask a question and hear the
+  answer, and a step-up is a question. Above five hundred and fifty two
+  rupees of case value a person answers it better than the agent does.
+
+  And time is most of the money. Someone refused twenty minutes ago is still
+  deciding. Someone refused yesterday has bought it somewhere else. That
+  half-life is not a number we picked: the operating-point section already
+  pinned two points on that curve months ago when it published the seventy to
+  thirty-five percent recontact band. Exactly one exponential goes through
+  both. It comes out at one day, and a test fails if the two documents ever
+  stop agreeing.
+
+If asked "why not just call everyone": a hundred and fifty rupee callback pays
+for itself on almost anything, so cost is not the constraint. People are. Drag
+the staffing slider and watch the ladder fall back to a voice agent on the
+cases a reviewer cannot reach. It is the same argument as Beat 5's, applied to
+outreach.
 
 
 -------------------------------------------------------------------------------
@@ -287,6 +338,11 @@ tell you the test asked for anything.
 NUMBERS YOU ARE ALLOWED TO SAY
 -------------------------------------------------------------------------------
   8,265 blocked, 6,346 of them good, Rs 44 cr refused vs Rs 11 cr stopped
+  1,405 of 1,775 actioned, 70.1% expected to return, Rs 38 per recovery
+  median 18 minutes from block to completed order
+  SMS Rs 0.35 / email Rs 0.08 / voice Rs 14 / human Rs 150
+  a person beats the voice agent above Rs 552 of case value
+  40 callbacks a day supports 103 blocked orders a day; we see 29
   1,775 holdout cases, cap 0.20
   88.2% recall of recoverable        (83.1 to 89.6 across seeds)
   96.3% precision                    (92.0 to 98.2 across seeds)
@@ -299,6 +355,10 @@ NUMBERS YOU ARE ALLOWED TO SAY
   Unseen merchant: AUC drops 0.0008, precision 92.9% to 89.0%
 
 NEVER SAY
+  That the channel conversion rates are measured. They are asserted, they are
+  in RECOVERY.md rather than METRICS.md for that reason, and the number to
+  quote is the crossover, not the rate.
+  That the voice agent converts better than an SMS. It does not.
   A recovery figure without the fraud figure in the same sentence.
   "Precision is stable." It is not. It moves 6.2 points.
   "99% accurate." Nothing here is 99% anything at the shipped operating point.

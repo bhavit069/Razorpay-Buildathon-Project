@@ -51,6 +51,7 @@ const sandbox = {
   document, console, Math, JSON, Number, String, Array, Object, Date, isNaN,
   parseInt, parseFloat, Boolean, RegExp, Error, Intl, Function, Symbol,
   innerWidth: 1440, innerHeight: 900, location: { hash: "" },
+  performance: { now: () => 0 }, Infinity,
   addEventListener(){}, scrollTo(){}, setTimeout(){}, requestAnimationFrame(){},
 };
 sandbox.window = sandbox; sandbox.globalThis = sandbox;

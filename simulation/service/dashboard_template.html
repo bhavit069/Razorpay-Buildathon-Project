@@ -27,9 +27,22 @@ font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif;
 display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-header{flex:none;padding:18px 24px;border-bottom:1px solid var(--line);
-background:var(--card);display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
-h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.01em}
+header{flex:none;padding:12px 22px;border-bottom:1px solid var(--line);
+background:var(--card);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+h1{font-size:16px;margin:0;font-weight:680;letter-spacing:-.02em;
+display:flex;align-items:center;gap:7px}
+.tick{width:7px;height:7px;border-radius:99px;background:var(--good);
+box-shadow:0 0 0 3px #1a7f4b22;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hby{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);
+font-weight:650;border-left:1px solid var(--line);padding-left:14px}
+.hstats{display:flex;gap:0;flex-wrap:wrap;margin-left:auto}
+.hp{display:flex;flex-direction:column;gap:1px;padding:0 15px;
+border-left:1px solid var(--line);font-size:10.5px;color:var(--mut);
+text-transform:uppercase;letter-spacing:.05em;font-weight:650;line-height:1.3}
+.hp b{font-size:14px;color:var(--fg);text-transform:none;letter-spacing:-.01em;
+font-variant-numeric:tabular-nums;font-weight:650}
+.hp.dim b{color:var(--mut);font-weight:600}
 .sub{color:var(--mut);font-size:13px}
 .wrap{flex:1;min-height:0;display:grid;grid-template-columns:236px minmax(0,1fr)}
 .list{border-right:1px solid var(--line);background:var(--card);
@@ -247,6 +260,65 @@ align-items:start;padding:9px 12px;background:var(--card);font-size:12.5px}
 .rs{display:block;font-size:11.5px;color:var(--mut);margin-top:2px}
 .rung.fired .rt{font-weight:600;color:var(--accent)}
 
+/* ---- the live board and the recovery page -------------------------------- */
+.lhead{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;
+flex-wrap:wrap}
+.lctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:none}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:var(--card);border:0;border-right:1px solid var(--line);
+color:var(--mut);font:inherit;font-size:11.5px;padding:6px 11px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--sel);color:var(--accent);font-weight:650}
+
+.board{display:grid;gap:11px;margin:18px 0 16px;
+grid-template-columns:repeat(auto-fit,minmax(min(168px,100%),1fr))}
+.board .tile .v{transition:color .25s}
+.lcols{grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));
+align-items:start}
+
+/* feeds */
+.feed{max-height:376px;overflow-y:auto;padding:8px 10px}
+.fr,.fl{display:grid;align-items:center;gap:9px;padding:6px 4px;
+border-bottom:1px solid var(--soft);font-size:12.5px}
+.fr{grid-template-columns:auto minmax(0,1fr) auto auto auto}
+.fr:last-child,.fl:last-child{border-bottom:0}
+.fm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fa{font-weight:600;white-space:nowrap}
+.fp{color:var(--mut);font-size:11.5px;white-space:nowrap}
+.fc{display:flex;gap:3px;white-space:nowrap}
+.fl{grid-template-columns:auto minmax(0,1fr) auto minmax(52px,88px) auto}
+.fbar{background:var(--soft);border-radius:99px;height:5px;overflow:hidden}
+.fbar>span{display:block;height:100%;background:var(--accent);
+border-radius:99px;transition:width .3s linear}
+
+/* the channel glyph, used in feeds, tables and ladders */
+.ch{display:inline-flex;align-items:center;justify-content:center;
+width:20px;height:20px;border-radius:5px;font-size:11px;font-style:normal;
+line-height:1;flex:none}
+.ch.good{background:#e6f4ec;color:var(--good)}
+.ch.blue{background:var(--sel);color:var(--accent)}
+.ch.neut{background:var(--soft);color:var(--mut)}
+.ch.warn{background:#fdf4e3;color:var(--warn)}
+.ch.bad{background:#fbeae9;color:var(--bad)}
+
+/* a ladder, drawn */
+.chain{display:flex;flex-direction:column;gap:2px}
+.cstep{display:flex;gap:9px;align-items:flex-start;padding:6px 0}
+.cn{display:block;font-size:13px;font-weight:600;line-height:1.3}
+.ct{display:block;font-size:11.5px;color:var(--mut);margin-top:1px}
+.carr{color:var(--faint);font-size:12px;padding-left:6px;line-height:1}
+.tot{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+font-size:12.5px;color:var(--mut)}
+.tot span{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+font-weight:650;margin-right:8px}
+
+.sub-row td{padding-top:0;padding-bottom:9px;border-bottom:1px solid var(--soft)}
+.sub-row .note{margin:0;max-width:74ch}
+
+.slider{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.slider label{font-size:12.5px;color:var(--mut);flex:none}
+.slider input[type=range]{flex:1;min-width:180px}
+
 @media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
 
 /* the sidebar plus two 320px cards needs about 1000px; below that give the
@@ -267,9 +339,14 @@ align-items:start;padding:9px 12px;background:var(--card);font-size:12.5px}
   .row.sel{border-left:0;border-bottom-color:var(--accent)}
   .row .d{display:none}
   main{overflow:visible;padding:20px 16px 56px}
-  header{padding:14px 16px;gap:10px}
+  header{padding:12px 16px;gap:10px}
   .bar-row{grid-template-columns:minmax(88px,34%) 1fr auto}
   .pl{min-width:0;width:100%}
+  .hstats{margin-left:0;width:100%;overflow-x:auto;padding-bottom:2px}
+  .hp:first-child{padding-left:0;border-left:0}
+  .hby{border-left:0;padding-left:0}
+  .lhead{flex-direction:column;gap:12px}
+  .feed{max-height:300px}
 }
 @media(max-width:560px){
   h2{font-size:20px}
@@ -293,12 +370,23 @@ align-items:start;padding:9px 12px;background:var(--card);font-size:12.5px}
   .rung{grid-template-columns:16px minmax(0,1fr);row-gap:5px}
   .rung .tag{grid-column:2}
   .f{grid-template-columns:minmax(0,1fr) minmax(0,104px)}
+  /* the feed rows drop the score and the merchant before they drop the money
+     and the channel, which are what the row is for */
+  .fr{grid-template-columns:auto minmax(0,1fr) auto auto}
+  .fr .fp{display:none}
+  .fl{grid-template-columns:auto minmax(0,1fr) auto auto}
+  .fl .fbar{display:none}
+  .hp{padding:0 10px;font-size:9.5px}
+  .hp b{font-size:12.5px}
+  .board{gap:8px}
+  .cstep{gap:7px}
 }
 </style>
 
 <header>
-  <h1>Reclaimify</h1>
-  <span class="sub" id="hsub"></span>
+  <h1>Reclaimify<span class="tick" aria-hidden="true"></span></h1>
+  <span class="hby">false-decline recovery</span>
+  <span class="hstats" id="hsub"></span>
 </header>
 <div class="wrap">
   <div class="list" id="nav"></div>
@@ -321,6 +409,15 @@ function cr(x){
   if (a >= 1e7) return `${s}Rs ${(a/1e7).toFixed(2)} cr`;
   if (a >= 1e5) return `${s}Rs ${(a/1e5).toFixed(2)} L`;
   return `${s}Rs ${n0(a)}`;
+}
+/* An SMS costs 35 paise and cr() rounded that to "Rs 0", which made the
+   cheapest channel on the page look free and the whole crossover argument
+   look like it was about nothing. Anything under ten rupees keeps its paise. */
+function rs(x){
+  const a = Math.abs(x);
+  if (a === 0) return "free";
+  if (a < 10) return `${x < 0 ? "-" : ""}Rs ${a.toFixed(2)}`;
+  return cr(x);
 }
 const C = { good:"#1a7f4b", bad:"#b3261e", warn:"#a16207", accent:"#2b4c7e",
             line:"#e2e0dc", mut:"#6b6b6b", faint:"#b6b2ab" };
@@ -407,7 +504,161 @@ function decide(p, amount, orders, tenure, cap){
 }
 const TONE = { OVERTURN:"good", UPHOLD:"bad", STEP_UP:"warn", ESCALATE:"warn" };
 
+/* ============================================================ the recovery ladder */
+/* Transliterated from core/recovery.py, the same way the model above is
+   transliterated from the exporter. The bundle carries Python's plan for 300
+   real holdout cases and service/check_agent.js replays every one of them
+   through this code, so a page showing a different ladder than the numbers
+   came from fails the build rather than the demo. */
+const RC = B.recovery;
+const CH = Object.fromEntries(RC.channels.map(c => [c.key, c]));
+const RCFG = Object.assign({}, RC.cfg);
+
+function rDecay(t, cfg){ return t <= 0 ? 1 : Math.exp(-Math.LN2 * t / cfg.half_life_min); }
+
+function pReturn(c, elapsed, cfg, rung){
+  const t = Math.max(0, elapsed) + c.latency;
+  let p = c.reach * c.lift * rDecay(t, cfg);
+  if (rung > 0) p *= Math.pow(1 - cfg.rung_correlation, rung);
+  return Math.min(1, Math.max(0, p));
+}
+function ltvAtRisk(amount, orders, tenure, cfg){
+  if (!cfg.count_ltv || orders < 3 || tenure < 90) return 0;
+  return (orders / tenure) * cfg.ltv_horizon_days * amount * cfg.margin
+         * cfg.churn_on_false_decline;
+}
+/* Which channels this action may use. A step-up is an unanswered question, so
+   a one-way nudge cannot discharge it: that is a constraint on the channel,
+   not a preference, and it is the only reason a voice agent is in the list. */
+function allowedFor(action, inSession){
+  if (action === "UPHOLD")   return [[], "block stands, nothing to recover"];
+  if (action === "ESCALATE") return [[CH.human], "escalation is a person by definition"];
+  if (action === "STEP_UP")
+    return [RC.channels.filter(c => c.two_way),
+            "a step-up is a question, so the channel has to take an answer"];
+  if (inSession) return [[CH.auto], "still at checkout, so just let it through"];
+  return [RC.channels.filter(c => c.key !== "auto"), "overturned, customer has left"];
+}
+function rPlan(action, evRelease, amount, orders, tenure, opts){
+  opts = opts || {};
+  const cfg = opts.cfg || RCFG;
+  const elapsed = opts.elapsed || 0;
+  const exclude = opts.exclude || [];
+  let [pool, why] = allowedFor(action, !!opts.inSession);
+  const reasons = [why];
+  if (exclude.length){
+    pool = pool.filter(c => exclude.indexOf(c.key) < 0);
+    reasons.push(`unavailable(${exclude.slice().sort().join(",")})`);
+  }
+  if (opts.only) pool = pool.filter(c => c.key === opts.only);
+  const V = evRelease + ltvAtRisk(amount, orders, tenure, cfg);
+  // Whether to engage is already settled for two of the four actions. A
+  // STEP_UP means the policy decided an exchange is warranted and an ESCALATE
+  // means a person has to look, both because ev_release is NOT trustworthy on
+  // that case - so re-testing ev_release to decide whether to bother is
+  // circular, and it silently dropped three escalations on the floor.
+  const committed = action === "STEP_UP" || action === "ESCALATE";
+  const none = { action, value: V, rungs: [], p: 0, cost: 0, ev: 0, eta: 0, reasons };
+  if (!pool.length) return none;
+  if (V <= 0 && !committed){
+    reasons.push(`conversion_worth_nothing(${Math.round(V)})`); return none; }
+
+  const rungs = [], used = {};
+  let remaining = 1, t = elapsed, spend = 0, etaNum = 0;
+  for (let i = 0; i < cfg.max_rungs; i++){
+    let best = null, bestEv = cfg.min_ev_inr || 0, bestP = 0;
+    for (const c of pool){
+      if (used[c.key]) continue;
+      const p = pReturn(c, t, cfg, rungs.length);
+      // `remaining` is the chance we are still trying: a rung only runs if
+      // every earlier one missed, so its revenue and its cost both discount by it
+      const ev = remaining * (p * V - c.cost);
+      // an ordinary marketing floor. Without it, pure positive-EV greed put an
+      // agentic phone call on a Rs 1,195 order for +Rs 1.83 of expected value
+      if (c.cost > 0 && p * V < cfg.min_roas * c.cost) continue;
+      if (ev > bestEv){ best = c; bestEv = ev; bestP = p; }
+    }
+    if (!best) break;
+    rungs.push({ channel: best.key, at: t, cost: best.cost, p: bestP,
+                 ev: bestEv, committed: false });
+    used[best.key] = 1;
+    spend += remaining * best.cost;
+    etaNum += remaining * bestP * (t + best.latency);
+    remaining *= (1 - bestP);
+    t += Math.max(best.latency * 2, 30);
+  }
+  if (!rungs.length && committed){
+    const c = pool.slice().sort((x, y) => x.cost - y.cost)[0];
+    const p = pReturn(c, elapsed, cfg, 0);
+    rungs.push({ channel: c.key, at: elapsed, cost: c.cost, p,
+                 ev: p * V - c.cost, committed: true });
+    reasons.push(`committed_${action.toLowerCase()}_floor(${c.key})`);
+    spend = c.cost; remaining = 1 - p; etaNum = p * (elapsed + c.latency);
+  }
+  const pTotal = 1 - remaining;
+  if (!rungs.length) reasons.push(`no_channel_pays_at(${Math.round(V)})`);
+  return { action, value: V, rungs, p: pTotal, cost: spend,
+           ev: rungs.reduce((a, r) => a + r.ev, 0),
+           eta: pTotal > 0 ? etaNum / pTotal : 0, reasons };
+}
+function crossover(a, b, cfg){
+  cfg = cfg || RCFG;
+  const dp = pReturn(a, 0, cfg, 0) - pReturn(b, 0, cfg, 0);
+  return dp <= 0 ? Infinity : (a.cost - b.cost) / dp;
+}
+const CHTONE = { auto:"good", sms:"blue", email:"neut", voice:"warn", human:"bad" };
+const CHICON = { auto:"&#8987;", sms:"&#9993;", email:"&#64;", voice:"&#9742;", human:"&#128100;" };
+function mins(m){
+  if (m < 1) return "now";
+  if (m < 60) return `${Math.round(m)} min`;
+  if (m < 1440) return `${(m/60).toFixed(m < 600 ? 1 : 0)} h`;
+  return `${(m/1440).toFixed(1)} d`;
+}
+
 /* ==================================================================== charts */
+/* Several lines on one axis. Used only where the series are peers - four
+   channels, not recovered-against-admitted - so the palette rule that forces
+   small multiples elsewhere does not apply. Each line is still labelled at its
+   own right-hand end rather than through a legend swatch, so nobody has to
+   match a colour to read it. */
+function svgMulti(series, names, colors, opts){
+  opts = opts || {};
+  const W = 620, H = opts.h || 200, P = { l:44, r:118, t:12, b:28 };
+  const all = series.flat();
+  const x0 = Math.min(...all.map(d => d.x)), x1 = Math.max(...all.map(d => d.x));
+  const y1 = Math.max(...all.map(d => d.y)) * 1.08 || 1;
+  const X = v => P.l + (v - x0) / (x1 - x0 || 1) * (W - P.l - P.r);
+  const Y = v => H - P.b - v / y1 * (H - P.t - P.b);
+  const ticks = [0, y1 / 2, y1];
+  const xt = opts.xticks || [0, 240, 480, 960, 1440];
+  // labels can collide when two lines end close together; nudge them apart
+  const ends = series.map((s, i) => ({ i, y: Y(s[s.length - 1].y) }))
+                     .sort((a, b) => a.y - b.y);
+  ends.forEach((e, k) => { if (k && e.y - ends[k-1].y < 13) e.y = ends[k-1].y + 13; });
+  const labelY = {}; ends.forEach(e => labelY[e.i] = e.y);
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"
+      preserveAspectRatio="xMidYMid meet" aria-label="${esc(opts.aria || "chart")}">
+    ${ticks.map(t => `<line x1="${P.l}" x2="${W-P.r}" y1="${Y(t).toFixed(1)}"
+        y2="${Y(t).toFixed(1)}" stroke="${C.line}"/>
+      <text x="${P.l-8}" y="${(Y(t)+4).toFixed(1)}" text-anchor="end" fill="${C.mut}"
+        font-size="10.5" font-family="${SANS}">${(100*t).toFixed(0)}%</text>`).join("")}
+    ${xt.filter(t => t >= x0 && t <= x1).map(t => `<text x="${X(t).toFixed(1)}"
+        y="${H-9}" text-anchor="middle" fill="${C.mut}" font-size="10.5"
+        font-family="${SANS}">${esc(mins(t))}</text>`).join("")}
+    ${series.map((s, i) => `<polyline fill="none" stroke="${colors[i]}"
+        stroke-width="2" stroke-linejoin="round"
+        points="${s.map(d => `${X(d.x).toFixed(1)},${Y(d.y).toFixed(1)}`).join(" ")}"/>`).join("")}
+    ${series.map((s, i) => {
+      const last = s[s.length - 1];
+      return `<line x1="${X(last.x).toFixed(1)}" x2="${(W-P.r+8).toFixed(1)}"
+          y1="${Y(last.y).toFixed(1)}" y2="${labelY[i].toFixed(1)}"
+          stroke="${colors[i]}" stroke-width="1" opacity=".45"/>
+        <text x="${W-P.r+12}" y="${(labelY[i]+3.5).toFixed(1)}" fill="${colors[i]}"
+          font-size="11" font-weight="600" font-family="${SANS}">${esc(names[i])}</text>`;
+    }).join("")}
+  </svg>`;
+}
 function svgLine(series, opts){
   const W = 560, H = opts.h || 156, P = { l:62, r:14, t:12, b:26 };
   const xs = series.map(d => d.x), ys = series.map(d => d.y);
@@ -472,6 +723,261 @@ function barList(rows){
 const PAGES = [];
 const S = B.stats, H = B.headline, O = B.outcome, SD = B.seeds;
 const impMap = Object.fromEntries(B.importance);
+
+/* --------------------------------------------------------------- 1. live --- */
+/* A running instance rather than a screenshot of one.
+
+   What is real: the cases, sampled from the 1,775 blocked orders in the
+   holdout; the probability, which the model produced; the action, which the
+   policy produced; the recovery ladder, which core/recovery.py produced; and
+   the answer key, which is revealed only after a case resolves and is never an
+   input to anything.
+
+   What is simulated: arrival times, and the coin that decides whether a
+   contacted customer actually came back. That coin is drawn against the
+   declared per-channel probability, seeded, and the header says so. Whether a
+   returning order turns out to be fraud is NOT a coin - it is the answer key. */
+let LIVE = null;
+
+function mulberry(seed){          // small deterministic PRNG, so a run repeats
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function newRun(seed){
+  const pool = B.recovery.check.slice();
+  return {
+    seed, rnd: mulberry(seed), t: 0, i: 0, pool,
+    feed: [], inflight: [], done: [], closed: 0,
+    // running totals, kept incrementally. `feed` and `done` are trimmed
+    // for memory, so anything derived by walking them under-reports as
+    // the run goes on - which is how the channel mix quietly started
+    // showing the last two hundred cases instead of all of them.
+    mix: {}, retGood: 0, retBad: 0, returnedAmount: 0,
+    n: 0, released: 0, upheld: 0, asked: 0, escalated: 0,
+    recovered: 0, admitted: 0, spend: 0, lost: 0, returns: 0, etas: [],
+    playing: true, speed: 30,        // virtual minutes per real second
+  };
+}
+
+function send(run, key){
+  run.spend += CH[key].cost;
+  const m = run.mix[key] || (run.mix[key] = { n: 0, cost: 0 });
+  m.n++; m.cost += CH[key].cost;
+}
+
+function liveTick(run, dtMin){
+  run.t += dtMin;
+  // arrivals: the holdout window ran 29 blocked orders a day, so one every
+  // ~50 virtual minutes. Kept honest rather than sped up to look busy.
+  while (run.t >= run.i * 50){
+    // 7919 is coprime with the pool size, so this walks every case before
+    // repeating any. The pool is 400 cases and the board keeps running past
+    // that, so a long demo does see the same orders again.
+    const c = run.pool[(run.i * 7919) % run.pool.length];
+    run.i++;
+    run.n++;
+    const at = run.t;
+    if (c.action === "OVERTURN") run.released++;
+    else if (c.action === "UPHOLD") run.upheld++;
+    else if (c.action === "STEP_UP") run.asked++;
+    else run.escalated++;
+    const item = { c, at, rung: 0, state: c.chain.length ? "contacting" : "closed",
+                   fired: [], key: `${c.payment_id}_${run.n}` };
+    run.feed.unshift(item);
+    if (run.feed.length > 40) run.feed.pop();
+    if (c.chain.length){
+      run.inflight.push(item);
+      send(run, c.chain[0]);
+    } else {
+      run.closed++;              // upheld: nothing to recover, nothing to spend
+    }
+  }
+  // resolutions
+  for (let k = run.inflight.length - 1; k >= 0; k--){
+    const it = run.inflight[k], c = it.c;
+    const ch = CH[c.chain[it.rung]];
+    const due = it.at + c.at[it.rung] + ch.latency;
+    if (run.t < due) continue;
+    const p = rPlan(c.action, c.ev, c.amount, c.orders, c.tenure)
+              .rungs[it.rung].p;
+    it.fired.push(ch.key);
+    if (run.rnd() < p){
+      // they came back. Whether that was a good order is the answer key,
+      // not another coin.
+      it.state = "returned"; it.at_done = run.t;
+      run.returns++;
+      run.etas.push(run.t - it.at);
+      run.returnedAmount += c.amount;
+      // good or bad is the answer key, not a second coin
+      if (c.good){ run.recovered += c.amount; run.retGood++; }
+      else { run.admitted += c.amount; run.retBad++; }
+      run.inflight.splice(k, 1);
+      run.done.push(it);
+    } else if (it.rung + 1 < c.chain.length){
+      it.rung++;
+      send(run, c.chain[it.rung]);
+    } else {
+      it.state = "lost"; it.at_done = run.t;
+      run.lost++;
+      run.inflight.splice(k, 1);
+      run.done.push(it);
+    }
+  }
+  if (run.done.length > 200) run.done.splice(0, run.done.length - 200);
+}
+
+PAGES.push({ id:"live", nav:"Live", sub:"orders arriving and being worked",
+  render(){
+    const o = B.recovery.outcome;
+    return `
+  <div class="lhead">
+    <div>
+      <h2>The blocked pile, being worked</h2>
+      <p class="lede">Real cases from the ${n0(O.n_cases)} blocked orders the model
+      never trained on, arriving at the rate they actually arrived. The score, the
+      action and the outreach ladder are the shipped ones. Arrival timing and
+      whether a contacted customer came back are simulated, from a seeded draw
+      against the declared per-channel rate.</p>
+    </div>
+    <div class="lctl">
+      <button class="btn go" id="lplay">Pause</button>
+      <span class="seg" id="lspeed">
+        <button data-sp="10">slow</button><button data-sp="30" class="on">1x</button
+        ><button data-sp="120">fast</button></span>
+      <button class="btn" id="lreset">Restart</button>
+    </div>
+  </div>
+
+  <div class="board" id="lstats"></div>
+
+  <div class="grid lcols">
+    <div class="card"><h4>Arriving <span class="sub" id="lclock"></span></h4>
+      <div class="b feed" id="lfeed"></div></div>
+    <div>
+      <div class="card"><h4>Being recovered <span class="sub" id="lcount"></span></h4>
+        <div class="b feed" id="lflight"></div></div>
+      <div class="card" style="margin-top:14px"><h4>Outreach so far</h4>
+        <div class="b" id="lmix"></div></div>
+    </div>
+  </div>
+
+  <div class="note-box" style="margin-top:16px"><p style="margin:0">
+    <b>The answer key is revealed, never used.</b> Whether a returning order turns
+    out to be a good customer or fraud comes from the generator's record, after the
+    fact. Nothing above it reads that field: the model scored these cases without
+    it and the ladder routed them without it. The only coin flipped here is whether
+    someone answered.</p></div>`;
+  },
+  after(){
+    LIVE = newRun(7);
+    const feedEl = document.getElementById("lfeed");
+    const flightEl = document.getElementById("lflight");
+    const statsEl = document.getElementById("lstats");
+    const mixEl = document.getElementById("lmix");
+    const clockEl = document.getElementById("lclock");
+    const countEl = document.getElementById("lcount");
+    const playEl = document.getElementById("lplay");
+
+    playEl.onclick = () => {
+      LIVE.playing = !LIVE.playing;
+      playEl.textContent = LIVE.playing ? "Pause" : "Play";
+      playEl.classList.toggle("go", LIVE.playing);
+    };
+    document.getElementById("lreset").onclick = () => {
+      const sp = LIVE.speed; LIVE = newRun(LIVE.seed + 1); LIVE.speed = sp; paint();
+    };
+    document.querySelectorAll("#lspeed button").forEach(b => b.onclick = () => {
+      document.querySelectorAll("#lspeed button").forEach(x =>
+        x.classList.toggle("on", x === b));
+      LIVE.speed = +b.dataset.sp;
+    });
+
+    const vday = (t) => `day ${Math.floor(t / 1440) + 1}, ${
+      String(Math.floor(t % 1440 / 60)).padStart(2, "0")}:${
+      String(Math.floor(t % 60)).padStart(2, "0")}`;
+
+    function tile(k, v, s, cls){
+      return `<div class="tile ${cls || ""}" style="padding:11px 13px">
+        <span class="k">${k}</span><span class="v" style="font-size:21px">${v}</span>
+        <span class="s">${s}</span></div>`;
+    }
+    function paint(){
+      const r = LIVE;
+      const net = r.recovered * B.margin - r.admitted - r.spend;
+      const medEta = r.etas.length
+        ? r.etas.slice().sort((a, b) => a - b)[r.etas.length >> 1] : 0;
+      statsEl.innerHTML =
+        tile("Reviewed", n0(r.n), `${r.released} released &middot; ${r.upheld} upheld`) +
+        tile("Asked / escalated", `${r.asked} / ${r.escalated}`,
+             "refused to decide alone") +
+        tile("Came back", n0(r.returns), `${r.lost} did not`) +
+        tile("Revenue recovered", cr(r.recovered), "good orders that returned", "pos") +
+        tile("Fraud admitted", cr(r.admitted), "bad orders that returned", "neg") +
+        tile("Outreach spend", cr(r.spend), "messages, calls, reviewer time") +
+        tile("Net contribution", cr(net),
+             `${pct(B.margin,0)} margin, less fraud and spend`, net >= 0 ? "pos" : "neg") +
+        tile("Median time to money", medEta ? mins(medEta) : "&mdash;",
+             "from block to completed order", "hi");
+
+      clockEl.textContent = vday(r.t);
+      countEl.textContent = `${r.inflight.length} in flight`;
+
+      feedEl.innerHTML = r.feed.slice(0, 14).map(it => {
+        const c = it.c;
+        return `<div class="fr">
+          <span class="tag ${TONE[c.action]}">${c.action}</span>
+          <span class="fm">${esc(c.merchant)}</span>
+          <span class="fa num">${cr(c.amount)}</span>
+          <span class="fp num">p ${c.p_bad.toFixed(3)}</span>
+          <span class="fc">${c.chain.length
+            ? c.chain.map(k => `<i class="ch ${CHTONE[k]}" title="${esc(CH[k].name)}">${
+                CHICON[k]}</i>`).join("")
+            : '<span class="sub">no contact</span>'}</span></div>`;
+      }).join("") || '<p class="note" style="margin:0">waiting for the first order</p>';
+
+      flightEl.innerHTML = r.inflight.slice(-10).reverse().map(it => {
+        const c = it.c, ch = CH[c.chain[it.rung]];
+        const due = it.at + c.at[it.rung] + ch.latency;
+        const frac = Math.max(0, Math.min(1, (r.t - it.at) / Math.max(1, due - it.at)));
+        return `<div class="fl">
+          <span class="ch ${CHTONE[ch.key]}">${CHICON[ch.key]}</span>
+          <span class="fm">${esc(ch.name)}</span>
+          <span class="fa num">${cr(c.amount)}</span>
+          <span class="fbar"><span style="width:${(100*frac).toFixed(0)}%"></span></span>
+          <span class="sub num">${mins(Math.max(0, due - r.t))}</span></div>`;
+      }).join("") || '<p class="note" style="margin:0">nothing in flight</p>';
+
+      const tot = Object.values(r.mix).reduce((a, m) => a + m.n, 0) || 1;
+      mixEl.innerHTML = `<div class="bars">${RC.channels.filter(c => r.mix[c.key])
+        .map(c => `<div class="bar-row">
+          <span>${esc(c.name)}</span>
+          <span class="bar-track"><span class="bar-fill" style="width:${
+            (100*r.mix[c.key].n/tot).toFixed(1)}%;background:${
+            {good:C.good,blue:C.accent,neut:C.mut,warn:C.warn,bad:C.bad}[CHTONE[c.key]]
+            }"></span></span>
+          <span class="n">${r.mix[c.key].n} &middot; ${rs(r.mix[c.key].cost)}</span>
+          </div>`).join("")}</div>
+        <p class="note" style="margin:10px 0 0">A human callback costs
+        ${rs(CH.human.cost)} and an SMS ${rs(CH.sms.cost)}. The ladder spends the
+        expensive one only where the case value carries it, which is the whole of
+        the routing rule.</p>`;
+    }
+
+    let last = performance.now();
+    function frame(now){
+      if (!document.getElementById("lfeed")) return;      // page changed
+      const dt = Math.min(250, now - last); last = now;
+      if (LIVE.playing){ liveTick(LIVE, dt / 1000 * LIVE.speed); paint(); }
+      requestAnimationFrame(frame);
+    }
+    paint();
+    requestAnimationFrame(frame);
+  }});
 
 /* --------------------------------------------------------------- 1. flow --- */
 PAGES.push({ id:"flow", nav:"How it works", sub:"the pipeline, end to end",
@@ -1080,6 +1586,27 @@ EV = (1 - p) &middot; m &middot; A  -  p &middot; (A + f)
         <span class="tag ${rg.fired ? TONE[rg.out] : "neut"}">${rg.out}</span>
         </div>`).join("")}</div>`,
       "Four rungs, tested top to bottom, first match wins. This is the whole decision: no model output reaches it except the one number, and no language model touches it at all.")}
+
+    ${step(r.movers.length ? 8 : 7, "Go and get the customer",
+      (() => {
+        const pl = rPlan(d.action, d.ev, r.amount, r.orders, r.tenure);
+        if (!pl.rungs.length) return `<p class="note" style="margin:0">${
+          esc(pl.reasons[0])}. Nothing is sent and nothing is spent.</p>`;
+        return `<div class="chain">${pl.rungs.map((g, i) => `
+          <div class="cstep">
+            <span class="ch ${CHTONE[g.channel]}">${CHICON[g.channel]}</span>
+            <div><span class="cn">${esc(CH[g.channel].name)}</span>
+              <span class="ct">${g.at < 1 ? "immediately" : "after " + mins(g.at)}
+                &middot; ${rs(g.cost)} &middot; ${pct(g.p,0)} chance they complete${
+                g.committed ? ' &middot; <span class="tag warn">mandated</span>' : ""}</span></div>
+          </div>${i < pl.rungs.length - 1
+            ? '<span class="carr">&darr; if that does not land</span>' : ""}`).join("")}
+          </div>
+          <div class="tot"><span>Overall</span><b>${pct(pl.p,0)}</b> come back
+            &middot; ${rs(pl.cost)} expected outreach spend &middot; typically
+            ${mins(pl.eta)} from block to completed order</div>`;
+      })(),
+      "Reversing a block recovers nothing on its own. The ladder is tried cheapest first and a rung is added only while the rupees it is expected to bring in beat " + RCFG.min_roas + "x what it costs to send, so a small order stops early and a large one earns a person. A step-up can only use a channel that takes an answer.")}
   </div>
 
   <div class="note-box" style="margin:16px 0 0"><p style="margin:0">
@@ -1232,6 +1759,237 @@ PAGES.push({ id:"agent", nav:"Run the agent", sub:"one order, and how it was dec
     }
 
     document.querySelector("[data-w='0']").click();
+  }});
+
+/* ----------------------------------------------------------- 4. recovery --- */
+PAGES.push({ id:"recovery", nav:"Getting them back", sub:"which channel, and when",
+  render(){
+    const o = RC.outcome, cfg = RCFG;
+    const P0 = (c) => pReturn(c, 0, cfg, 0);
+    return `
+  <h2>Reversing a block recovers nothing on its own</h2>
+  <p class="lede">A corrected row in a database is not a sale. The customer left,
+  and getting them back is a second decision with its own arithmetic: which
+  channel, at what cost, how long it takes, and whether it is worth doing at all.
+  Same expected-value shape as the release decision, and it composes with it
+  rather than replacing it.</p>
+
+  <pre style="margin-top:16px">EV(channel) = P(return | channel, elapsed) &middot; V  -  cost(channel)
+
+<span class="c"># V is the conversion value: exactly the EV(release) the policy already
+# computed, so the fraud risk is priced once and not counted twice.</span></pre>
+
+  <div class="grid tiles" style="margin-top:16px">
+    <div class="tile pos"><span class="k">Actioned</span>
+      <span class="v">${n0(o.contacted)}</span>
+      <span class="s">of ${n0(o.cases)}; the ${n0(o.uncontacted)} left alone are
+      exactly the upheld blocks</span></div>
+    <div class="tile hi"><span class="k">Expected to return</span>
+      <span class="v">${pct(o.blended_rate)}</span>
+      <span class="s">${n0(Math.round(o.expected_returns))} customers</span></div>
+    <div class="tile"><span class="k">Outreach spend</span>
+      <span class="v">${cr(o.spend)}</span>
+      <span class="s">${rs(o.spend / Math.max(1, o.expected_returns))} per customer
+      recovered</span></div>
+    <div class="tile"><span class="k">Median time to money</span>
+      <span class="v">${mins(o.median_eta_min)}</span>
+      <span class="s">block to completed order</span></div>
+  </div>
+
+  <h3>The ladder</h3>
+  <p class="note">Tried cheapest first, and a rung is added only while the rupees
+  it is expected to bring in exceed ${cfg.min_roas}&times; what it costs to send,
+  given every earlier rung has already missed. Nobody wrote a severity table: the
+  ladder tracks severity because <code>V</code> is on one side of that inequality.</p>
+  <div class="card"><div class="b scroll"><table>
+    <thead><tr><th>Channel</th><th class="r">Cost</th><th class="r">Arrives in</th>
+      <th class="r">Reaches</th><th class="r">Of those, return</th>
+      <th class="r">P(return)</th><th>Can ask</th></tr></thead>
+    <tbody>${RC.channels.map(c => `<tr>
+      <td><span class="ch ${CHTONE[c.key]}">${CHICON[c.key]}</span>
+        ${esc(c.name)}</td>
+      <td class="r">${rs(c.cost)}</td>
+      <td class="r">${mins(c.latency)}</td>
+      <td class="r">${pct(c.reach,0)}</td>
+      <td class="r">${pct(c.lift,0)}</td>
+      <td class="r"><b>${pct(P0(c))}</b></td>
+      <td>${c.two_way ? '<span class="tag blue">two-way</span>'
+                      : '<span class="tag neut">one-way</span>'}</td></tr>
+      <tr class="sub-row"><td colspan="7" class="note">${esc(c.note)}</td></tr>`).join("")}
+    </tbody></table></div></div>
+
+  <h3>Three cases, three ladders</h3>
+  <div class="grid two" id="rex"></div>
+
+  <h3>The part that does not depend on believing the rates</h3>
+  <p class="note">Every rate above is asserted. The crossover is not a rate, it is
+  a threshold: the case value at which one channel overtakes another. It can be
+  checked against whatever a pilot measures, which is why it is the number to
+  quote. Same reason the queue section leads with a breakeven rather than picking
+  a point in the band.</p>
+  <div class="card"><div class="b">
+    <div class="bars">${RC.crossovers.filter(x => x.value !== null && x.value > 0)
+      .sort((a, b) => a.value - b.value).map(x => `<div class="bar-row">
+        <span>${esc(CH[x.dearer].name)} over ${esc(CH[x.cheaper].name)}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:${
+          Math.min(100, 100 * x.value / 1200).toFixed(0)}%;background:${C.accent}"></span></span>
+        <span class="n">${cr(x.value)}</span></div>`).join("")}</div>
+    <p class="note" style="margin:12px 0 0"><b>Every pair not listed never crosses
+    over.</b> An SMS is both cheaper and better converting than a phone call, so no
+    order is ever large enough to make the call the better nudge. The voice agent is
+    here for one reason: it is the cheapest channel that can ask a question and hear
+    the answer, and a step-up is a question. Above ${cr(RC.crossovers
+      .filter(x => x.dearer === "human" && x.cheaper === "voice").map(x => x.value)[0]
+      || 0)} of case value a person answers it better than the agent does.</p>
+  </div></div>
+
+  <h3>Time is most of the money</h3>
+  <p class="note">A customer refused twenty minutes ago is still deciding. One
+  refused yesterday has bought it somewhere else. The half-life below is
+  <b>not</b> a free parameter: the operating-point section already fixed two
+  points on this curve when it published the ${pct(B.queue.range[0],0)} to
+  ${pct(B.queue.range[2],0)} recontact band, and exactly one exponential passes
+  through both. It comes out at ${n0(cfg.half_life_min)} minutes, one day.</p>
+  <div class="card"><div class="b"><figure>
+    <div class="wide" id="rdecay"></div>
+    <figcaption>Chance a customer still completes, against how long since the
+    block. Each line already includes that channel's own delivery time, which is
+    why the email line starts below the others rather than beside them.</figcaption>
+  </figure></div></div>
+
+  <div class="card" style="margin-top:14px"><h4>Checked against the frozen band</h4>
+    <div class="b scroll"><table>
+      <thead><tr><th>Programme</th><th class="r">This module</th>
+        <th class="r">Operating-point section</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>SMS only, arrives in two minutes</td>
+          <td class="r">${pct(RC.single_touch.sms)}</td>
+          <td class="r">${pct(B.queue.range[0])}</td>
+          <td><span class="tag good">agrees</span> &ldquo;an in-session retry prompt&rdquo;</td></tr>
+        <tr><td>Email only, lands next day</td>
+          <td class="r">${pct(RC.single_touch.email)}</td>
+          <td class="r">${pct(B.queue.range[2])}</td>
+          <td><span class="tag good">agrees</span> &ldquo;a next-day email&rdquo;</td></tr>
+        <tr class="mark"><td><b>the ladder, all rungs</b></td>
+          <td class="r"><b>${pct(RC.outcome.blended_rate)}</b></td>
+          <td class="r">&mdash;</td>
+          <td>beats every single touch, which is the reason to build one</td></tr>
+      </tbody></table></div>
+    <div class="b" style="border-top:1px solid var(--line)">
+      <p class="note" style="margin:0">Two documents that disagreed here would mean
+      one of them was wrong. A test asserts they do not.</p></div>
+  </div>
+
+  <h3>What a person costs is time, not money</h3>
+  <p class="note">A ${rs(CH.human.cost)} callback pays for itself on almost any case
+  worth chasing, so cost is not what rations it. People are. Drag the staffing and
+  watch the ladder fall back to a voice agent on the cases a reviewer cannot reach
+  &mdash; the same argument the reviewer baseline makes, applied to outreach.</p>
+  <div class="card"><div class="b">
+    <div class="slider"><label for="rcap">Human callbacks per day</label>
+      <input type="range" id="rcap" min="1" max="60" step="1"
+        value="${cfg.human_calls_per_day}"></div>
+    <div id="rcapout" style="margin-top:12px"></div>
+  </div></div>
+
+  <h3>Assumptions, in one place</h3>
+  <div class="note-box w"><p style="margin:0 0 8px"><b>Every per-channel rate on
+  this page is asserted, not measured.</b> The dataset records payments, not
+  outreach, so it cannot supply a delivery rate, an answer rate or a conversion
+  rate, and no amount of care with the model conjures one.</p>
+  <p style="margin:0">Two of them are deliberately pessimistic. Second and third
+  rungs are shrunk by ${pct(cfg.rung_correlation,0)} because someone who ignores an
+  SMS probably ignores a call too, and the value of the customer relationship at
+  risk is left out entirely unless switched on. Relaxing either only improves the
+  result, so what is reported is a floor.</p></div>
+  <div class="card"><div class="b scroll"><table>
+    <thead><tr><th>Half-life</th><th class="r">Rung correlation</th>
+      <th class="r">Expected to return</th><th class="r">Spend</th>
+      <th class="r">Median time</th></tr></thead>
+    <tbody>${RC.sweep.map(r => `<tr${
+      r.half_life_min === cfg.half_life_min && Math.abs(r.rung_correlation - cfg.rung_correlation) < 1e-9
+        ? ' class="mark"' : ""}>
+      <td>${mins(r.half_life_min)}</td><td class="r">${r.rung_correlation.toFixed(2)}</td>
+      <td class="r">${pct(r.blended_rate)}</td><td class="r">${cr(r.spend_inr)}</td>
+      <td class="r">${mins(r.median_eta_min)}</td></tr>`).join("")}</tbody>
+  </table></div></div>`;
+  },
+  after(){
+    // three real showcase cases, planned live rather than pre-rendered
+    const picks = [
+      ["A small order", B.samples.find(s => s.json.amount_inr < 5000)],
+      ["A large one", B.samples.find(s => s.json.amount_inr > 400000)],
+      ["One it will not judge alone",
+       B.samples.find(s => s.json.network_orders_prior === 0)],
+    ].filter(x => x[1]);
+    const ex = document.getElementById("rex");
+    if (ex) ex.innerHTML = picks.map(([label, s]) => {
+      const { x } = vectorise(s.json);
+      const p = calibrate(rawScore(x));
+      const d = decide(p, s.json.amount_inr, s.json.network_orders_prior,
+                       s.json.network_tenure_days);
+      const pl = rPlan(d.action, d.ev, s.json.amount_inr,
+                       s.json.network_orders_prior, s.json.network_tenure_days);
+      return `<div class="card"><h4>${esc(label)}
+        <span style="flex:1"></span><span class="tag ${TONE[d.action]}">${d.action}</span></h4>
+        <div class="b">
+          <p class="note" style="margin:0 0 10px">${esc(s.json.merchant)} &middot;
+            <b>${cr(s.json.amount_inr)}</b> &middot; worth ${cr(pl.value)} to recover</p>
+          <div class="chain">${pl.rungs.map((r, i) => `
+            <div class="cstep">
+              <span class="ch ${CHTONE[r.channel]}">${CHICON[r.channel]}</span>
+              <div><span class="cn">${esc(CH[r.channel].name)}</span>
+                <span class="ct">${r.at < 1 ? "immediately" : "after " + mins(r.at)}
+                  &middot; ${rs(r.cost)} &middot; ${pct(r.p,0)} chance${
+                  r.committed ? ' &middot; <span class="tag warn">mandated</span>' : ""}</span></div>
+            </div>${i < pl.rungs.length - 1 ? '<span class="carr">&darr;</span>' : ""}`).join("")
+            || '<p class="note" style="margin:0">Nothing to recover.</p>'}</div>
+          ${pl.rungs.length ? `<div class="tot"><span>Overall</span>
+            <b>${pct(pl.p,0)}</b> come back &middot; ${rs(pl.cost)} spent &middot;
+            typically ${mins(pl.eta)}</div>` : ""}
+        </div></div>`;
+    }).join("");
+
+    // decay curve
+    const host = document.getElementById("rdecay");
+    if (host){
+      const keys = ["sms", "email", "voice", "human"];
+      const series = keys.map(k => RC.decay.map(d => ({ x: d.t, y: d[k] })));
+      host.innerHTML = svgMulti(series, keys.map(k => CH[k].name),
+        keys.map(k => ({ good:C.good, blue:C.accent, neut:C.mut,
+                         warn:C.warn, bad:C.bad }[CHTONE[k]])));
+    }
+
+    // capacity
+    const cap = document.getElementById("rcap"), out = document.getElementById("rcapout");
+    if (cap) {
+      const paint = () => {
+        const n = +cap.value, o = RC.outcome;
+        // the exported grade is at the shipped budget; scale the wanted set by
+        // day rather than re-running 1,775 plans on every drag
+        const perDay = o.human_wanted / o.days;
+        const served = Math.min(perDay, n);
+        const denied = Math.max(0, perDay - n) * o.days;
+        const supports = n / (o.human_wanted / o.cases);
+        out.innerHTML = `<div class="grid tiles" style="gap:11px">
+          <div class="tile" style="padding:11px 13px"><span class="k">Reviewer time</span>
+            <span class="v" style="font-size:21px">${
+              (served * RCFG.human_minutes_per_call / 60).toFixed(1)} h</span>
+            <span class="s">per day, at ${RCFG.human_minutes_per_call} min a call</span></div>
+          <div class="tile ${denied > 0 ? "neg" : "pos"}" style="padding:11px 13px">
+            <span class="k">Cases denied a person</span>
+            <span class="v" style="font-size:21px">${n0(Math.round(denied))}</span>
+            <span class="s">${denied > 0
+              ? "fall back to a voice agent, ranked by value"
+              : "capacity is not the constraint here"}</span></div>
+          <div class="tile hi" style="padding:11px 13px"><span class="k">Supports</span>
+            <span class="v" style="font-size:21px">${n0(Math.round(supports))}</span>
+            <span class="s">blocked orders a day before rationing starts. This
+            merchant set produces ${(o.cases / o.days).toFixed(0)}.</span></div>
+        </div>`;
+      };
+      cap.oninput = paint; paint();
+    }
   }});
 
 /* ----------------------------------------------------- 4. operating point --- */
@@ -1488,10 +2246,16 @@ PAGES.push({ id:"evidence", nav:"How honest is it", sub:"the numbers that got wo
 const nav = document.getElementById("nav"), mainEl = document.getElementById("main");
 nav.innerHTML = PAGES.map((p,i) => `<button class="row${i===0?" sel":""}" data-p="${i}">
   <span class="t">${esc(p.nav)}</span><span class="d">${esc(p.sub)}</span></button>`).join("");
-document.getElementById("hsub").innerHTML =
-  `${n0(O.n_cases)} blocked orders reviewed at cap ${B.cap} &middot; recall
-   <b>${pct(O.recall)}</b> &middot; fraud admitted <b>${cr(O.admitted)}</b>
-   &middot; ${esc(B.model.learner)}, ${B.model.n_trees} trees`;
+document.getElementById("hsub").innerHTML = [
+  ["blocked orders reviewed", n0(O.n_cases)],
+  ["recall of recoverable", pct(O.recall)],
+  ["recovered", cr(O.recovered)],
+  ["fraud admitted", cr(O.admitted)],
+  ["customers contacted", n0(B.recovery.outcome.contacted)],
+  ["median time to money", mins(B.recovery.outcome.median_eta_min)],
+].map(([k, v]) => `<span class="hp"><b>${v}</b>${esc(k)}</span>`).join("")
+  + `<span class="hp dim"><b>cap ${B.cap}</b>${esc(B.model.learner)}, ${
+      B.model.n_trees} trees</span>`;
 
 let at = -1;
 function go(i){

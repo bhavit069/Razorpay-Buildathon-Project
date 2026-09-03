@@ -16,7 +16,8 @@ from core.truth import HoldoutPeek
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Modules that must have no path to the answer key at all.
-QUARANTINED = ["core/feature_store.py", "core/policy.py", "core/backtest.py"]
+QUARANTINED = ["core/feature_store.py", "core/policy.py", "core/backtest.py",
+               "core/recovery.py"]
 
 
 # --- (a) structural: no forbidden join is even reachable ---------------------

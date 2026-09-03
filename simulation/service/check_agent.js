@@ -47,6 +47,7 @@ const sandbox = {
   console, Math, JSON, Number, String, Array, Object, Date, isNaN, Set, Map,
   parseInt, parseFloat, Boolean, RegExp, Error, Intl, Function, Symbol,
   innerWidth: 1440, innerHeight: 900, location: { hash: "" },
+  performance: { now: () => 0 }, Infinity,
   addEventListener(){}, setTimeout(){}, requestAnimationFrame(){},
 };
 sandbox.window = sandbox; sandbox.globalThis = sandbox;
@@ -57,10 +58,13 @@ for (const [i, s] of scripts.entries()){
     console.error(`script ${i} threw:`, e.message); process.exit(1); }
 }
 const get = (n) => vm.runInContext(n, sandbox);
+const pct = (x) => (100 * x).toFixed(1) + "%";
 const { B, trace, verdictHTML, decide, vectorise, rawScore, calibrate,
-        WRITTEN, FIELDS, fieldHTML, TONE } =
+        WRITTEN, FIELDS, fieldHTML, TONE, rPlan, pReturn, crossover, CH,
+        newRun, liveTick } =
   Object.fromEntries(["B","trace","verdictHTML","decide","vectorise","rawScore",
-    "calibrate","WRITTEN","FIELDS","fieldHTML","TONE"].map(n => [n, get(n)]));
+    "calibrate","WRITTEN","FIELDS","fieldHTML","TONE","rPlan","pReturn",
+    "crossover","CH","newRun","liveTick"].map(n => [n, get(n)]));
 
 let fail = 0;
 const check = (name, problems) => {
@@ -223,6 +227,160 @@ const reached = new Set(CASES.map(j => trace(j).d.action));
 check("the case set reaches every action",
   ["OVERTURN","UPHOLD","STEP_UP","ESCALATE"].filter(a => !reached.has(a))
     .map(a => `no case in the set produces ${a}, so that path is unchecked`));
+
+/* 11. the recovery ladder in the page is the one core/recovery.py computed.
+       Same standard the model is held to: the bundle carries Python's plan for
+       300 real holdout cases and every one is replayed through the page's own
+       code. A console that shows a different ladder than the numbers came from
+       is a nicely typeset lie. */
+check("the JS recovery ladder reproduces Python on 300 cases", (() => {
+  const bad = [];
+  let worst = 0;
+  for (const c of B.recovery.check){
+    const p = rPlan(c.action, c.ev, c.amount, c.orders, c.tenure);
+    const got = p.rungs.map(r => r.channel).join(",");
+    if (got !== c.chain.join(",")){
+      bad.push(`${c.payment_id}: js [${got}] vs python [${c.chain.join(",")}]`);
+      continue;
+    }
+    worst = Math.max(worst, Math.abs(p.p - c.p), Math.abs(p.cost - c.cost),
+                     Math.abs(p.eta - c.eta), Math.abs(p.value - c.value));
+  }
+  // the bundle rounds to 9 places on the way out, so that is the floor
+  if (worst > 1e-8) bad.push(`worst numeric gap ${worst.toExponential(2)}`);
+  return bad;
+})());
+
+/* 12. the constraints, restated against the page's copy rather than Python's */
+check("a step-up never gets a one-way channel", (() => {
+  const bad = [];
+  for (const c of B.recovery.check){
+    if (c.action !== "STEP_UP") continue;
+    for (const r of rPlan(c.action, c.ev, c.amount, c.orders, c.tenure).rungs)
+      if (!CH[r.channel].two_way) bad.push(`${c.payment_id}: ${r.channel} cannot take an answer`);
+  }
+  return bad;
+})());
+
+check("an escalation goes to a person and an upheld block goes nowhere", (() => {
+  const bad = [];
+  for (const c of B.recovery.check){
+    const r = rPlan(c.action, c.ev, c.amount, c.orders, c.tenure).rungs;
+    if (c.action === "ESCALATE" && r.map(x => x.channel).join(",") !== "human")
+      bad.push(`${c.payment_id}: escalation routed to ${r.map(x => x.channel) || "nothing"}`);
+    if (c.action === "UPHOLD" && r.length)
+      bad.push(`${c.payment_id}: upheld block still contacted`);
+  }
+  return bad;
+})());
+
+check("no rung the ladder CHOSE is sent at a loss", (() => {
+  // A mandated rung may run at a loss: an escalation gets a reviewer whether
+  // or not the arithmetic likes it, which is what escalating means. Those
+  // carry a flag rather than being averaged in with the rest.
+  const bad = [];
+  for (const c of B.recovery.check)
+    for (const r of rPlan(c.action, c.ev, c.amount, c.orders, c.tenure).rungs)
+      if (!r.committed && !(r.ev > 0))
+        bad.push(`${c.payment_id}: chose ${r.channel} at ev ${r.ev.toFixed(2)}`);
+  return bad;
+})());
+
+check("a committed action is always actioned", (() => {
+  const bad = [];
+  for (const c of B.recovery.check){
+    if (c.action !== "ESCALATE" && c.action !== "STEP_UP") continue;
+    if (!rPlan(c.action, c.ev, c.amount, c.orders, c.tenure).rungs.length)
+      bad.push(`${c.payment_id}: ${c.action} left with no channel at all`);
+  }
+  return bad;
+})());
+
+check("waiting costs money", (() => {
+  const now = rPlan("OVERTURN", 100000, 500000, 40, 900, { elapsed: 0 });
+  const later = rPlan("OVERTURN", 100000, 500000, 40, 900, { elapsed: 2880 });
+  return later.p < now.p && later.ev < now.ev ? []
+    : [`p ${now.p} -> ${later.p}, ev ${now.ev} -> ${later.ev} after two days`];
+})());
+
+check("the single-touch channels reproduce the frozen recontact band", (() => {
+  // METRICS.md 11 calls 0.70 an in-session retry prompt and 0.35 a next-day
+  // email. Those are the two anchors the half-life was solved from.
+  const bad = [];
+  const want = { sms: 0.70, email: 0.35 };
+  for (const k of Object.keys(want))
+    if (Math.abs(B.recovery.single_touch[k] - want[k]) > 0.02)
+      bad.push(`${k}-only is ${B.recovery.single_touch[k].toFixed(3)}, band says ${want[k]}`);
+  return bad;
+})());
+
+/* 17. the live board keeps its own running totals, on the most prominent
+       screen in the console. If those double-count a return or lose a case
+       between the feed and the tally, every number a judge looks at first is
+       wrong and nothing else here would notice. */
+check("the live board's books balance", (() => {
+  const bad = [];
+  const run = newRun(7);
+  let prevRec = 0, prevAdm = 0, prevSpend = 0;
+  for (let i = 0; i < 400; i++){
+    liveTick(run, 60);
+    if (run.recovered < prevRec) bad.push("recovered went down");
+    if (run.admitted < prevAdm) bad.push("admitted went down");
+    if (run.spend < prevSpend) bad.push("spend went down");
+    prevRec = run.recovered; prevAdm = run.admitted; prevSpend = run.spend;
+  }
+  // every arrival is in exactly one place
+  const accounted = run.returns + run.lost + run.inflight.length + run.closed;
+  if (accounted !== run.n)
+    bad.push(`${run.n} arrived but ${accounted} accounted for ` +
+             `(${run.returns} returned, ${run.lost} lost, ` +
+             `${run.inflight.length} in flight, ${run.closed} upheld)`);
+  // the action tallies have to add up too
+  const acts = run.released + run.upheld + run.asked + run.escalated;
+  if (acts !== run.n) bad.push(`${run.n} arrived, ${acts} in the action tallies`);
+  // an upheld block is never contacted and never costs anything
+  if (run.closed !== run.upheld)
+    bad.push(`${run.upheld} upheld but ${run.closed} closed without contact`);
+  // spend must equal the channel mix the screen shows. Both are running
+  // totals now: deriving either by walking `feed`/`done` under-reports,
+  // because those are trimmed, which is exactly how the mix panel came to be
+  // showing the last two hundred cases instead of the whole run.
+  const mixCost = Object.values(run.mix).reduce((a, m) => a + m.cost, 0);
+  if (Math.abs(mixCost - run.spend) > 1e-9)
+    bad.push(`spend ${run.spend.toFixed(2)} but the mix totals ${mixCost.toFixed(2)}`);
+  const mixN = Object.values(run.mix).reduce((a, m) => a + m.n, 0);
+  if (mixN < run.returns) bad.push(`${run.returns} returned off ${mixN} attempts`);
+  if (run.n < 50) bad.push(`only ${run.n} orders arrived in 400 ticks`);
+  return bad;
+})());
+
+check("the live board is deterministic for a seed", (() => {
+  const a = newRun(3), b = newRun(3);
+  for (let i = 0; i < 200; i++){ liveTick(a, 60); liveTick(b, 60); }
+  return (a.recovered === b.recovered && a.admitted === b.admitted
+          && a.returns === b.returns && a.spend === b.spend)
+    ? [] : [`same seed diverged: ${a.recovered} vs ${b.recovered}`];
+})());
+
+check("the board never books fraud as revenue", (() => {
+  // whether a returning order was good comes from the answer key, not a coin
+  const run = newRun(11);
+  for (let i = 0; i < 400; i++) liveTick(run, 60);
+  const bad = [];
+  if (run.retGood + run.retBad !== run.returns)
+    bad.push(`${run.returns} returned but ${run.retGood}+${run.retBad} classified`);
+  if (Math.abs(run.recovered + run.admitted - run.returnedAmount) > 1e-6)
+    bad.push(`recovered+admitted ${(run.recovered + run.admitted).toFixed(0)} ` +
+             `vs value returned ${run.returnedAmount.toFixed(0)}`);
+  if (run.retBad === 0) bad.push("no fraud came back at all, which is not credible");
+  // and the split has to track the pool's own answer key, not a coin
+  const poolBad = B.recovery.check.filter(c => c.good === false).length
+                  / B.recovery.check.length;
+  const seenBad = run.retBad / run.returns;
+  if (seenBad > poolBad * 3) bad.push(`${pct(seenBad)} of returns were fraud ` +
+    `against ${pct(poolBad)} of the pool - the split is not coming from the key`);
+  return bad;
+})());
 
 console.log(fail ? `\n${fail} agent problem(s)` : "\nthe agent page decides correctly");
 process.exit(fail ? 1 : 0);

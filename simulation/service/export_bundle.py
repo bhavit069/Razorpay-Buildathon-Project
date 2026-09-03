@@ -29,6 +29,7 @@ from core.metrics import (HUMAN_COVERAGE, RECONTACT_RANGE, Deployment,
                           recontact_arithmetic)
 from core.model import Adjudicator
 from core.policy import PolicyConfig
+from core import recovery as R
 from core.showcase import ROLES
 from core.showcase import pick as pick_showcase
 from core.truth import TruthVault
@@ -43,6 +44,79 @@ CAP = 0.20
 #   [feature_index, threshold, left, right]
 # and the test is always `value <= threshold -> left`, because every split in
 # this model is of that form and missing values never occur (checked below).
+def recovery_block(ledger, vault, n_check: int = 400) -> dict:
+    """Everything the console needs to run and to check the recovery ladder.
+
+    `check` is the part that matters: Python's plan for a few hundred real
+    cases, so service/check_agent.js can prove the JavaScript reproduces it
+    rather than approximating it. Same standard the model is held to, for the
+    same reason - a page that shows a different ladder than the one the numbers
+    came from is a nicely typeset lie.
+    """
+    cfg = R.RecoveryConfig()
+    o = R.grade(ledger)
+    singles = {k: R.grade(ledger, cfg, only=k).blended_rate
+               for k in ("sms", "email", "voice", "human")}
+    # Doubles as the live board's case pool, so it carries enough to render a
+    # real case: the score the model gave it, the action the policy took, and
+    # the answer key. The board reveals truth AFTER a case resolves and never
+    # feeds it to anything - same rule the case room follows.
+    truth = {t.payment_id: t for t in vault.grade([r.payment_id for r in ledger.records])}
+    check = []
+    step = max(1, len(ledger.records) // n_check)
+    for rec in ledger.records[::step][:n_check]:
+        pl = R.plan(rec.action, rec.ev_release_inr, rec.amount_inr,
+                    rec.network_orders_prior, rec.network_tenure_days,
+                    payment_id=rec.payment_id, cfg=cfg)
+        t = truth.get(rec.payment_id)
+        check.append({
+            "payment_id": rec.payment_id, "action": rec.action,
+            "ev": rec.ev_release_inr, "amount": rec.amount_inr,
+            "orders": rec.network_orders_prior, "tenure": rec.network_tenure_days,
+            "chain": [g.channel for g in pl.rungs],
+            "at": [round(g.at_min, 6) for g in pl.rungs],
+            "committed": [bool(g.committed) for g in pl.rungs],
+            "p": round(pl.p_total, 12), "cost": round(pl.cost_expected_inr, 9),
+            "eta": round(pl.eta_min, 9), "value": round(pl.value_inr, 9),
+            # for the board only, never an input to anything above
+            "merchant": rec.merchant, "reason": rec.block_reason,
+            "p_bad": round(rec.p_bad, 9), "day": rec.day,
+            "good": (t.true_outcome == "clean") if t else None,
+            "truth": (t.true_outcome if t else None),
+        })
+    return {
+        "channels": [{"key": c.key, "name": c.name, "cost": c.cost_inr,
+                      "latency": c.latency_min, "two_way": c.two_way,
+                      "reach": c.reach, "lift": c.lift, "note": c.note}
+                     for c in R.CHANNELS],
+        "cfg": {"half_life_min": cfg.half_life_min,
+                "rung_correlation": cfg.rung_correlation,
+                "min_roas": cfg.min_roas, "max_rungs": cfg.max_rungs,
+                "human_calls_per_day": cfg.human_calls_per_day,
+                "human_minutes_per_call": cfg.human_minutes_per_call,
+                "count_ltv": cfg.count_ltv,
+                "churn_on_false_decline": cfg.churn_on_false_decline,
+                "ltv_horizon_days": cfg.ltv_horizon_days,
+                "margin": cfg.margin},
+        "crossovers": [{"dearer": a, "cheaper": b,
+                        "value": (None if v == float("inf") else v)}
+                       for a, b, v in R.crossover_table(cfg)],
+        "decay": R.decay_curve(cfg),
+        "single_touch": singles,
+        "outcome": {"cases": o.cases, "contacted": o.contacted,
+                    "uncontacted": o.uncontacted, "stranded": o.stranded,
+                    "spend": o.spend_inr, "expected_returns": o.expected_returns,
+                    "blended_rate": o.blended_rate,
+                    "median_eta_min": o.median_eta_min,
+                    "human_wanted": o.human_wanted, "human_denied": o.human_denied,
+                    "human_minutes": o.human_minutes,
+                    "supports_per_day": o.supports_per_day,
+                    "days": o.days, "by_channel": o.rows()},
+        "sweep": R.sweep(ledger),
+        "check": check,
+    }
+
+
 def pack(node):
     if "leaf_value" in node:
         return node["leaf_value"]
@@ -264,6 +338,7 @@ def build(data_dir="data300k", out=OUT):
                              "contribution": v.net_contribution_inr}
                          for k, v in rationed.items()},
         },
+        "recovery": recovery_block(ledger, vault),
         "merchants": merchants,
         "importance": imp,
         "dist": dist,

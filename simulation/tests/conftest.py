@@ -40,6 +40,16 @@ def model(store, vault):
     return Adjudicator().fit(store, vault)
 
 
+@pytest.fixture(scope="session")
+def ledger(store, model):
+    """The shipped decision over the holdout, replayed once and shared. Session
+    scoped because fitting and replaying costs a couple of seconds and every
+    recovery test wants the same one."""
+    from core.backtest import run as backtest_run
+    from core.policy import PolicyConfig
+    return backtest_run(store, model, PolicyConfig(cap=0.20), split="holdout")
+
+
 def _lightgbm_error():
     """None if the model stack loads. LightGBM ships a native library and this
     machine's Application Control policy can refuse it; when that happens every
@@ -77,7 +87,7 @@ def pytest_collection_modifyitems(config, items):
     if not LGB_ERROR:
         return
     # data_dir only locates the dataset, so tests that take just that still run
-    needs = {"store", "vault", "model"}
+    needs = {"store", "vault", "model", "ledger"}
     mark = pytest.mark.skip(reason=LGB_ERROR)
     for item in items:
         if needs & set(getattr(item, "fixturenames", ())):

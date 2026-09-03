@@ -118,6 +118,64 @@ cannot imply model output that is not there. The free tier is 20 requests per
 day per model, so wider live coverage needs a paid key rather than any code
 change.
 
+## Getting the customer back
+
+Reversing a block recovers nothing on its own. A corrected row in a database is
+not a sale: the customer left, and somebody has to go and get them. That is a
+second decision with its own arithmetic.
+
+```
+EV(channel) = P(return | channel, elapsed) * V  -  cost(channel)
+```
+
+`V` is the conversion value, which is exactly the `EV(release)` the policy
+already computed, so fraud risk is priced once and not twice. Five channels,
+tried cheapest first, and a rung is added only while the rupees it is expected
+to bring in beat twice what it costs to send, given every earlier rung missed.
+
+| | Cost | Arrives in | P(return) | Two-way |
+|---|---|---|---|---|
+| Release in session | free | now | 100% | no |
+| SMS or WhatsApp | Rs 0.35 | 2 min | 70.0% | no |
+| Email | Rs 0.08 | 90 min | 34.2% | no |
+| Agentic voice call | Rs 14 | 18 min | 30.5% | **yes** |
+| Human callback | Rs 150 | 4 h | 55.2% | **yes** |
+
+Nobody wrote a severity table. A Rs 1,195 order gets an SMS and then an email,
+37 paise all in. A Rs 21,711 order earns a human callback as its second rung.
+The ladder tracks severity because `V` is on one side of that inequality.
+
+**A voice agent is not a better nudge than an SMS.** It converts worse and costs
+forty times more, and no order is ever large enough to change that. It is here
+because it is the cheapest channel that can ask a question and hear the answer,
+and a step-up is a question. Above Rs 552 of case value a person answers it
+better, and that crossover is the number to quote rather than any of the rates.
+
+**Time is most of the money.** A customer refused twenty minutes ago is still
+deciding; one refused yesterday has bought it elsewhere. The half-life is not a
+free parameter: `METRICS.md` 11 already fixed two points on that curve when it
+published the 70%-to-35% recontact band and called its ends an in-session retry
+prompt and a next-day email. Exactly one exponential passes through both, and
+its half-life is 1438 minutes. A test asserts the two documents still agree.
+
+Over the 1,775 blocked orders: 1,405 actioned, which is exactly everything not
+upheld; 70.1% expected to return; Rs 37,809 of outreach, Rs 38 per customer
+recovered; median 18 minutes from block to completed order.
+
+**What rations a person is time, not money.** A Rs 150 callback pays for itself
+on nearly any case worth chasing, so the constraint is people. That is the same
+argument the reviewer baseline makes, and leaving it out would have rebuilt the
+exact fantasy that baseline exists to puncture. At 40 callbacks a day this
+supports 103 blocked orders a day before rationing starts and this merchant set
+produces 29, so capacity does not bind here - reported rather than assumed. A
+denied escalation is *stranded*, not handled more cheaply, and counted
+separately.
+
+Every per-channel rate above is asserted, not measured, because the dataset
+records payments and not outreach. They live in `RECOVERY.md`, deliberately
+outside the frozen `METRICS.md`, so one kind of number cannot be mistaken for
+the other.
+
 ## Results
 
 Reviewing 1,775 blocked orders the model was not trained on, at the operating
@@ -236,7 +294,8 @@ standard.
 | `simulation/METRICS.md` | Every number the project quotes, generated |
 | `simulation/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
 | `simulation/notes.txt` | Running log of what was built and what broke |
-| `console.html` | Five-page console, also served by `run.py serve`. The agent page runs the real model. |
+| `console.html` | Seven-page console, also served by `run.py serve`. Opens on a live board; the agent page runs the real model. |
+| `simulation/RECOVERY.md` | The outreach ladder. Generated, and separate from METRICS.md on purpose. |
 | `flow.html` | Browser walkthrough of the pipeline, one real case through eight stages |
 | `knowledge.txt` | What to run, what the idea is, what is left to do |
 | `SCRIPT.txt` | The demo script, five beats |
@@ -263,7 +322,8 @@ python run.py room        # build the case room, then open artifacts/case_room.h
 python run.py serve       # build the console and serve it on http://localhost:4000
 python run.py agent       # run the agent over the blocked pile
 python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
-python run.py dry         # pre-demo check, network cut, 15 checks
+python run.py recovery    # regenerate RECOVERY.md
+python run.py dry         # pre-demo check, network cut, 16 checks
 python run.py seeds       # how much it moves between worlds, ~6 min
 ```
 

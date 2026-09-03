@@ -275,11 +275,30 @@ def main():
                            stdin=subprocess.DEVNULL)
         if r.returncode:
             raise AssertionError(r.stdout.strip()[-500:])
-        return f"{r.stdout.count('[ok]')} agent checks pass over 12 cases"
+        return f"{r.stdout.count(chr(91)+chr(111)+chr(107)+chr(93))} agent checks pass"
     try:
         c("the agent page decides correctly", agent_page)
     except FileNotFoundError:
         print("  [skip] the agent page decides correctly (no node on PATH)")
+
+    def recovery_doc():
+        """RECOVERY.md regenerates from core.recovery, so a stale one means the
+        ladder on the page and the ladder in the document have drifted."""
+        from core.recovery_doc import to_markdown
+        path = os.path.join(ROOT, "RECOVERY.md")
+        if not os.path.exists(path):
+            raise AssertionError("RECOVERY.md missing; run `python run.py recovery`")
+        from core.backtest import run as backtest_run
+        led = backtest_run(state["store"], state["model"],
+                           PolicyConfig(cap=0.20), "holdout")
+        want = to_markdown(led)
+        have = open(path, encoding="utf-8").read()
+        if want.strip() != have.strip():
+            raise AssertionError("RECOVERY.md has drifted from core.recovery; "
+                                 "run `python run.py recovery`")
+        n = sum(1 for line in have.splitlines() if line.startswith("## "))
+        return f"{len(have) // 1024} KB, {n} sections, regenerates identically"
+    c("RECOVERY.md is current", recovery_doc)
 
     # --- replay strictness ---------------------------------------------------
     def replay_serves_demo_cases():
