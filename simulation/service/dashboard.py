@@ -13,8 +13,22 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "dashboard_template.html")
+ENGINE = os.path.join(HERE, "engine.js")
 OUT = os.path.join("artifacts", "dashboard.html")
 BUNDLE = os.path.join("artifacts", "bundle.json")
+
+
+def inject_engine(page: str) -> str:
+    """Splice service/engine.js in. One copy of the model and the ladder, shared
+    by every front end, so a second UI cannot quietly disagree with the checked
+    one about what the model says."""
+    if "__ENGINE__" not in page:
+        raise ValueError("template has no __ENGINE__ placeholder")
+    with open(ENGINE, encoding="utf-8") as fh:
+        engine = fh.read()
+    if "</script" in engine.lower():
+        raise ValueError("engine contains a script close tag")
+    return page.replace("__ENGINE__", engine)
 
 
 def build(out: str = OUT, data_dir: str = "data300k", rebuild: bool = True) -> str:
@@ -33,6 +47,7 @@ def build(out: str = OUT, data_dir: str = "data300k", rebuild: bool = True) -> s
 
     if "__BUNDLE__" not in page:
         raise ValueError("template has no __BUNDLE__ placeholder")
+    page = inject_engine(page)
     # The bundle is JSON, so it can only break out of the <script> through a
     # literal </script>. Nothing in it should contain one, but check rather
     # than assume, since payment ids and verdict text pass through here.

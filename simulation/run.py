@@ -114,6 +114,14 @@ def console():
     sh("-m", "service.dashboard")
 
 
+def stage():
+    """The room version: one screen, four scenes, dark by default, served on
+    http://localhost:4005. Same bundle and the same engine as the console, so
+    the two cannot disagree about what the model says. Run it alongside
+    `run.py serve` rather than instead of it."""
+    sh("-m", "service.serve", "--stage")
+
+
 def recovery():
     """RECOVERY.md: the outreach ladder, its crossovers and its assumptions.
     Separate from METRICS.md on purpose - that file is frozen and measured,
@@ -143,8 +151,8 @@ def _dataset():
 
 
 TASKS = {f.__name__: f for f in (data, data300k, validate, moat, sweep, metrics,
-                                 test, notebooks, seeds, agent, docs, room, console, serve, warm, dry,
-                                 recovery, clean)}
+                                 test, notebooks, seeds, agent, docs, room, console, serve, stage, warm,
+                                 dry, recovery, clean)}
 
 if __name__ == "__main__":
     name = sys.argv[1] if len(sys.argv) > 1 else ""

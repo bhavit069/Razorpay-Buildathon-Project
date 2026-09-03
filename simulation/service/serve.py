@@ -31,9 +31,11 @@ DEFAULT_PORT = 4000
 ROUTES = {
     "/": "dashboard.html",
     "/console": "dashboard.html",
+    "/stage": "stage.html",
     "/case": "case_room.html",
     "/case-room": "case_room.html",
 }
+STAGE_PORT = 4005
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -106,6 +108,9 @@ def build_pages():
         dashboard.build(out=os.path.join("artifacts", "dashboard.html"),
                         rebuild=False)
     if not os.path.exists(os.path.join(ARTIFACTS, "case_room.html")):
+        print("building the stage")
+        from . import stage
+        stage.build()
         print("building the case room")
         from . import case_room
         case_room.build()
@@ -113,20 +118,34 @@ def build_pages():
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--port", type=int, default=DEFAULT_PORT)
+    ap.add_argument("--port", type=int, default=None,
+                    help=f"default {DEFAULT_PORT}, or {STAGE_PORT} with --stage")
+    ap.add_argument("--stage", action="store_true",
+                    help="serve the room version at / instead of the console. "
+                         "Both pages are always built and both routes always "
+                         "work, so the two can run side by side on two ports.")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--no-build", action="store_true",
                     help="serve what is already in artifacts/")
     ap.add_argument("--no-open", action="store_true",
                     help="do not open a browser")
     a = ap.parse_args(argv)
+    if a.port is None:
+        a.port = STAGE_PORT if a.stage else DEFAULT_PORT
+    if a.stage:
+        # / and /console swap places, so :4005 lands on the stage and the
+        # console is still reachable from it without a second server.
+        ROUTES["/"] = "stage.html"
+        ROUTES["/console"] = "dashboard.html"
 
     os.chdir(ROOT)
     if not a.no_build:
         build_pages()
-    elif not os.path.exists(os.path.join(ARTIFACTS, "dashboard.html")):
-        raise SystemExit("artifacts/dashboard.html does not exist. "
-                         "Run without --no-build, or `python run.py console`.")
+    else:
+        need = ROUTES["/"]
+        if not os.path.exists(os.path.join(ARTIFACTS, need)):
+            raise SystemExit(f"artifacts/{need} does not exist. "
+                             "Run without --no-build, or `python run.py console`.")
 
     # Threading, not the single-threaded default: one slow or half-open
     # connection was enough to make the next request hang.

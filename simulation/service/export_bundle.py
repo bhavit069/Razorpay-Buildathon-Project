@@ -23,7 +23,8 @@ import numpy as np
 
 from core.backtest import run as backtest_run
 from core.feature_store import FeatureStore
-from core.metrics import (HUMAN_COVERAGE, RECONTACT_RANGE, Deployment,
+from core.metrics import (HUMAN_COVERAGE, RECONTACT_RANGE, REVIEW_COST_INR,
+                          Deployment,
                           StepUpModel, baseline_human_rationed,
                           baseline_human_reviewer, frontier, grade,
                           recontact_arithmetic)
@@ -306,6 +307,7 @@ def build(data_dir="data300k", out=OUT):
         "margin": cfg.margin,
         "dispute_overhead_inr": cfg.dispute_overhead_inr,
         "stepup_floor_inr": cfg.stepup_floor_inr,
+        "review_cost_inr": REVIEW_COST_INR,
         "uphold_floor": cfg.uphold_floor,
         "min_orders": cfg.min_network_orders,
         "min_tenure_days": cfg.min_network_tenure_days,

@@ -3,12 +3,23 @@ Five beats, about five minutes. Every number here is in development/METRICS.md.
 
 BEFORE YOU RECORD
   cd development
-  python run.py dry          # 16 checks, network cut. must be 16 of 16.
+  python run.py dry          # 18 checks, network cut. must be 18 of 18.
   python run.py room         # writes artifacts/case_room.html
   python run.py serve        # builds the console, serves localhost:4000
+  python run.py stage        # the room version, localhost:4005
 
-  Leave the server running. Open two tabs: localhost:4000 for the console and
-  localhost:4000/case for the case room.
+  Leave both servers running. Three tabs: localhost:4005 for the stage,
+  localhost:4000 for the console, localhost:4000/case for the case room.
+
+  WHICH SCREEN FOR WHAT. The stage is what you leave up between conversations
+  and what you point at while talking - one screen, scenes on the number keys
+  1 to 5, dark, readable from a step back. The console is where you go when
+  somebody asks a question the stage does not already answer, because it has
+  the tables. The case room is one order at a time.
+
+  If you only have one screen, run the whole demo off the stage. Scene 1 is
+  Beat 1 and Beat 5's opening, scene 2 is Beat 1, scene 3 covers Beats 2 to 4,
+  scene 4 is Beat 4b and scene 5 is Beat 5.
 
   The console opens on the live board. Start it before you start talking and
   leave it running: by Beat 5 it has a few hundred real orders on it and the

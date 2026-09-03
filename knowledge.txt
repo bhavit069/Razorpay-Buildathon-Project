@@ -106,6 +106,29 @@ run it once before anything else works.
    it is the single most useful thing to have on screen when someone asks why
    0.20.
 
+   THE STAGE, on :4005.
+
+       python run.py stage        # leave `run.py serve` running too
+
+   Same numbers, same engine file, different job. The console is for someone
+   sitting down with it; the stage is for someone walking past the laptop. One
+   screen, no navigating, five scenes on the number keys 1-5 or the arrow
+   keys, dark by default with a light toggle for projectors, and the money
+   large enough to read from behind a chair.
+
+       1  LIVE      the pipeline, orders moving through it, the totals running
+       2  WHY       the problem in three numbers and one bar
+       3  ONE CASE  evidence, decision and ladder for one order
+       4  LADDER    the five channels and how severity falls out of the maths
+       5  HONEST    the four numbers that moved against us
+
+   Both servers run side by side and cross-link: :4000/stage and :4005/console
+   reach each other, and /case is the case room on either. There is one copy
+   of the model and one copy of the recovery ladder, in service/engine.js,
+   injected into both pages at build time, so the two front ends cannot
+   disagree about what the model says. check_stage.js asserts that directly:
+   it loads both pages and compares their configuration and their answers.
+
 3. THE NUMBERS.
 
        python run.py metrics
@@ -168,7 +191,7 @@ run it once before anything else works.
 
 7. THE DRY RUN. Do this before any recording.
 
-       python run.py dry           # 16 checks, network cut, about 60s
+       python run.py dry           # 18 checks, network cut, about 60s
 
    It blocks the socket module and then does everything the demo does: checks
    the generated doc blocks are current, runs the suite, fits the model, picks

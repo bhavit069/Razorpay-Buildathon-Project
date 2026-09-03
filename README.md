@@ -294,6 +294,7 @@ standard.
 | `simulation/METRICS.md` | Every number the project quotes, generated |
 | `simulation/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
 | `simulation/notes.txt` | Running log of what was built and what broke |
+| `simulation/service/stage_template.html` | The room version on :4005. Five scenes, dark by default. |
 | `console.html` | Seven-page console, also served by `run.py serve`. Opens on a live board; the agent page runs the real model. |
 | `simulation/RECOVERY.md` | The outreach ladder. Generated, and separate from METRICS.md on purpose. |
 | `flow.html` | Browser walkthrough of the pipeline, one real case through eight stages |
@@ -320,10 +321,11 @@ python run.py test        # 79 tests                    ~25s
 python run.py metrics     # regenerate every number     ~60s
 python run.py room        # build the case room, then open artifacts/case_room.html
 python run.py serve       # build the console and serve it on http://localhost:4000
+python run.py stage       # the room version, http://localhost:4005
 python run.py agent       # run the agent over the blocked pile
 python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
 python run.py recovery    # regenerate RECOVERY.md
-python run.py dry         # pre-demo check, network cut, 16 checks
+python run.py dry         # pre-demo check, network cut, 18 checks
 python run.py seeds       # how much it moves between worlds, ~6 min
 ```
 
@@ -335,6 +337,15 @@ cd simulation && python run.py data300k && python run.py room
 
 then open `simulation/artifacts/case_room.html`. It is one file, no server, no
 network.
+
+`python run.py stage` is the version to leave open at a table. One screen, five
+scenes on the number keys, dark by default, the money large enough to read
+across a room, and a live pipeline with real blocked orders moving through it.
+It serves on http://localhost:4005 and runs alongside the console rather than
+instead of it; the two cross-link. There is one copy of the model and one of the
+recovery ladder, in `simulation/service/engine.js`, injected into both pages at
+build time, and `check_stage.js` loads both and compares their answers, so the
+two front ends cannot drift apart.
 
 `python run.py serve` puts the whole system on http://localhost:4000: the
 pipeline, the portfolio, the operating-point curve, the honest-metrics page,

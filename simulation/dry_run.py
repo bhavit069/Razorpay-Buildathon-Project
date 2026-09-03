@@ -281,6 +281,33 @@ def main():
     except FileNotFoundError:
         print("  [skip] the agent page decides correctly (no node on PATH)")
 
+    def build_stage():
+        from service import stage
+        p = stage.build()
+        size = os.path.getsize(os.path.join(ROOT, p)) / 1024
+        html = open(os.path.join(ROOT, p), encoding="utf-8").read()
+        refs = re.findall(r'(?:src|href)="(?:https?:)?//[^"]+"', html)
+        if [x for x in refs if "fonts.g" not in x]:
+            raise AssertionError(f"stage loads external resources: {refs[:3]}")
+        return f"{size:.0f} KB, self-contained, five scenes"
+    c("the stage builds", build_stage)
+
+    def stage_page():
+        """The room version on :4005. Two front ends over one set of numbers is
+        the arrangement most likely to produce a demo that contradicts its own
+        documentation, so this checks the stage says the same thing the console
+        does, not merely that it renders."""
+        r = subprocess.run(["node", "service/check_stage.js"], cwd=ROOT,
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL)
+        if r.returncode:
+            raise AssertionError(r.stdout.strip()[-500:])
+        return f"{r.stdout.count('[ok]')} stage checks pass"
+    try:
+        c("the stage agrees with the console", stage_page)
+    except (FileNotFoundError, ImportError):
+        print("  [skip] the stage agrees with the console (no node on PATH)")
+
     def recovery_doc():
         """RECOVERY.md regenerates from core.recovery, so a stale one means the
         ladder on the page and the ladder in the document have drifted."""
