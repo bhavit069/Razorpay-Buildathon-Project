@@ -254,7 +254,8 @@ def main():
         scroll container. Verified against the pre-fix page, where it finds
         five, so it is not a rubber stamp."""
         r = subprocess.run(["node", "service/check_responsive.js"], cwd=ROOT,
-                           capture_output=True, text=True)
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL)
         if r.returncode:
             raise AssertionError(r.stdout.strip()[-400:])
         return f"{r.stdout.count('[ok]')} responsive checks pass"
@@ -270,7 +271,8 @@ def main():
         no-ops. This drives the decision path itself over every case the page
         can load and reads the HTML back."""
         r = subprocess.run(["node", "service/check_agent.js"], cwd=ROOT,
-                           capture_output=True, text=True)
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL)
         if r.returncode:
             raise AssertionError(r.stdout.strip()[-500:])
         return f"{r.stdout.count('[ok]')} agent checks pass over 12 cases"

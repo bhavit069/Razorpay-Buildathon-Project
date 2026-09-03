@@ -150,7 +150,7 @@ run it once before anything else works.
 
 7. THE DRY RUN. Do this before any recording.
 
-       python run.py dry           # 14 checks, network cut, about 40s
+       python run.py dry           # 15 checks, network cut, about 40s
 
    It blocks the socket module and then does everything the demo does: checks
    the generated doc blocks are current, runs the suite, fits the model, picks

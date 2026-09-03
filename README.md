@@ -263,7 +263,7 @@ python run.py room        # build the case room, then open artifacts/case_room.h
 python run.py serve       # build the console and serve it on http://localhost:4000
 python run.py agent       # run the agent over the blocked pile
 python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
-python run.py dry         # pre-demo check, network cut, 14 checks
+python run.py dry         # pre-demo check, network cut, 15 checks
 python run.py seeds       # how much it moves between worlds, ~6 min
 ```
 

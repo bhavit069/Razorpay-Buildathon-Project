@@ -3,7 +3,7 @@ Five beats, about five minutes. Every number here is in development/METRICS.md.
 
 BEFORE YOU RECORD
   cd development
-  python run.py dry          # 14 checks, network cut. must be 14 of 14.
+  python run.py dry          # 15 checks, network cut. must be 15 of 15.
   python run.py room         # writes artifacts/case_room.html
   python run.py serve        # builds the console, serves localhost:4000
 

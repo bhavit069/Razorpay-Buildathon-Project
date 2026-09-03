@@ -268,6 +268,10 @@ def test_console_layout_is_responsive():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if not os.path.exists(os.path.join(root, "artifacts", "dashboard.html")):
         pytest.skip("no built console; run `python run.py console`")
+    # stdin=DEVNULL, not the default: under pytest's capture the inherited
+    # stdin has no OS handle, and Popen fails with WinError 6 trying to
+    # duplicate one. It passes standalone and fails in the suite without it.
     r = subprocess.run([node, "service/check_responsive.js"], cwd=root,
-                       capture_output=True, text=True)
+                       capture_output=True, text=True,
+                       stdin=subprocess.DEVNULL)
     assert r.returncode == 0, r.stdout
