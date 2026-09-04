@@ -5,9 +5,6 @@
 A merchant's fraud system blocks an order. Nothing ever looks at that decision
 again. This reviews the blocked pile and decides which blocks were wrong.
 
-> **Open `demo/console.html` in a browser.** Nothing to install, nothing loads
-> from the network. It runs the real fitted model in the page.
-
 ---
 
 ## The problem
