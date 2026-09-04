@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "content": "You ordered from Aurum Jewels for Rs 292,581 and it was held.\n\nYour situation: this is not your account and not your instrument.\nYour record on this account: 0 previous orders, 335 days old.\n\nYou cannot answer specifics about the real account holder. Deflect, claim to be in a hurry, complain about the delay, or give vague answers. Do not volunteer that anything is wrong.\n\nThe merchant asks: Hello. To help us process this high-value Aurum Jewels order, would you like to pay online via UPI or card instead of Cash on Delivery?",
+      "role": "user"
+    }
+  ],
+  "model": "gemini-3.6-flash",
+  "provider": "gemini",
+  "system": "You are role-playing a customer whose order was held for\nverification, in a text chat with the merchant.\n\nAnswer in character, in one or two sentences. Real people are terse, slightly\nirritated at being asked, and do not write customer-service prose. Do not\nbreak character or mention that you are playing a role.",
+  "text": "No, I chose COD for a reason. I'm in the middle of something right now, so please just process the order as it is\u2014why is this taking so long?",
+  "usage": {
+    "input_tokens": 201,
+    "output_tokens": 37,
+    "thinking_tokens": 462
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "content": "Case pay_5sr9UbuKWw8GCM: Rs 292,581 at Aurum Jewels, held for amount_anomaly. Cash on delivery. Network file: 0 prior orders, 335 days. Begin verification.",
+      "role": "user"
+    }
+  ],
+  "model": "gemini-3.6-flash",
+  "provider": "gemini",
+  "system": "You are verifying a held payment for an Indian merchant.\n\nThe order was blocked and the file is too thin to clear it on record alone. Ask\nshort verification questions that a genuine account holder could answer easily\nand someone using a stolen instrument could not.\n\nUseful lines of questioning:\n- confirm the delivery address in the customer's own words\n- confirm a detail of a previous order on this account\n- offer prepaid instead of cash on delivery\n\nThat last one matters. A refused cash-on-delivery order converted to prepaid\ncarries no return risk at all, so a customer who agrees to pay up front has\nremoved the exposure rather than argued about it.\n\nOne question per turn. Under 30 words. No greetings after the first turn. Never\nstate or imply a decision about the order.",
+  "text": "Hello. To help us process this high-value Aurum Jewels order, would you like to pay online via UPI or card instead of Cash on Delivery?",
+  "usage": {
+    "input_tokens": 225,
+    "output_tokens": 31,
+    "thinking_tokens": 513
+  }
+}

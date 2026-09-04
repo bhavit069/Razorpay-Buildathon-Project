@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "content": "ORDER\n  payment_id     pay_cHqPoyD6hCHji7\n  merchant       Aurum Jewels\n  amount         Rs 211,715\n  method         cod\n  blocked for    address_mismatch\n  merchant score 0.384 against a threshold of 0.38\n\nWHAT THE MERCHANT COULD SEE\n  new device            1\n  address mismatch      1\n  basket vs their norm  2.94 sd\n  ordered at night      1\n  first order here      0\n  disposable email      0\n  pincode RTO index     0.88\n  prior RTO here        0\n  cash on delivery      1\n\nWHAT ONLY THE NETWORK CAN SEE\n  prior orders          47\n  across merchants      2\n  tenure                1453 days\n  completed cleanly     0.979\n  prior disputes        0\n  prior RTOs            1\n  devices seen          1\n  instrument used at    2 merchants\n\nDECISION (already made, not yours to revisit)\n  action                OVERTURN\n  P(block was correct)  0.098\n  expected value of release  Rs 27,037\n  rules that fired      ev_positive(+27,037), p_bad_under_cap(0.098<0.2)",
+      "role": "user"
+    }
+  ],
+  "model": "gemini-3.6-flash",
+  "provider": "gemini",
+  "system": "You write the case note for a payments risk review system.\n\nA merchant's fraud stack blocked an order. A calibrated model and an\nexpected-value policy have already re-examined it and reached a decision. Your\nonly job is to explain that decision in plain English for the merchant.\n\nRules, all of them hard:\n- 3 to 6 sentences. No headings, no bullet points, no preamble.\n- State the decision in the first sentence.\n- Cite only figures present in the evidence you are given. Never estimate,\n  round to a nicer number, or introduce a figure that is not there.\n- Name the counter-evidence. If the decision was to release, say what still\n  looks bad about the order. If it was to uphold, say what looked good.\n- Do not speculate about the customer's intent or circumstances. You know their\n  transaction record and nothing else.\n- Do not recommend a different decision. It is not yours to make.\n\nWrite for someone who will read a hundred of these. Be flat and specific.",
+  "text": "The initial block on this Rs 211,715 order for Aurum Jewels has been overturned. The re-examination determined the probability that the block was correct is 0.098, which produces an expected value of release of Rs 27,037 under rule ev_positive(+27,037) and p_bad_under_cap(0.098<0.2). This release is supported by network history showing a tenure of 1453 days across 47 prior orders at 2 merchants, 0 prior disputes, and a completed cleanly rate of 0.979. Risk factors that still present counter-evidence include an address mismatch, a new device, a night order time, a cash on delivery payment method, a pincode RTO index of 0.88, and a basket size 2.94 sd above your norm.",
+  "usage": {
+    "input_tokens": 528,
+    "output_tokens": 193,
+    "thinking_tokens": 1652
+  }
+}
