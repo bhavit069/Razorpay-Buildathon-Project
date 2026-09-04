@@ -1,4 +1,4 @@
-# Reviewing declined orders
+# Reclaimify
 
 Razorpay Buildathon, Track 02.
 
@@ -100,7 +100,7 @@ the verification exchange, keeps a tamper-evident log, and hands escalations to
 a reviewer with a written brief. One screen on top of it, a self-contained HTML
 case room that opens from disk.
 
-The order is the argument, and it is checked rather than claimed. Run the
+The order is the argument, and it is checked rather than claimed here. Run the
 backtest and the agent over the same 300 cases and every score is identical to
 the last digit; the only two decisions that differ are the two the agent
 resolved by asking the customer a question, which the backtest has no way to do.
@@ -128,8 +128,8 @@ second decision with its own arithmetic.
 EV(channel) = P(return | channel, elapsed) * V  -  cost(channel)
 ```
 
-`V` is the conversion value, which is exactly the `EV(release)` the policy
-already computed, so fraud risk is priced once and not twice. Five channels,
+`V` is the conversion value. It is the same `EV(release)` the policy already
+computed, so fraud risk is priced once instead of twice. Five channels,
 tried cheapest first, and a rung is added only while the rupees it is expected
 to bring in beat twice what it costs to send, given every earlier rung missed.
 
@@ -145,27 +145,26 @@ Nobody wrote a severity table. A Rs 1,195 order gets an SMS and then an email,
 37 paise all in. A Rs 21,711 order earns a human callback as its second rung.
 The ladder tracks severity because `V` is on one side of that inequality.
 
-**A voice agent is not a better nudge than an SMS.** It converts worse and costs
-forty times more, and no order is ever large enough to change that. It is here
-because it is the cheapest channel that can ask a question and hear the answer,
-and a step-up is a question. Above Rs 552 of case value a person answers it
+**A voice agent is a worse nudge than an SMS.** It converts less well and costs
+forty times more, and no order is ever large enough to change that. It earns its place as the
+cheapest channel that can ask a question and hear the answer, and a step-up is
+a question. Above Rs 552 of case value a person answers it
 better, and that crossover is the number to quote rather than any of the rates.
 
 **Time is most of the money.** A customer refused twenty minutes ago is still
 deciding; one refused yesterday has bought it elsewhere. The half-life is not a
 free parameter: `METRICS.md` 11 already fixed two points on that curve when it
 published the 70%-to-35% recontact band and called its ends an in-session retry
-prompt and a next-day email. Exactly one exponential passes through both, and
-its half-life is 1438 minutes. A test asserts the two documents still agree.
+prompt and a next-day email. One exponential passes through both, and its
+half-life is 1438 minutes. A test asserts the two documents still agree.
 
-Over the 1,775 blocked orders: 1,405 actioned, which is exactly everything not
-upheld; 70.1% expected to return; Rs 37,809 of outreach, Rs 38 per customer
+Over the 1,775 blocked orders: 1,405 actioned, everything not upheld; 70.1% expected to return; Rs 37,809 of outreach, Rs 38 per customer
 recovered; median 18 minutes from block to completed order.
 
 **What rations a person is time, not money.** A Rs 150 callback pays for itself
 on nearly any case worth chasing, so the constraint is people. That is the same
 argument the reviewer baseline makes, and leaving it out would have rebuilt the
-exact fantasy that baseline exists to puncture. At 40 callbacks a day this
+same fantasy that baseline exists to puncture. At 40 callbacks a day this
 supports 103 blocked orders a day before rationing starts and this merchant set
 produces 29, so capacity does not bind here - reported rather than assumed. A
 denied escalation is *stranded*, not handled more cheaply, and counted
@@ -190,9 +189,9 @@ point that actually ships:
 | Net contribution | Rs 1.29 cr |
 | Refused to decide | 15.3% |
 
-The operating point is cap 0.20, which is not tuned. It is where the expected
+The operating point is cap 0.20. It is not tuned: it sits where the expected
 value of releasing stops being positive at a 25% margin. Tuning it down to 0.02
-would show 98.6% precision and Rs 22.57 L of fraud instead, which is the
+would show 98.6% precision and Rs 22.57 L of fraud instead. That is the
 threshold that flatters the table. Picking that is the behaviour this project
 exists to criticise, so the headline uses the EV point and leads with recall.
 
@@ -217,8 +216,8 @@ day runs out:
 | top 10% by value | 178 | 8.6% | Rs 69.41 L |
 | **this system, all 1,775** | **1,775** | **88.2%** | **Rs 1.29 cr** |
 
-The gap is not intelligence, it is reach. The cases a queue skips are exactly
-the small ones where the customer never complains and quietly never comes back.
+The gap is reach, not intelligence. The cases a queue skips are the small
+ones where the customer never complains and never comes back.
 
 **The money depends on where it runs.** Everything above assumes inline at
 checkout, where a released order converts at full value because the customer is
@@ -235,7 +234,7 @@ Quote the range.
 
 An earlier draft of this file said precision was the stable number at 97.8% to
 99.1%. That range was measured at a cap re-tuned on each seed, which absorbs
-exactly the variation being measured. At a fixed operating point the variation
+the very variation being measured. At a fixed operating point the variation
 shows up.
 
 **The cross-merchant advantage is modest.** About +4.6% in profit terms over a
@@ -288,64 +287,59 @@ standard.
 
 ## Layout
 
-| Path | Contents |
+| Path | What is in it |
 |---|---|
-| `simulation/` | The whole system: decision core, agent, tests, notebooks |
-| `simulation/METRICS.md` | Every number the project quotes, generated |
-| `simulation/notebooks/` | Five explainers with live output, start at `00_start_here.ipynb` |
-| `simulation/notes.txt` | Running log of what was built and what broke |
-| `simulation/service/stage_template.html` | The room version on :4005. Five scenes, dark by default. |
-| `console.html` | Seven-page console, also served by `run.py serve`. Opens on a live board; the agent page runs the real model. |
-| `simulation/RECOVERY.md` | The outreach ladder. Generated, and separate from METRICS.md on purpose. |
-| `flow.html` | Browser walkthrough of the pipeline, one real case through eight stages |
-| `knowledge.txt` | What to run, what the idea is, what is left to do |
-| `SCRIPT.txt` | The demo script, five beats |
-| `IDEA.md` | The pitch. Sections 5 and 7 regenerate from the harness. |
-| `ARCHITECTURE.md` | The original plan. Read it for intent, not numbers. |
-| `PULL_REQUEST.md` | Full change writeup, including what is wrong with it |
+| `demo/` | Prebuilt pages. Open `demo/console.html` in a browser, nothing to install. |
+| `core/` | The decision core: features, model, policy, backtest, metrics, the recovery ladder |
+| `agent/` | The language-model layer: orchestrator, tools, verdicts, step-up, ledger |
+| `simulation/` | The world generator and the checks that say the signal is really there |
+| `web/` | The console and case room, and the scripts that verify them against Python |
+| `tests/` | 117 tests. `test_leakage.py` is the one that matters most. |
+| `tools/` | Scripts you run rather than import: the dry run, the seed sweep, the cache warmer |
+| `docs/` | Every document, plus five notebooks with live output |
 
-`simulation/METRICS.md` regenerates from current code and is the only document
-whose numbers are current by construction. `IDEA.md` sections 5 and 7 and
-`DATA_CARD.md` sections 2, 4 and 5b regenerate from the harness between markers
-via `python run.py docs`, and `python -m core.docs --check` fails if either has
+Worth opening first, in `docs/`:
+
+| File | Why |
+|---|---|
+| `METRICS.md` | Every number this project quotes. Generated from the code. |
+| `RECOVERY.md` | The outreach ladder. Kept out of METRICS.md on purpose. |
+| `DATA_CARD.md` | How the world was generated, and what is wrong with it |
+| `IDEA.md` | The pitch. Sections 5 and 7 regenerate from the harness. |
+| `notes.txt` | Running log of what was built and what broke |
+| `2026-09-03.md` | Status report, including a log of every bug found |
+
+`METRICS.md` regenerates from current code and is the only document whose
+numbers are current by construction. `IDEA.md` sections 5 and 7 and
+`DATA_CARD.md` sections 2, 4 and 5b regenerate between markers via
+`python run.py docs`, and `python -m core.docs --check` fails if either has
 drifted. Everything else, this file included, is hand-written against those and
 can go stale.
 
 ## Running it
 
+The fastest thing, needing nothing installed: open `demo/console.html`. Seven
+pages, a live board, and an agent page that runs the real model in the browser.
+
+To run it properly:
+
 ```bash
-cd simulation
 pip install -r requirements.txt
 python run.py data300k    # build the simulated world   ~31s
-python run.py test        # 79 tests                    ~25s
+python run.py test        # 118 tests                   ~15s
 python run.py metrics     # regenerate every number     ~60s
-python run.py room        # build the case room, then open artifacts/case_room.html
-python run.py serve       # build the console and serve it on http://localhost:4000
-python run.py stage       # the room version, http://localhost:4005
+python run.py room        # build the case room
+python run.py serve       # console on http://localhost:4000
 python run.py agent       # run the agent over the blocked pile
-python run.py docs        # refill the generated blocks in IDEA.md/DATA_CARD.md
-python run.py recovery    # regenerate RECOVERY.md
-python run.py dry         # pre-demo check, network cut, 18 checks
+python run.py docs        # refill the generated blocks in docs/
+python run.py recovery    # regenerate docs/RECOVERY.md
+python run.py dry         # pre-demo check, network cut, 17 checks
 python run.py seeds       # how much it moves between worlds, ~6 min
 ```
 
-If you only have two minutes:
-
-```bash
-cd simulation && python run.py data300k && python run.py room
-```
-
-then open `simulation/artifacts/case_room.html`. It is one file, no server, no
-network.
-
-`python run.py stage` is the version to leave open at a table. One screen, five
-scenes on the number keys, dark by default, the money large enough to read
-across a room, and a live pipeline with real blocked orders moving through it.
-It serves on http://localhost:4005 and runs alongside the console rather than
-instead of it; the two cross-link. There is one copy of the model and one of the
-recovery ladder, in `simulation/service/engine.js`, injected into both pages at
-build time, and `check_stage.js` loads both and compares their answers, so the
-two front ends cannot drift apart.
+`data300k` has to run first. It writes 95 MB that is not committed, because it
+reproduces from the seed. `dry` wants the case room already built, so run
+`room` before it. Everything else can be run in any order.
 
 `python run.py serve` puts the whole system on http://localhost:4000: the
 pipeline, the portfolio, the operating-point curve, the honest-metrics page,
@@ -362,7 +356,8 @@ marked. The action is arithmetic; the model contributes one number to it.
 
 That page evaluates the 300 fitted trees in the browser, and the build refuses
 to write it unless the JavaScript reproduces the Python probability on all
-1,775 holdout cases.
+1,775 holdout cases. `python run.py dry` re-checks that against the whole
+holdout every time.
 
 Nothing on either page loads from the network, so opening the files straight
 off disk works too.

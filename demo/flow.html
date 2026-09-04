@@ -1,0 +1,637 @@
+<title>Docket Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+
+<style>
+/* ---------------------------------------------------------------------------
+   A hand-written Tailwind-named utility layer.
+
+   The page has to open from a local file with the network unplugged, the same
+   way the demo does, so pulling Tailwind off a CDN was not an option. These
+   are the utilities this page actually uses, under their real Tailwind names,
+   so the markup reads as Tailwind and the file stays self-contained.
+
+   Palette: docket paper on India ink. The signature accent is ochre, which is
+   also the colour used for STEP_UP and ESCALATE, because the thing this
+   system is actually selling is a considered refusal to answer.
+--------------------------------------------------------------------------- */
+:root{
+  --ink:#0E1116; --ink-2:#151A21; --ink-3:#1C222B;
+  --rule:#272E39; --rule-2:#333C49;
+  --paper:#E9E4D8; --muted:#868D99; --dim:#5C636E;
+  --ochre:#C99A3F; --ochre-dim:#8A6A2C;
+  --release:#57A26F; --uphold:#C86158;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--ink); color:var(--paper);
+  font-family:var(--mono); font-size:13.5px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--ochre); color:var(--ink)}
+
+/* layout */
+.flex{display:flex} .grid{display:grid} .block{display:block}
+.inline-flex{display:inline-flex} .hidden{display:none}
+.flex-col{flex-direction:column} .items-center{align-items:center}
+.items-start{align-items:flex-start} .items-baseline{align-items:baseline}
+.justify-between{justify-content:space-between} .flex-1{flex:1 1 0%}
+.flex-none{flex:none} .flex-wrap{flex-wrap:wrap}
+.gap-1{gap:.25rem} .gap-2{gap:.5rem} .gap-3{gap:.75rem} .gap-4{gap:1rem}
+.gap-6{gap:1.5rem} .gap-8{gap:2rem}
+.h-screen{height:100dvh} .w-full{width:100%} .min-w-0{min-width:0}
+.overflow-y-auto{overflow-y:auto} .overflow-x-auto{overflow-x:auto}
+.relative{position:relative} .sticky{position:sticky} .top-0{top:0}
+.mx-auto{margin-left:auto;margin-right:auto}
+.max-w-3xl{max-width:56rem}
+
+/* spacing */
+.p-0{padding:0} .p-2{padding:.5rem} .p-3{padding:.75rem} .p-4{padding:1rem}
+.p-5{padding:1.25rem} .p-6{padding:1.5rem}
+.px-3{padding-left:.75rem;padding-right:.75rem}
+.px-4{padding-left:1rem;padding-right:1rem}
+.px-5{padding-left:1.25rem;padding-right:1.25rem}
+.px-6{padding-left:1.5rem;padding-right:1.5rem}
+.py-1{padding-top:.25rem;padding-bottom:.25rem}
+.py-2{padding-top:.5rem;padding-bottom:.5rem}
+.py-3{padding-top:.75rem;padding-bottom:.75rem}
+.py-4{padding-top:1rem;padding-bottom:1rem}
+.py-6{padding-top:1.5rem;padding-bottom:1.5rem}
+.py-10{padding-top:2.5rem;padding-bottom:2.5rem}
+.pt-4{padding-top:1rem} .pb-2{padding-bottom:.5rem} .pb-24{padding-bottom:6rem}
+.mt-1{margin-top:.25rem} .mt-2{margin-top:.5rem} .mt-3{margin-top:.75rem}
+.mt-4{margin-top:1rem} .mt-6{margin-top:1.5rem} .mt-8{margin-top:2rem}
+.mb-1{margin-bottom:.25rem} .mb-2{margin-bottom:.5rem} .mb-3{margin-bottom:.75rem}
+.mb-4{margin-bottom:1rem} .mb-6{margin-bottom:1.5rem}
+
+/* type */
+.font-mono{font-family:var(--mono)} .font-serif{font-family:var(--serif)}
+.text-xs{font-size:11px} .text-sm{font-size:12.5px} .text-base{font-size:13.5px}
+.text-lg{font-size:16px} .text-xl{font-size:19px} .text-2xl{font-size:24px}
+.text-3xl{font-size:32px} .text-4xl{font-size:42px}
+.font-normal{font-weight:400} .font-medium{font-weight:500} .font-bold{font-weight:700}
+.italic{font-style:italic}
+.uppercase{text-transform:uppercase}
+.tracking-wide{letter-spacing:.06em} .tracking-widest{letter-spacing:.14em}
+.leading-tight{line-height:1.25} .leading-relaxed{line-height:1.75}
+.tabular{font-variant-numeric:tabular-nums}
+.text-left{text-align:left} .text-right{text-align:right}
+.balance{text-wrap:balance}
+.whitespace-pre-wrap{white-space:pre-wrap}
+
+/* colour */
+.text-paper{color:var(--paper)} .text-muted{color:var(--muted)}
+.text-dim{color:var(--dim)} .text-ochre{color:var(--ochre)}
+.text-release{color:var(--release)} .text-uphold{color:var(--uphold)}
+.bg-ink{background:var(--ink)} .bg-ink-2{background:var(--ink-2)}
+.bg-ink-3{background:var(--ink-3)}
+.border{border:1px solid var(--rule)}
+.border-t{border-top:1px solid var(--rule)}
+.border-b{border-bottom:1px solid var(--rule)}
+.border-r{border-right:1px solid var(--rule)}
+.border-l-2{border-left:2px solid var(--rule)}
+.rounded{border-radius:3px} .rounded-full{border-radius:999px}
+
+/* ---- components ---------------------------------------------------------- */
+.chrome{
+  background:var(--ink-2); border-bottom:1px solid var(--rule);
+  display:flex; align-items:center; gap:.75rem; padding:.6rem 1rem;
+}
+.lamp{width:9px;height:9px;border-radius:50%;background:var(--rule-2)}
+.lamp.on{background:var(--ochre)}
+
+.rail{width:280px;background:var(--ink-2);border-right:1px solid var(--rule);
+  overflow-y:auto}
+.step{
+  display:grid; grid-template-columns:2.1rem 1fr; gap:.5rem;
+  width:100%; text-align:left; background:none; border:0;
+  border-bottom:1px solid var(--rule); border-left:2px solid transparent;
+  color:var(--muted); font-family:var(--mono); font-size:12.5px;
+  padding:.7rem 1rem .7rem .85rem; cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+.step:hover{background:var(--ink-3); color:var(--paper)}
+.step:focus-visible{outline:2px solid var(--ochre); outline-offset:-2px}
+.step[aria-current="true"]{
+  background:var(--ink-3); color:var(--paper);
+  border-left-color:var(--ochre);
+}
+.step .n{color:var(--dim); font-size:11px; padding-top:.15rem}
+.step[aria-current="true"] .n{color:var(--ochre)}
+.step .cmd{font-weight:500}
+.step .sub{font-size:11px; color:var(--dim); line-height:1.45}
+.step[aria-current="true"] .sub{color:var(--muted)}
+.step.done .n::after{content:" ok"; color:var(--release); font-size:9px}
+
+.prompt{color:var(--ochre)}
+.caret{
+  display:inline-block; width:.55em; height:1.05em; background:var(--ochre);
+  vertical-align:-.18em; animation:blink 1.05s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0}}
+
+.pane{animation:rise .28s cubic-bezier(.2,.7,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+h2.head{
+  font-family:var(--serif); font-weight:600; font-size:31px; line-height:1.15;
+  letter-spacing:-.015em; margin:0; color:var(--paper); text-wrap:balance;
+}
+.lede{font-family:var(--serif); font-size:17px; line-height:1.6;
+  color:var(--muted); max-width:62ch; margin:.75rem 0 0}
+.body p{max-width:66ch; margin:0 0 .85rem; color:var(--paper)}
+.body p.note{color:var(--muted); font-size:12.5px}
+
+.label{font-size:10px; text-transform:uppercase; letter-spacing:.14em;
+  color:var(--dim); font-weight:700}
+
+.card{background:var(--ink-2); border:1px solid var(--rule); border-radius:3px}
+
+table.data{width:100%; border-collapse:collapse; font-size:12.5px}
+table.data th{
+  text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--dim); font-weight:700; padding:.4rem .75rem;
+  border-bottom:1px solid var(--rule); white-space:nowrap;
+}
+table.data td{padding:.35rem .75rem; border-bottom:1px solid var(--ink-3);
+  vertical-align:top}
+table.data td.num{text-align:right; font-variant-numeric:tabular-nums}
+table.data tr:last-child td{border-bottom:0}
+.on{color:var(--uphold); font-weight:500}
+.off{color:var(--dim)}
+
+.pill{display:inline-flex; align-items:center; gap:.35rem; font-size:10px;
+  font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  padding:.15rem .5rem; border-radius:2px; border:1px solid}
+.pill.rel{color:var(--release); border-color:#2F5D42; background:#14251B}
+.pill.uph{color:var(--uphold); border-color:#6B322D; background:#251515}
+.pill.hold{color:var(--ochre); border-color:#5E4820; background:#221B0E}
+.pill.model{color:var(--release); border-color:#2F5D42; background:#14251B}
+
+pre.term{
+  background:var(--ink); border:1px solid var(--rule); border-radius:3px;
+  padding:.85rem 1rem; overflow-x:auto; font-size:12px; line-height:1.65;
+  color:var(--paper); margin:0;
+}
+pre.term .c{color:var(--dim)}
+pre.term .k{color:var(--ochre)}
+pre.term .g{color:var(--release)}
+pre.term .r{color:var(--uphold)}
+
+.quote{border-left:2px solid var(--ochre); padding:.15rem 0 .15rem 1rem;
+  color:var(--paper); font-size:12.5px; line-height:1.7; max-width:70ch}
+
+.bar{
+  border-top:1px solid var(--rule); background:var(--ink-2);
+  display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;
+  padding:.55rem 1.25rem; font-size:11px;
+}
+.bar b{font-weight:500; color:var(--paper); font-variant-numeric:tabular-nums}
+.bar .k{color:var(--dim); text-transform:uppercase; letter-spacing:.1em;
+  font-size:9.5px; margin-right:.4rem}
+
+kbd{font-family:var(--mono); font-size:10px; background:var(--ink-3);
+  border:1px solid var(--rule-2); border-bottom-width:2px; border-radius:3px;
+  padding:.05rem .3rem; color:var(--muted)}
+
+.navbtn{background:var(--ink-3); border:1px solid var(--rule-2); color:var(--paper);
+  font-family:var(--mono); font-size:12px; padding:.35rem .8rem; border-radius:3px;
+  cursor:pointer}
+.navbtn:hover{border-color:var(--ochre); color:var(--ochre)}
+.navbtn:disabled{opacity:.35; cursor:default}
+.navbtn:disabled:hover{border-color:var(--rule-2); color:var(--paper)}
+.navbtn:focus-visible{outline:2px solid var(--ochre); outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;
+    animation-iteration-count:1 !important; transition-duration:.001ms !important}
+  .caret{animation:none}
+}
+@media (max-width:900px){
+  .shell{flex-direction:column}
+  .rail{width:100%; max-height:186px; border-right:0;
+    border-bottom:1px solid var(--rule)}
+  h2.head{font-size:25px}
+}
+</style>
+
+<div class="flex flex-col h-screen">
+
+  <div class="chrome">
+    <span class="lamp on"></span><span class="lamp"></span><span class="lamp"></span>
+    <span class="text-sm text-muted" style="margin-left:.35rem">
+      reclaimify &mdash; docket &mdash; <span class="text-paper">pay_5E72cODtQrmZkn</span>
+    </span>
+    <span class="flex-1"></span>
+    <span class="text-xs text-dim hidden" id="hint2">
+      <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to walk the pipeline
+    </span>
+  </div>
+
+  <div class="flex flex-1 min-w-0 shell" style="overflow:hidden">
+
+    <nav class="rail flex-none" id="rail" aria-label="Pipeline stages"></nav>
+
+    <main class="flex-1 min-w-0 overflow-y-auto" id="pane" tabindex="-1"></main>
+  </div>
+
+  <div class="bar" id="bar"></div>
+</div>
+
+<script>
+/* The case that walks the pipeline. Every value below is copied out of
+   artifacts/case_room.html for pay_5E72cODtQrmZkn, so this page and the demo
+   are describing the same row. */
+const CASE = {
+  id: "pay_5E72cODtQrmZkn",
+  merchant: "Aurum Jewels",
+  amount: 515680.96,
+  method: "upi",
+  reason: "amount_anomaly",
+  score: 0.50881,
+  threshold: 0.38,
+  p_bad: 0.003086,
+  ev: 126928.42,
+  action: "OVERTURN",
+  truth: "clean",
+  model: "gemini-3.6-flash",
+  verdict: "The decision is to overturn the initial block and release order pay_5E72cODtQrmZkn for Rs 515,681. Across the network, the account reflects a tenure of 1534 days with 75 prior orders and a clean completion rate of 0.960, resulting in a 0.003 probability that the block was correct and an expected release value of Rs 126,928. Counter-evidence to this release includes a basket variance of 4.56 sd above norm, a merchant score of 0.509 against a threshold of 0.38, and a new device value of 1. The account also carries network records of 1 prior dispute, 2 prior RTOs, and a pincode RTO index of 1.15.",
+  local: [
+    ["New device", "yes", true],
+    ["Basket vs merchant norm", "4.56 sd", true],
+    ["Pincode return index", "1.15", true],
+    ["Shipping differs from billing", "no", false],
+    ["Ordered at night", "no", false],
+    ["First order here", "no", false],
+    ["Cash on delivery", "no", false],
+    ["Disposable email", "no", false],
+    ["Accounts on this device", "1", false],
+    ["Orders in last 24h", "0", false],
+  ],
+  network: [
+    ["Prior orders", "75"],
+    ["Across merchants", "1"],
+    ["Tenure", "1,534 days"],
+    ["Completed cleanly", "0.960"],
+    ["Prior disputes", "1"],
+    ["Prior returns", "2"],
+    ["Devices seen", "1"],
+    ["Instrument used at", "1 merchant"],
+  ],
+};
+
+const inr = n => "Rs " + Math.round(n).toLocaleString("en-IN");
+
+function rows(list, flags) {
+  return list.map(r => {
+    const cls = flags ? (r[2] ? "on" : "off") : "";
+    return `<tr><td class="${cls}">${r[0]}</td><td class="num ${cls}">${r[1]}</td></tr>`;
+  }).join("");
+}
+
+const STAGES = [
+  {
+    cmd: "docket open",
+    sub: "a blocked order becomes a case",
+    head: "Nothing else in the stack ever looks at this row again",
+    lede: "A fraud system blocked an order. There is no appeal, no second read, and no record anywhere that a good customer was refused. The pile just sits there. Opening a case on it is the entire idea.",
+    state: { stage: "docketed" },
+    body: `
+      <p>The merchant's own stack scored this order <b>${CASE.score.toFixed(3)}</b>
+      against its threshold of <b>${CASE.threshold}</b> and blocked it for
+      <span class="text-ochre">${CASE.reason}</span>. That decision was correct given
+      what the merchant could see. This is not a claim that the risk stack is
+      badly built.</p>
+      <p>It is a claim that one side of the trade is measured and the other is
+      invisible. A chargeback leaves a fee, a dispute record and a number that
+      moves. A wrongly refused customer leaves an absence. So the threshold
+      ratchets one way forever.</p>
+      <pre class="term"><span class="c"># the case that walks this page</span>
+payment_id   <span class="k">${CASE.id}</span>
+merchant     ${CASE.merchant}
+amount       <span class="k">${inr(CASE.amount)}</span>   method ${CASE.method}
+blocked_for  ${CASE.reason}   score ${CASE.score.toFixed(3)} &gt; ${CASE.threshold}
+status       <span class="r">BLOCKED</span>, and nothing downstream revisits it</pre>
+      <p class="note mt-4">Everything on this page is one real row from the
+      holdout split, carried through all eight stages. The numbers match
+      <span class="text-paper">artifacts/case_room.html</span> exactly.</p>`,
+  },
+  {
+    cmd: "evidence pull",
+    sub: "local signals, then the network file",
+    head: "The merchant is not wrong, just short of evidence.",
+    lede: "Two blocks of evidence. One the merchant already had, one it could not buy at any price.",
+    state: { stage: "evidence loaded" },
+    body: `
+      <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(270px,1fr))">
+        <div class="card">
+          <div class="px-4 py-3 border-b"><span class="label">What the merchant could see</span></div>
+          <div class="overflow-x-auto"><table class="data">${rows(CASE.local, true)}</table></div>
+        </div>
+        <div class="card">
+          <div class="px-4 py-3 border-b"><span class="label">What only the network can see</span></div>
+          <div class="overflow-x-auto"><table class="data">${rows(CASE.network, false)}</table></div>
+        </div>
+      </div>
+      <p class="mt-6">Three signals fired, and each is a correct description of
+      unusual behaviour and a wrong inference about intent. A new device, a
+      basket four and a half standard deviations above this merchant's norm, a
+      pincode with a mildly elevated return rate.</p>
+      <p>The right-hand column explains all three at once: this customer has been
+      buying for four years and completes 96% of what they order. A single
+      merchant cannot see that, because it is not their data. That asymmetry is
+      the whole reason a payment platform is the right place to run an appeal.</p>
+      <p class="note">The evidence is assembled point in time. A test walks
+      3,401 pairs of consecutive orders and fails if any counter moves backwards
+      or if tenure outgrows the wall clock.</p>`,
+  },
+  {
+    cmd: "adjudicate",
+    sub: "one calibrated probability",
+    head: "A number that means what it says",
+    lede: "Gradient boosting produces a score. Isotonic calibration on a held-back slice of training data turns it into a probability you can multiply by money.",
+    state: { p_bad: CASE.p_bad },
+    body: `
+      <pre class="term">tool  <span class="k">adjudicate</span>
+in    14 local features + 8 network features
+out   p_bad = <span class="g">${CASE.p_bad.toFixed(6)}</span>
+      <span class="c">"probability that the original block was correct"</span>
+took  0.54 ms</pre>
+      <p class="mt-4">Calibration is the part that matters and the part usually
+      skipped. An uncalibrated model that outputs 0.30 is not telling you that
+      three in ten such orders go bad. Without that property the expected-value
+      rule in the next stage is multiplying money by a number that does not mean
+      anything.</p>
+      <p>The split is three ways and chronological: fit on the first 80% of
+      training, calibrate on the last 20%, and choose every operating point on
+      that calibration slice. The holdout is read many times, but only to
+      report. No threshold was ever picked on it.</p>
+      <p class="note">The answer key lives behind one module.
+      <span class="text-paper">core/truth.py</span> has two doors:
+      <span class="text-paper">training_labels()</span> raises if you ask it about
+      a holdout case, and the unrestricted door is imported only by the grader.
+      Leakage is a test failure, not a code review question.</p>`,
+  },
+  {
+    cmd: "policy decide",
+    sub: "expected value, four actions",
+    head: "The arithmetic decides. Not the model, and not a vibe.",
+    lede: "Releasing is worth doing only while it is worth money. That is a formula, and it has a ceiling that no amount of confidence gets past.",
+    state: { action: CASE.action },
+    body: `
+      <pre class="term"><span class="c"># the entire decision rule</span>
+EV(release) = (1 - p) &middot; m &middot; A  -  p &middot; (A + f)
+
+  p = ${CASE.p_bad.toFixed(6)}        <span class="c">probability the block was right</span>
+  m = 0.25            <span class="c">contribution margin</span>
+  A = ${inr(CASE.amount)}     <span class="c">order value</span>
+  f = Rs 750          <span class="c">dispute overhead on a bad release</span>
+
+EV = <span class="g">+${inr(CASE.ev)}</span>   &rarr;  <span class="g">${CASE.action}</span>
+reasons: ev_positive(+126,928), p_bad_under_cap(0.003&lt;0.2)</pre>
+      <p class="mt-4">Rearranged, releasing is positive only while
+      <span class="text-ochre">p &lt; m / (1 + m)</span>, which at a 25% margin is
+      <b>0.20</b>. So the operating point is not tuned: it sits where the
+      arithmetic stops working.</p>
+      <p>That matters because the alternative is picking the threshold that makes
+      the precision column look best. Moving to 0.02 would show 98.6% precision
+      instead of 96.3%. It would also leave recoverable revenue on the table, and
+      that is the behaviour this project exists to criticise.</p>
+      <div class="grid gap-3 mt-6" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
+        <div class="card p-4"><span class="pill rel">Overturn</span>
+          <p class="note mt-2" style="margin-bottom:0">Release it. The block was wrong.</p></div>
+        <div class="card p-4"><span class="pill uph">Uphold</span>
+          <p class="note mt-2" style="margin-bottom:0">The block was right. Leave it.</p></div>
+        <div class="card p-4"><span class="pill hold">Step up</span>
+          <p class="note mt-2" style="margin-bottom:0">Not sure, and enough money at stake to be worth asking a question.</p></div>
+        <div class="card p-4"><span class="pill hold">Escalate</span>
+          <p class="note mt-2" style="margin-bottom:0">Not sure, and no question would settle it. Send it to a person.</p></div>
+      </div>
+      <p class="mt-6">The two on the right are the ones that matter. The system
+      refuses to decide on <b>15.3%</b> of cases, and that rate is reported rather
+      than hidden. A model that always answers is claiming to know things it does
+      not.</p>`,
+  },
+  {
+    cmd: "verify",
+    sub: "ask a question, generate new evidence",
+    head: "Verification is not history",
+    lede: "A step-up generates evidence that did not exist. It does not rewrite the evidence that did.",
+    state: {},
+    body: `
+      <p>This case did not need one. When a case is thin and the amount is
+      material, the agent runs a short verification exchange instead of guessing:
+      confirm the delivery address, or offer to switch a cash-on-delivery order
+      to prepaid.</p>
+      <p>The subtle part is where the answer goes. Confirming an address proves
+      someone controls the account. It does not create a payment record. So a
+      confirmation feeds the <span class="text-ochre">sufficiency gate</span> and
+      never the model's features.</p>
+      <pre class="term"><span class="c"># an earlier version credited confirmations as prior orders</span>
+customer A  before <span class="k">0.204</span>  after verification <span class="r">0.571</span>   <span class="c">worse</span>
+customer B  before <span class="k">0.188</span>  after verification <span class="r">0.402</span>   <span class="c">worse</span>
+
+<span class="c"># two customers who cooperated came out looking more suspicious.
+# writing fiction into the feature vector is not a bug you can tune out,
+# so the path was removed. Verification now clears a gate and nothing else.</span></pre>
+      <p class="mt-4">The exchange only runs where it can actually change an
+      outcome. Running it on every ambiguous case produced 73 dialogues and two
+      resolutions, which is a demo, not a mechanism. It is now restricted to thin
+      files, where the missing evidence is the kind a question can supply.</p>
+      <p class="note">Open and declared: 73 of 300 cases sit in a band where the
+      model is unsure and no question would help. They escalate. That is correct
+      behaviour, and it means a person still touches about 4% of the pile.</p>`,
+  },
+  {
+    cmd: "verdict write",
+    sub: "explain it, then check every number",
+    head: "The model writes the words. It never decides whether money moves.",
+    lede: "By the time a language model sees this case, the decision has already been made by the arithmetic two stages ago.",
+    state: { verdict: "written" },
+    body: `
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="label">Verdict</span>
+          <span class="pill model">written by ${CASE.model}</span>
+        </div>
+        <div class="quote">${CASE.verdict}</div>
+      </div>
+      <p class="mt-6">Every figure in that paragraph was checked against the
+      evidence before it was shown. If the model writes a number that cannot be
+      derived from what it was given, the note is rejected and rewritten, and
+      after three attempts it falls back to a deterministic template that is
+      labelled as one.</p>
+      <p>Three separate tests enforce that the model cannot decide: the tools it
+      can reach accept no free text, the fact-extraction schema has no field for
+      an action, and the verdict function is handed a decision that already
+      exists.</p>
+      <pre class="term"><span class="c"># a bug only a live model could expose</span>
+payment id   pay_<span class="r">5E72</span>cODtQrmZkn
+             &uarr; the citation checker read "72" out of the id,
+               found it nowhere in the evidence, and rejected
+               every correctly cited verdict three times running.
+
+<span class="c"># offline runs never caught it: the template does not print the id.
+# so "300 of 300 verdicts audit clean" was true, and was measuring
+# a checker that would have refused every real verdict it ever saw.</span></pre>`,
+  },
+  {
+    cmd: "ledger append",
+    sub: "an append-only record of what was done",
+    head: "Every case leaves a row this time",
+    lede: "The original block left no record. The appeal does, and the record cannot be edited without it showing.",
+    state: { ledger: "sealed" },
+    body: `
+      <pre class="term"><span class="c"># each entry hashes the previous one</span>
+seq 0   <span class="k">a3f1...</span>   prev 0000...
+seq 1   <span class="k">7c02...</span>   prev a3f1...
+seq 2   <span class="k">bef9...</span>   prev 7c02...   <span class="c">&larr; ${CASE.id}</span>
+
+verify()  &rarr;  <span class="g">303 entries, chain intact</span>
+<span class="c"># edit any entry and verification fails at that entry, not at the end</span></pre>
+      <p class="mt-4">The entry records the payment id, the amount, the action,
+      the probability, the operating point in force, the verdict text, where the
+      verdict came from, and which tools were called. It is written whether the
+      case was released or refused.</p>
+      <p>This is the part that makes the whole thing auditable rather than
+      merely clever. A merchant who wants to know why an order was released six
+      weeks ago gets the evidence, the arithmetic and the note that was shown,
+      not a model that would now say something different.</p>`,
+  },
+  {
+    cmd: "grade",
+    sub: "join the answer key, price the result",
+    head: "Recovery and fraud admitted, always in the same table",
+    lede: "The answer key is opened once, after every decision is final, by the only module allowed to touch it.",
+    state: { graded: true },
+    body: `
+      <pre class="term">truth(${CASE.id})  &rarr;  <span class="g">clean</span>
+<span class="c"># released, and it would have completed. this one was right.</span></pre>
+      <p class="mt-4">Across all 1,775 holdout cases at this operating point:</p>
+      <div class="card mt-3 overflow-x-auto">
+        <table class="data">
+          <thead><tr><th>Metric</th><th class="num">Holdout</th><th class="num">Across 5 generated worlds</th></tr></thead>
+          <tbody>
+            <tr><td class="text-paper"><b>Recall of recoverable</b></td><td class="num text-paper"><b>88.2%</b></td><td class="num text-muted">83.1% to 89.6%</td></tr>
+            <tr><td>Overturn precision</td><td class="num">96.3%</td><td class="num text-muted">92.0% to 98.2%</td></tr>
+            <tr><td>Revenue recovered</td><td class="num">Rs 7.21 cr</td><td class="num text-dim">&mdash;</td></tr>
+            <tr><td class="text-paper"><b>Fraud admitted</b></td><td class="num text-paper"><b>Rs 51.21 L</b></td><td class="num text-muted">Rs 8.13 L to Rs 51.21 L</td></tr>
+            <tr><td>Net contribution</td><td class="num">Rs 1.29 cr</td><td class="num text-muted">Rs 89.95 L to Rs 1.86 cr</td></tr>
+            <tr><td>Refused to decide</td><td class="num">15.3%</td><td class="num text-dim">&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-6">Read the right column before quoting the middle one. Recall
+      is the steady quantity. Precision moves 6.2 points between worlds, and money
+      moves about twofold. Each depends on something different: recall on how well
+      the model ranks, precision on where a fixed threshold happens to land, money
+      on the value distribution of that world's blocked pile.</p>
+      <p>An earlier revision quoted precision as 97.8% to 99.1% and called it
+      stable. That range came from a sweep that re-picked the threshold on every
+      seed, which absorbs the very variation it was supposed to measure. The
+      claim is withdrawn.</p>
+      <div class="card p-5 mt-6">
+        <span class="label">The baseline that beats us</span>
+        <div class="overflow-x-auto mt-3"><table class="data">
+          <thead><tr><th>Reviewer coverage</th><th class="num">Recall</th><th class="num">Net contribution</th></tr></thead>
+          <tbody>
+            <tr><td>A person reviewing all 1,775</td><td class="num">88.3%</td><td class="num text-release">Rs 1.36 cr</td></tr>
+            <tr><td>A person reviewing the top 10% by value</td><td class="num">8.6%</td><td class="num">Rs 69.41 L</td></tr>
+            <tr><td>A person reviewing the top 3% by value</td><td class="num">2.4%</td><td class="num">Rs 28.17 L</td></tr>
+            <tr><td class="text-paper"><b>This system, all 1,775</b></td><td class="num text-paper"><b>88.2%</b></td><td class="num text-paper"><b>Rs 1.29 cr</b></td></tr>
+          </tbody>
+        </table></div>
+        <p class="note mt-3" style="margin-bottom:0">A competent reviewer wins case
+        for case, and that row stays in the table because it is true. Nobody can
+        afford to run one across the whole pile. The gap is not intelligence, it
+        is reach.</p>
+      </div>`,
+  },
+];
+
+/* ------------------------------------------------------------------ render */
+const rail = document.getElementById("rail");
+const pane = document.getElementById("pane");
+const bar  = document.getElementById("bar");
+let at = 0;
+
+rail.innerHTML = STAGES.map((s, i) => `
+  <button class="step" data-i="${i}" aria-current="${i === 0}">
+    <span class="n">${String(i + 1).padStart(2, "0")}</span>
+    <span>
+      <span class="cmd"><span class="prompt">$ </span>${s.cmd}</span><br>
+      <span class="sub">${s.sub}</span>
+    </span>
+  </button>`).join("");
+
+function state(i) {
+  const acc = { stage: "waiting", p_bad: null, action: null,
+                verdict: null, ledger: null, graded: false };
+  for (let k = 0; k <= i; k++) Object.assign(acc, STAGES[k].state);
+  return acc;
+}
+
+function renderBar(i) {
+  const s = state(i);
+  const cell = (k, v) => `<span><span class="k">${k}</span><b>${v}</b></span>`;
+  bar.innerHTML = [
+    cell("case", CASE.id),
+    cell("p_bad", s.p_bad === null ? "&mdash;" : s.p_bad.toFixed(6)),
+    cell("action", s.action
+      ? `<span class="text-release">${s.action}</span>` : "pending"),
+    cell("verdict", s.verdict
+      ? `<span class="text-release">${s.verdict}</span>` : "&mdash;"),
+    cell("ledger", s.ledger
+      ? `<span class="text-release">${s.ledger}</span>` : "&mdash;"),
+    cell("truth", s.graded
+      ? `<span class="text-release">${CASE.truth}</span>` : "sealed"),
+  ].join("");
+}
+
+function show(i) {
+  at = Math.max(0, Math.min(STAGES.length - 1, i));
+  const s = STAGES[at];
+  rail.querySelectorAll(".step").forEach((b, j) => {
+    b.setAttribute("aria-current", String(j === at));
+    b.classList.toggle("done", j < at);
+  });
+  pane.innerHTML = `
+    <div class="pane px-6 py-10 mx-auto max-w-3xl">
+      <div class="text-sm mb-6"><span class="prompt">reclaimify $</span>
+        <span class="text-paper">${s.cmd}</span><span class="caret"></span></div>
+      <h2 class="head">${s.head}</h2>
+      <p class="lede">${s.lede}</p>
+      <div class="body mt-8">${s.body}</div>
+      <div class="flex gap-3 mt-8 pt-4 border-t items-center">
+        <button class="navbtn" id="prev" ${at === 0 ? "disabled" : ""}>&larr; ${
+          at === 0 ? "start" : STAGES[at - 1].cmd}</button>
+        <button class="navbtn" id="next" ${at === STAGES.length - 1 ? "disabled" : ""}>${
+          at === STAGES.length - 1 ? "end of pipeline" : STAGES[at + 1].cmd} &rarr;</button>
+        <span class="flex-1"></span>
+        <span class="text-xs text-dim tabular">stage ${at + 1} of ${STAGES.length}</span>
+      </div>
+    </div>`;
+  document.getElementById("prev").onclick = () => show(at - 1);
+  document.getElementById("next").onclick = () => show(at + 1);
+  renderBar(at);
+  pane.scrollTop = 0;
+  rail.querySelector(`[data-i="${at}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+}
+
+rail.addEventListener("click", e => {
+  const b = e.target.closest(".step");
+  if (b) show(Number(b.dataset.i));
+});
+addEventListener("keydown", e => {
+  if (["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
+  if (e.key === "ArrowRight" || e.key === "j") { show(at + 1); e.preventDefault(); }
+  if (e.key === "ArrowLeft"  || e.key === "k") { show(at - 1); e.preventDefault(); }
+});
+document.getElementById("hint2").classList.remove("hidden");
+show(0);
+</script>

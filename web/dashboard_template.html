@@ -1,0 +1,1709 @@
+<title>Reclaimify Console</title>
+<style>
+/* ---------------------------------------------------------------------------
+   Same visual system as web/case_room.py: warm off-white, system sans,
+   hairline rules, 7px cards, one blue accent, and three status colours used
+   only as labelled tags. No webfont, so nothing loads from the network.
+
+   Those status colours are never adjacent series on a chart. Green and red
+   cannot clear deuteranopia separation as neighbours at any lightness, so
+   wherever both recovered and admitted are needed the chart is two
+   single-series panels. That also fixes a scale problem: recovery runs about
+   fifteen times fraud admitted, and on a shared axis the line that matters
+   most would sit flat on the baseline.
+--------------------------------------------------------------------------- */
+:root{--bg:#faf9f7;--fg:#1a1a1a;--mut:#6b6b6b;--line:#e2e0dc;--card:#fff;
+--good:#1a7f4b;--bad:#b3261e;--warn:#a16207;--accent:#2b4c7e;
+--soft:#f4f2ef;--sel:#eef2f8;--faint:#b6b2ab}
+*{box-sizing:border-box}
+/* The shell is a flex column rather than three boxes each subtracting a
+   hardcoded header height. The header wraps to two or three lines on a narrow
+   window, and calc(100vh - 61px) then left the panes taller than the space,
+   which produced a page scrollbar next to an inner one and cut the bottom off
+   every page. dvh, not vh, so mobile browser chrome does not do the same. */
+html{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);
+font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif;
+display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{flex:none;padding:12px 22px;border-bottom:1px solid var(--line);
+background:var(--card);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+h1{font-size:16px;margin:0;font-weight:680;letter-spacing:-.02em;
+display:flex;align-items:center;gap:7px}
+.tick{width:7px;height:7px;border-radius:99px;background:var(--good);
+box-shadow:0 0 0 3px #1a7f4b22;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hby{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);
+font-weight:650;border-left:1px solid var(--line);padding-left:14px}
+.hstats{display:flex;gap:0;flex-wrap:wrap;margin-left:auto}
+.hp{display:flex;flex-direction:column;gap:1px;padding:0 15px;
+border-left:1px solid var(--line);font-size:10.5px;color:var(--mut);
+text-transform:uppercase;letter-spacing:.05em;font-weight:650;line-height:1.3}
+.hp b{font-size:14px;color:var(--fg);text-transform:none;letter-spacing:-.01em;
+font-variant-numeric:tabular-nums;font-weight:650}
+.hp.dim b{color:var(--mut);font-weight:600}
+/* the slider has been dragged off the shipped operating point */
+.hp.off{color:var(--warn)}
+.hp.off b{color:var(--warn)}
+.sub{color:var(--mut);font-size:13px}
+.wrap{flex:1;min-height:0;display:grid;grid-template-columns:236px minmax(0,1fr)}
+.list{border-right:1px solid var(--line);background:var(--card);
+overflow-y:auto;min-height:0;display:flex;flex-direction:column}
+/* how far down the page you are, so the rail says something the rows cannot */
+.prog{height:2px;background:var(--soft);flex:none}
+.prog i{display:block;height:100%;background:var(--accent);width:0;
+transition:width .12s linear}
+.navrows{flex:1}
+.byline{margin-top:auto;flex:none;border-top:1px solid var(--line);
+padding:13px 14px;font-size:11px;line-height:1.5;color:var(--mut)}
+.byline b{display:block;color:var(--fg);font-size:12px;font-weight:650;
+letter-spacing:-.01em}
+/* The rail is a table of contents now, not a router: one page, five sections,
+   and this tracks which one you are looking at. */
+.row{display:flex;gap:9px;align-items:baseline;width:100%;text-align:left;
+font:inherit;color:inherit;text-decoration:none;
+padding:11px 14px;border:0;border-bottom:1px solid var(--line);
+border-left:3px solid transparent;background:none;cursor:pointer}
+.row:hover{background:var(--soft)}
+.row.sel{background:var(--sel);border-left-color:var(--accent)}
+.row.sel .t{color:var(--accent)}
+.row.done .n{color:var(--good)}
+.row .n{font-size:10px;font-weight:700;color:var(--faint);letter-spacing:.06em;
+font-variant-numeric:tabular-nums;flex:none}
+.row.sel .n{color:var(--accent)}
+.row .t{font-weight:600;font-size:13.5px;display:block}
+.row .d{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.4;display:block}
+
+/* stacked sections */
+.sec{padding-bottom:50px}
+.sec+.sec{border-top:1px solid var(--line);padding-top:32px}
+.sec>h2{margin-top:0}
+.sechd{display:flex;align-items:baseline;gap:10px;margin:0 0 16px;flex-wrap:wrap;
+padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sechd::after{content:"";flex:1}
+.secno{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--accent);
+font-variant-numeric:tabular-nums;background:var(--sel);border:1px solid #d7dfeb;
+border-radius:4px;padding:2px 6px}
+.sectt{font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+font-weight:700}
+.secsub{font-size:12px;color:var(--mut)}
+main{padding:24px 28px 64px;overflow-y:auto;min-width:0;min-height:0}
+main>*{max-width:1060px}
+
+h2{margin:0;font-size:23px;font-weight:650;letter-spacing:-.02em;text-wrap:balance}
+.lede{color:var(--mut);font-size:15px;margin:8px 0 0;max-width:66ch}
+h3{margin:30px 0 11px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+color:var(--mut);font-weight:650}
+p{margin:0 0 10px;max-width:70ch}
+p.note{color:var(--mut);font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:7px}
+.card>h4{margin:0;padding:12px 16px;border-bottom:1px solid var(--line);
+font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);
+font-weight:650;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.card>.b{padding:14px 16px}
+.grid{display:grid;gap:14px}
+.two{grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(min(176px,100%),1fr))}
+/* input beside output on the agent page. min(...,100%) so it collapses to one
+   column instead of forcing a 630px floor and scrolling the whole body. */
+.io{grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));
+align-items:start}
+
+.tile{background:var(--card);border:1px solid var(--line);border-radius:7px;
+padding:13px 15px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--mut);font-weight:650;display:block;line-height:1.35}
+.tile .v{font-size:25px;font-weight:600;letter-spacing:-.02em;margin-top:6px;
+font-variant-numeric:tabular-nums;line-height:1.15;display:block}
+.tile .s{font-size:12px;color:var(--mut);margin-top:4px;display:block;line-height:1.4}
+.tile.hi{box-shadow:inset 3px 0 0 var(--accent)}
+.tile.hi .v{color:var(--accent)}
+.tile.pos .v{color:var(--good)}.tile.neg .v{color:var(--bad)}
+
+.tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;
+padding:1px 6px;border-radius:3px;font-weight:650;white-space:nowrap}
+.good{background:#e6f4ec;color:var(--good)}.bad{background:#fbeae9;color:var(--bad)}
+.warn{background:#fdf4e3;color:var(--warn)}
+.neut{background:var(--soft);color:var(--mut)}
+.blue{background:var(--sel);color:var(--accent)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--mut);font-weight:650;padding:6px 10px;border-bottom:1px solid var(--line);
+white-space:nowrap;background:var(--card);position:sticky;top:0}
+td{padding:5px 10px;border-bottom:1px solid var(--soft);vertical-align:top}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tr.mark td{background:var(--sel)}
+tr.mark td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.scroll{overflow-x:auto}
+
+pre{background:var(--soft);border:1px solid var(--line);border-radius:6px;
+padding:11px 13px;overflow-x:auto;margin:0;
+font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre .c{color:var(--mut)}pre .k{color:var(--accent);font-weight:600}
+pre .g{color:var(--good);font-weight:600}pre .r{color:var(--bad);font-weight:600}
+/* the trace is the thing a judge actually reads line by line, so the parts
+   of a line that mean different things are coloured differently: which
+   feature was tested, what this case had, what it was tested against. */
+pre .f{color:var(--accent)}
+pre .o{color:var(--faint)}
+pre .br{color:var(--mut);background:var(--soft);border-radius:3px;padding:0 4px}
+code{background:var(--soft);padding:1px 4px;border-radius:3px;
+font:12.5px ui-monospace,Menlo,Consolas,monospace}
+
+textarea{width:100%;min-height:300px;background:var(--soft);color:var(--fg);
+border:1px solid var(--line);border-radius:6px;padding:11px 13px;resize:vertical;
+font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button.btn{background:var(--card);border:1px solid var(--line);color:var(--fg);
+font:inherit;font-size:13.5px;padding:7px 15px;border-radius:6px;cursor:pointer}
+button.btn:hover{border-color:var(--accent);color:var(--accent)}
+button.btn.go{background:var(--accent);color:#fff;border-color:var(--accent);
+font-weight:600}
+button.btn.go:hover{background:#23406c;color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{background:var(--card);border:1px solid var(--line);color:var(--mut);
+font:inherit;font-size:12px;padding:3px 10px;border-radius:99px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.flat{cursor:default;background:var(--soft);
+font:11.5px ui-monospace,Menlo,monospace}
+.chip.flat:hover{border-color:var(--line);color:var(--mut)}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:142px 1fr 104px;gap:11px;
+align-items:center;font-size:12.5px}
+.bar-track{background:var(--soft);border-radius:3px;height:15px;overflow:hidden}
+.bar-fill{height:100%;border-radius:0 3px 3px 0}
+.bars-wide .bar-row{grid-template-columns:150px 1fr 140px}
+.bar-row .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--mut);
+font-size:12px}
+
+figure{margin:0}
+figcaption{font-size:13px;color:var(--mut);margin-top:9px;line-height:1.5;max-width:76ch}
+svg.chart{display:block;width:100%;height:auto}
+/* the wide pipeline diagram keeps its own width and scrolls, rather than
+   scaling its 11px labels down to something nobody can read on a phone */
+.wide{overflow-x:auto}
+.wide>svg{min-width:720px}
+.tip{position:fixed;pointer-events:none;background:#1a1a1a;color:#fff;
+border-radius:5px;padding:6px 9px;font-size:12px;z-index:50;opacity:0;
+transition:opacity .1s;font-variant-numeric:tabular-nums;max-width:250px;
+line-height:1.45;box-shadow:0 3px 12px rgba(0,0,0,.22)}
+.tip.on{opacity:1}
+.note-box{background:var(--card);border:1px solid var(--line);
+border-left:3px solid var(--accent);border-radius:7px;padding:13px 16px;margin:14px 0}
+.note-box.w{border-left-color:var(--bad)}
+.note-box p:last-child{margin-bottom:0}
+.foot{color:var(--mut);font-size:12.5px;margin-top:26px;border-top:1px solid var(--line);
+padding-top:12px;max-width:78ch}
+.pgfoot{border-top:1px solid var(--line);margin-top:8px;padding:22px 0 8px;
+display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;font-size:12.5px;
+color:var(--mut)}
+.pgfoot b{color:var(--fg);font-weight:650}
+.pgfoot .sp{flex:1}
+.pgfoot code{font-size:11.5px}
+
+/* ---- the agent page ------------------------------------------------------ */
+/* case pickers */
+.pick{margin-top:18px;display:flex;flex-direction:column;gap:7px}
+.pickrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+font-weight:650;min-width:9.5em}
+.chip.s{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:4px 11px}
+.chip.s .dot{width:7px;height:7px;border-radius:99px;flex:none}
+.dot.good{background:var(--good)}.dot.bad{background:var(--bad)}.dot.warn{background:var(--warn)}
+
+/* fields / json tabs */
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tb{background:var(--card);border:0;border-right:1px solid var(--line);color:var(--mut);
+font:inherit;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;
+font-weight:650;padding:4px 11px;cursor:pointer}
+.tb:last-child{border-right:0}
+.tb.sel{background:var(--sel);color:var(--accent)}
+
+/* one field */
+.fg{margin-bottom:20px}
+.fg:last-of-type{margin-bottom:4px}
+.fg h5{margin:0 0 3px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+color:var(--fg);font-weight:650}
+.fg .note{margin:0 0 10px;max-width:60ch}
+.fields{display:grid;gap:8px 16px;
+grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr))}
+.f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,124px);gap:10px;
+align-items:center;padding:4px 0;border-bottom:1px solid var(--soft)}
+.f label{cursor:pointer;min-width:0}
+.fl{display:block;font-size:13px;line-height:1.35}
+.fl i{color:var(--mut);font-style:normal;font-size:11.5px}
+.fk{display:block;font:10.5px ui-monospace,Menlo,Consolas,monospace;color:var(--faint);
+overflow:hidden;text-overflow:ellipsis}
+.fc{display:flex;align-items:center;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+.f input[type=number],.f input[type=text],.f select{width:100%;min-width:0;
+background:var(--card);border:1px solid var(--line);border-radius:5px;color:var(--fg);
+font:12.5px ui-monospace,Menlo,Consolas,monospace;padding:4px 7px;text-align:right}
+.f select,.f input[type=text]{text-align:left;font-family:inherit;font-size:12.5px}
+.f input:focus,.f select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.money{display:flex;align-items:center;gap:4px;width:100%}
+.money span{font-size:11.5px;color:var(--mut)}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut)}
+.sw input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.fc .tag{flex:none}
+
+/* verdict */
+.verdict{border-left:3px solid var(--line)}
+.verdict.good{border-left-color:var(--good)}
+.verdict.bad{border-left-color:var(--bad)}
+.verdict.warn{border-left-color:var(--warn)}
+.vhead{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
+.va{font-size:25px;font-weight:650;letter-spacing:-.02em}
+.va.good{color:var(--good)}.va.bad{color:var(--bad)}.va.warn{color:var(--warn)}
+.vw{color:var(--mut);font-size:13.5px}
+
+/* the trace */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;
+padding:0 0 18px;position:relative}
+.step:before{content:"";position:absolute;left:12.5px;top:24px;bottom:0;
+width:1px;background:var(--line)}
+.step:last-child:before{display:none}
+.sn{width:26px;height:26px;border-radius:99px;background:var(--sel);color:var(--accent);
+font-size:12px;font-weight:650;display:flex;align-items:center;justify-content:center;
+z-index:1}
+.sb{min-width:0}
+.sb h5{margin:4px 0 8px;font-size:13.5px;font-weight:650}
+.sb pre{font-size:12px;line-height:1.55}
+.sb .note{max-width:64ch}
+
+/* what moved it */
+.movers{display:flex;flex-direction:column;gap:5px}
+.mv{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.3fr) 62px;
+gap:9px;align-items:center;font-size:12px}
+.mf{font:11.5px ui-monospace,Menlo,Consolas,monospace;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap}
+.mn{color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis}
+.mn i{font-style:normal;color:var(--faint)}
+.mt{background:var(--soft);border-radius:3px;height:11px;overflow:hidden}
+.mb{display:block;height:100%;border-radius:0 3px 3px 0}
+.mb.up{background:var(--bad)}.mb.dn{background:var(--good)}
+.md{text-align:right;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600}
+.md.r{color:var(--bad)}.md.g{color:var(--good)}
+
+/* the policy ladder */
+.ladder{display:flex;flex-direction:column;gap:1px;border:1px solid var(--line);
+border-radius:6px;overflow:hidden;background:var(--line)}
+.rung{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:9px;
+align-items:start;padding:9px 12px;background:var(--card);font-size:12.5px}
+.rung.fired{background:var(--sel)}
+.rung.skip{color:var(--faint)}
+.rung.skip .rt,.rung.skip .rs{color:var(--faint)}
+.ri{color:var(--accent);font-size:13px;line-height:1.5}
+.rung.reached .ri{color:var(--mut)}
+.rt{font:12px ui-monospace,Menlo,Consolas,monospace;display:block}
+.rs{display:block;font-size:11.5px;color:var(--mut);margin-top:2px}
+.rung.fired .rt{font-weight:600;color:var(--accent)}
+
+/* ---- the live board and the recovery page -------------------------------- */
+.lhead{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;
+flex-wrap:wrap}
+.lctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:none}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:var(--card);border:0;border-right:1px solid var(--line);
+color:var(--mut);font:inherit;font-size:11.5px;padding:6px 11px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--sel);color:var(--accent);font-weight:650}
+
+.board{display:grid;gap:11px;margin:18px 0 16px;
+grid-template-columns:repeat(auto-fit,minmax(min(168px,100%),1fr))}
+.board .tile .v{transition:color .25s}
+.lcols{grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));
+align-items:start}
+
+/* feeds */
+.feed{max-height:376px;overflow-y:auto;padding:8px 10px}
+.fr,.fl{display:grid;align-items:center;gap:9px;padding:6px 4px;
+border-bottom:1px solid var(--soft);font-size:12.5px}
+.fr{grid-template-columns:auto minmax(0,1fr) auto auto auto}
+.fr:last-child,.fl:last-child{border-bottom:0}
+.fm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fa{font-weight:600;white-space:nowrap}
+.fp{color:var(--mut);font-size:11.5px;white-space:nowrap}
+.fc{display:flex;gap:3px;white-space:nowrap}
+.fl{grid-template-columns:auto minmax(0,1fr) auto minmax(52px,88px) auto}
+.fbar{background:var(--soft);border-radius:99px;height:5px;overflow:hidden}
+.fbar>span{display:block;height:100%;background:var(--accent);
+border-radius:99px;transition:width .3s linear}
+
+/* the channel glyph, used in feeds, tables and ladders */
+.ch{display:inline-flex;align-items:center;justify-content:center;
+width:20px;height:20px;border-radius:5px;font-size:11px;font-style:normal;
+line-height:1;flex:none}
+.ch.good{background:#e6f4ec;color:var(--good)}
+.ch.blue{background:var(--sel);color:var(--accent)}
+.ch.neut{background:var(--soft);color:var(--mut)}
+.ch.warn{background:#fdf4e3;color:var(--warn)}
+.ch.bad{background:#fbeae9;color:var(--bad)}
+
+/* a ladder, drawn */
+.chain{display:flex;flex-direction:column;gap:2px}
+.cstep{display:flex;gap:9px;align-items:flex-start;padding:6px 0}
+.cn{display:block;font-size:13px;font-weight:600;line-height:1.3}
+.ct{display:block;font-size:11.5px;color:var(--mut);margin-top:1px}
+.carr{color:var(--faint);font-size:12px;padding-left:6px;line-height:1}
+.tot{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+font-size:12.5px;color:var(--mut)}
+.tot span{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+font-weight:650;margin-right:8px}
+
+.sub-row td{padding-top:0;padding-bottom:9px;border-bottom:1px solid var(--soft)}
+.sub-row .note{margin:0;max-width:74ch}
+
+.slider{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.slider label{font-size:12.5px;color:var(--mut);flex:none}
+.slider input[type=range]{flex:1;min-width:180px}
+
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms!important}}
+
+/* the sidebar plus two 320px cards needs about 1000px; below that give the
+   cards the whole width before anything has to overflow */
+@media(max-width:1040px){
+  .wrap{grid-template-columns:196px minmax(0,1fr)}
+  main{padding:22px 20px 60px}
+}
+/* nav becomes a scrolling tab strip across the top */
+@media(max-width:820px){
+  body{height:auto;overflow:visible}
+  .wrap{grid-template-columns:1fr}
+  .list{border-right:0;border-bottom:1px solid var(--line);
+    display:flex;overflow-x:auto;overflow-y:hidden;
+    position:sticky;top:0;z-index:20;-webkit-overflow-scrolling:touch}
+  .row{flex:none;width:auto;white-space:nowrap;padding:10px 14px;
+    border-bottom:0;border-left:0;border-bottom:3px solid transparent}
+  .row.sel{border-left:0;border-bottom-color:var(--accent)}
+  .row .d{display:none}
+  main{overflow:visible;padding:20px 16px 56px}
+  header{padding:12px 16px;gap:10px}
+  .bar-row{grid-template-columns:minmax(88px,34%) 1fr auto}
+  .pl{min-width:0;width:100%}
+  .hstats{margin-left:0;width:100%;overflow-x:auto;padding-bottom:2px}
+  .hp:first-child{padding-left:0;border-left:0}
+  .hby{border-left:0;padding-left:0}
+  .lhead{flex-direction:column;gap:12px}
+  .feed{max-height:300px}
+}
+@media(max-width:560px){
+  h2{font-size:20px}
+  .lede{font-size:14.5px}
+  .tile .v{font-size:21px}
+  .card>h4{padding:10px 13px}
+  .card>.b{padding:12px 13px}
+  th,td{padding:5px 8px}
+  .bar-row{grid-template-columns:minmax(76px,38%) 1fr auto;gap:8px;font-size:11.5px}
+  .bar-row .n{font-size:11px}
+  textarea{min-height:220px}
+  .foot,figcaption,p{max-width:none}
+  /* the agent page: the bar and the before/after values are the first things
+     to go, because the field name and the size of the move are the content */
+  .mv{grid-template-columns:minmax(0,1fr) 58px}
+  .mn,.mt{display:none}
+  .va{font-size:21px}
+  .step{grid-template-columns:22px minmax(0,1fr);gap:10px}
+  .step:before{left:10.5px;top:22px}
+  .sn{width:22px;height:22px;font-size:11px}
+  .rung{grid-template-columns:16px minmax(0,1fr);row-gap:5px}
+  .rung .tag{grid-column:2}
+  .f{grid-template-columns:minmax(0,1fr) minmax(0,104px)}
+  /* the feed rows drop the score and the merchant before they drop the money
+     and the channel, which are what the row is for */
+  .fr{grid-template-columns:auto minmax(0,1fr) auto auto}
+  .fr .fp{display:none}
+  .fl{grid-template-columns:auto minmax(0,1fr) auto auto}
+  .fl .fbar{display:none}
+  .hp{padding:0 10px;font-size:9.5px}
+  .hp b{font-size:12.5px}
+  .board{gap:8px}
+  .cstep{gap:7px}
+}
+</style>
+
+<header>
+  <h1>Reclaimify<span class="tick" aria-hidden="true"></span></h1>
+  <span class="hby">false-decline recovery</span>
+  <span class="hstats" id="hsub"></span>
+</header>
+<div class="wrap">
+  <div class="list" id="nav"></div>
+  <main id="main"></main>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+const B = __BUNDLE__;
+</script>
+
+<script>
+__ENGINE__
+
+const tip = document.getElementById("tip");
+function showTip(e, html){
+  tip.innerHTML = html; tip.classList.add("on");
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY - 10;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14;
+  if (y + r.height > innerHeight - 8) y = innerHeight - r.height - 8;
+  tip.style.left = x + "px"; tip.style.top = Math.max(8, y) + "px";
+}
+const hideTip = () => tip.classList.remove("on");
+addEventListener("scroll", hideTip, true);
+
+/* ==================================================================== charts */
+/* Several lines on one axis. Used only where the series are peers - four
+   channels, not recovered-against-admitted - so the palette rule that forces
+   small multiples elsewhere does not apply. Each line is still labelled at its
+   own right-hand end rather than through a legend swatch, so nobody has to
+   match a colour to read it. */
+function svgMulti(series, names, colors, opts){
+  opts = opts || {};
+  const W = 620, H = opts.h || 200, P = { l:44, r:118, t:12, b:28 };
+  const all = series.flat();
+  const x0 = Math.min(...all.map(d => d.x)), x1 = Math.max(...all.map(d => d.x));
+  const y1 = Math.max(...all.map(d => d.y)) * 1.08 || 1;
+  const X = v => P.l + (v - x0) / (x1 - x0 || 1) * (W - P.l - P.r);
+  const Y = v => H - P.b - v / y1 * (H - P.t - P.b);
+  const ticks = [0, y1 / 2, y1];
+  const xt = opts.xticks || [0, 240, 480, 960, 1440];
+  // labels can collide when two lines end close together; nudge them apart
+  const ends = series.map((s, i) => ({ i, y: Y(s[s.length - 1].y) }))
+                     .sort((a, b) => a.y - b.y);
+  ends.forEach((e, k) => { if (k && e.y - ends[k-1].y < 13) e.y = ends[k-1].y + 13; });
+  const labelY = {}; ends.forEach(e => labelY[e.i] = e.y);
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"
+      preserveAspectRatio="xMidYMid meet" aria-label="${esc(opts.aria || "chart")}">
+    ${ticks.map(t => `<line x1="${P.l}" x2="${W-P.r}" y1="${Y(t).toFixed(1)}"
+        y2="${Y(t).toFixed(1)}" stroke="${C.line}"/>
+      <text x="${P.l-8}" y="${(Y(t)+4).toFixed(1)}" text-anchor="end" fill="${C.mut}"
+        font-size="10.5" font-family="${SANS}">${(100*t).toFixed(0)}%</text>`).join("")}
+    ${xt.filter(t => t >= x0 && t <= x1).map(t => `<text x="${X(t).toFixed(1)}"
+        y="${H-9}" text-anchor="middle" fill="${C.mut}" font-size="10.5"
+        font-family="${SANS}">${esc(mins(t))}</text>`).join("")}
+    ${series.map((s, i) => `<polyline fill="none" stroke="${colors[i]}"
+        stroke-width="2" stroke-linejoin="round"
+        points="${s.map(d => `${X(d.x).toFixed(1)},${Y(d.y).toFixed(1)}`).join(" ")}"/>`).join("")}
+    ${series.map((s, i) => {
+      const last = s[s.length - 1];
+      return `<line x1="${X(last.x).toFixed(1)}" x2="${(W-P.r+8).toFixed(1)}"
+          y1="${Y(last.y).toFixed(1)}" y2="${labelY[i].toFixed(1)}"
+          stroke="${colors[i]}" stroke-width="1" opacity=".45"/>
+        <text x="${W-P.r+12}" y="${(labelY[i]+3.5).toFixed(1)}" fill="${colors[i]}"
+          font-size="11" font-weight="600" font-family="${SANS}">${esc(names[i])}</text>`;
+    }).join("")}
+  </svg>`;
+}
+function svgLine(series, opts){
+  const W = 560, H = opts.h || 156, P = { l:62, r:14, t:12, b:26 };
+  const xs = series.map(d => d.x), ys = series.map(d => d.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  let y0 = Math.min(0, ...ys), y1 = Math.max(...ys);
+  if (y1 === y0) y1 = y0 + 1;
+  y1 += (y1 - y0) * 0.08;
+  const X = v => P.l + (v - x0) / (x1 - x0 || 1) * (W - P.l - P.r);
+  const Y = v => H - P.b - (v - y0) / (y1 - y0) * (H - P.t - P.b);
+  const pts = series.map(d => `${X(d.x).toFixed(1)},${Y(d.y).toFixed(1)}`).join(" ");
+  const area = `${X(x0).toFixed(1)},${Y(y0).toFixed(1)} ${pts} ${X(x1).toFixed(1)},${Y(y0).toFixed(1)}`;
+  const id = "g" + Math.random().toString(36).slice(2, 8);
+  // no fixed pixel height: width:100% plus the viewBox scales it to whatever
+  // the card is, and an inline height would letterbox it instead.
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"
+      preserveAspectRatio="xMidYMid meet" aria-label="${esc(opts.aria || "chart")}">
+    <defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="${opts.color}" stop-opacity=".16"/>
+      <stop offset="1" stop-color="${opts.color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${[y0, (y0+y1)/2, y1].map(t => `<line x1="${P.l}" x2="${W-P.r}"
+        y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="${C.line}"/>
+      <text x="${P.l-8}" y="${(Y(t)+4).toFixed(1)}" text-anchor="end" fill="${C.mut}"
+        font-size="10.5" font-family="${SANS}">${esc(opts.fmt ? opts.fmt(t) : t.toFixed(0))}</text>`
+      ).join("")}
+    <polygon points="${area}" fill="url(#${id})"/>
+    <polyline points="${pts}" fill="none" stroke="${opts.color}" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    ${series.map((d,i) => `<circle class="pt" cx="${X(d.x).toFixed(1)}"
+        cy="${Y(d.y).toFixed(1)}" r="3.2" fill="${opts.color}" stroke="#fff"
+        stroke-width="2" data-i="${i}"/>`).join("")}
+    ${(opts.xlabels||[]).map(l => `<text x="${X(l.x).toFixed(1)}" y="${H-8}"
+        text-anchor="middle" fill="${C.mut}" font-size="10.5"
+        font-family="${SANS}">${esc(l.t)}</text>`).join("")}
+    ${opts.markX !== undefined ? `<line x1="${X(opts.markX).toFixed(1)}"
+        x2="${X(opts.markX).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
+        stroke="${C.accent}" stroke-width="1.5" stroke-dasharray="3 3"/>` : ""}
+  </svg>`;
+}
+function wireChart(el, series, fmt){
+  el.querySelectorAll("circle.pt").forEach(c => {
+    const d = series[+c.dataset.i];
+    c.addEventListener("mouseenter", e => { c.setAttribute("r", 5); showTip(e, fmt(d)); });
+    c.addEventListener("mousemove", e => showTip(e, fmt(d)));
+    c.addEventListener("mouseleave", () => { c.setAttribute("r", 3.2); hideTip(); });
+  });
+}
+function barList(rows){
+  const max = Math.max(...rows.map(r => r.v));
+  return `<div class="bars">` + rows.map(r => `
+    <div class="bar-row">
+      <span>${esc(r.k)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${
+        (100*r.v/max).toFixed(1)}%;background:${r.color || C.accent}"></span></span>
+      <span class="n">${esc(r.n)}</span>
+    </div>`).join("") + `</div>`;
+}
+</script>
+
+<script>
+/* ===================================================================== pages */
+const PAGES = [];
+const S = B.stats, H = B.headline, O = B.outcome, SD = B.seeds;
+const impMap = Object.fromEntries(B.importance);
+
+
+/* --------------------------------------------------------------- 1. flow --- */
+PAGES.push({ id:"flow", nav:"How it works", sub:"the pipeline, end to end",
+  render(){ return `
+  <h2>An appeals court for the decline pile</h2>
+  <p class="lede">A fraud system blocks an order and nothing looks at it again.
+  This opens a case on each one, pulls evidence the merchant cannot see, and
+  decides which blocks were wrong.</p>
+
+  <h3>The pipeline</h3>
+  <div class="card"><div class="b">
+  <figure>
+    <div class="wide">
+    <svg class="chart" viewBox="0 0 960 292" role="img"
+      aria-label="A blocked order flows through evidence assembly, a calibrated
+      model, and an expected-value rule that emits one of four actions. The
+      language model sits on a separate path and only writes the explanation.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+          markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#6b6b6b"/></marker>
+        <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+          markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2b4c7e"/></marker>
+      </defs>
+      <text x="0" y="13" font-size="11" fill="#6b6b6b" letter-spacing="1.1"
+        font-family="${SANS}">DECISION PATH</text>
+
+      <rect x="0" y="28" width="126" height="50" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="63" y="49" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">blocked</text>
+      <text x="63" y="65" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">order</text>
+
+      <line x1="126" y1="53" x2="178" y2="53" stroke="#6b6b6b" stroke-width="1.4"
+        marker-end="url(#ar)"/>
+      <text x="152" y="44" text-anchor="middle" font-size="10.5" fill="#6b6b6b"
+        font-family="${SANS}">docket</text>
+
+      <rect x="180" y="28" width="166" height="50" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="263" y="49" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">evidence</text>
+      <text x="263" y="65" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">14 local + 8 network</text>
+
+      <line x1="346" y1="53" x2="398" y2="53" stroke="#6b6b6b" stroke-width="1.4"
+        marker-end="url(#ar)"/>
+      <rect x="400" y="28" width="166" height="50" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="483" y="49" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">calibrated model</text>
+      <text x="483" y="65" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">p(block was correct)</text>
+
+      <line x1="566" y1="53" x2="618" y2="53" stroke="#6b6b6b" stroke-width="1.4"
+        marker-end="url(#ar)"/>
+      <text x="592" y="44" text-anchor="middle" font-size="10.5" fill="#6b6b6b"
+        font-family="${SANS}">p_bad</text>
+
+      <rect x="620" y="22" width="186" height="62" rx="6" fill="#eef2f8"
+        stroke="#2b4c7e" stroke-width="1.5"/>
+      <text x="713" y="44" text-anchor="middle" font-size="13" fill="#2b4c7e"
+        font-weight="600" font-family="${SANS}">expected value</text>
+      <text x="713" y="60" text-anchor="middle" font-size="11" fill="#2b4c7e"
+        font-family="ui-monospace,Menlo,monospace">(1-p)mA - p(A+f)</text>
+      <text x="713" y="75" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">this decides</text>
+
+      <line x1="806" y1="53" x2="842" y2="53" stroke="#6b6b6b" stroke-width="1.4"/>
+      <line x1="842" y1="53" x2="842" y2="146" stroke="#6b6b6b" stroke-width="1.4"/>
+      <g font-family="${SANS}" font-size="12" font-weight="600">
+        <line x1="842" y1="53" x2="872" y2="53" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="57" fill="#1a7f4b">OVERTURN</text>
+        <line x1="842" y1="84" x2="872" y2="84" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="88" fill="#b3261e">UPHOLD</text>
+        <line x1="842" y1="115" x2="872" y2="115" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="119" fill="#a16207">STEP_UP</text>
+        <line x1="842" y1="146" x2="872" y2="146" stroke="#6b6b6b" stroke-width="1.4" marker-end="url(#ar)"/>
+        <text x="880" y="150" fill="#a16207">ESCALATE</text>
+      </g>
+
+      <line x1="0" y1="190" x2="960" y2="190" stroke="#e2e0dc" stroke-dasharray="4 4"/>
+      <text x="0" y="212" font-size="11" fill="#6b6b6b" letter-spacing="1.1"
+        font-family="${SANS}">EXPLANATION PATH</text>
+
+      <rect x="620" y="228" width="186" height="46" rx="6" fill="#fff"
+        stroke="#e2e0dc" stroke-dasharray="4 3"/>
+      <text x="713" y="248" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">language model</text>
+      <text x="713" y="264" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">writes the note</text>
+
+      <line x1="713" y1="228" x2="713" y2="92" stroke="#2b4c7e" stroke-width="1.4"
+        stroke-dasharray="4 3" marker-end="url(#arb)"/>
+      <text x="724" y="160" font-size="10.5" fill="#2b4c7e"
+        font-family="${SANS}">reads the decision,</text>
+      <text x="724" y="174" font-size="10.5" fill="#2b4c7e"
+        font-family="${SANS}">cannot change it</text>
+
+      <rect x="180" y="228" width="330" height="46" rx="6" fill="#fff" stroke="#e2e0dc"/>
+      <text x="345" y="248" text-anchor="middle" font-size="13" fill="#1a1a1a"
+        font-family="${SANS}">citation check, then hash-chained ledger</text>
+      <text x="345" y="264" text-anchor="middle" font-size="11" fill="#6b6b6b"
+        font-family="${SANS}">every figure verified against the evidence</text>
+      <line x1="620" y1="251" x2="514" y2="251" stroke="#6b6b6b" stroke-width="1.4"
+        marker-end="url(#ar)"/>
+    </svg>
+    </div>
+    <figcaption>The model sits on the explanation path, not the decision path. It
+    reads the action after the expected-value rule has already produced it, and
+    all it emits is prose that then has every number checked against the
+    evidence. Three tests enforce the separation: the tools it can reach accept
+    no free text, the extraction schema has no field for an action, and the
+    verdict function is handed a decision that already exists.</figcaption>
+  </figure>
+  </div></div>
+
+  <h3>Why a payment platform and not the merchant</h3>
+  <div class="grid two">
+    <div class="card"><h4>What the merchant sees</h4><div class="b">
+      <p style="margin:0">One customer, at one shop, never seen before. Thin file,
+      high risk, block. That inference is correct given what it can see. So the risk
+      stack is not the thing to fix.</p></div></div>
+    <div class="card"><h4>What the network sees</h4><div class="b">
+      <p style="margin:0">One identity across every merchant on the rails: years
+      of tenure, hundreds of clean orders, one device. No single merchant can buy
+      that.</p></div></div>
+  </div>
+
+  <div class="note-box"><p style="margin:0"><b>The obvious rule loses.</b> "Long
+  clean history means safe" is what professional abuse is built to beat: 42% of
+  fraudsters here farm a clean record first. The test is refusing someone whose
+  record looks perfect.</p></div>
+
+  <h3>The four actions</h3>
+  <div class="grid tiles">
+    ${[["OVERTURN","good",O.counts.OVERTURN,"Release it. The block was wrong."],
+       ["UPHOLD","bad",O.counts.UPHOLD,"The block was right. Leave it."],
+       ["STEP_UP","warn",O.counts.STEP_UP,"Unsure, and enough money at stake to ask a question."],
+       ["ESCALATE","warn",O.counts.ESCALATE,"Unsure, and no question would settle it."]]
+      .map(([a,t,c,d]) => `<div class="tile"><span class="tag ${t}">${a}</span>
+        <span class="v">${n0(c)}</span><span class="s">${d}</span></div>`).join("")}
+  </div>
+  <p class="note" style="margin-top:11px">${n0(O.n_cases)} holdout cases. The
+  right-hand two matter: it declines to decide on ${pct(O.abstention)}, and says
+  so.</p>`; }});
+
+/* ---------------------------------------------------------- 2. portfolio --- */
+PAGES.push({ id:"portfolio", nav:"Portfolio & signals",
+  sub:"what is in the pile, and what we read",
+  render(){
+  const outMix = Object.entries(S.true_outcome_mix).sort((a,b)=>b[1]-a[1]);
+  const outTot = outMix.reduce((s,[,v])=>s+v,0);
+  const fp = Object.entries(S.false_positives_by_persona).sort((a,b)=>b[1]-a[1]);
+  const fpTot = fp.reduce((s,[,v])=>s+v,0);
+  const local = B.model.features.filter(f => !f.startsWith("network_"));
+  const net = B.model.features.filter(f => f.startsWith("network_"));
+  const impMax = Math.max(...B.importance.map(r=>r[1]));
+  const featRow = (f, col) => `<tr><td>${esc(f)}</td><td class="r">${
+    impMap[f] !== undefined
+      ? `<span style="display:inline-block;width:${(56*impMap[f]/impMax).toFixed(0)}px;
+         height:7px;background:${col};border-radius:2px;vertical-align:middle;
+         margin-right:8px"></span>${impMap[f].toFixed(3)}`
+      : `<span style="color:${C.faint}">0.000</span>`}</td></tr>`;
+  return `
+  <h2>What is in the pile</h2>
+  <p class="lede">One generated year of traffic across ${S.merchants} merchants.
+  The blocked orders are the input; the good ones inside them are the opportunity.</p>
+
+  <h3>Portfolio</h3>
+  <div class="grid tiles">
+    <div class="tile"><span class="k">Transactions</span>
+      <span class="v">${n0(S.payments)}</span>
+      <span class="s">over ${B.config.days} days</span></div>
+    <div class="tile"><span class="k">Businesses</span>
+      <span class="v">${S.merchants}</span>
+      <span class="s">${n0(S.customers)} customers</span></div>
+    <div class="tile"><span class="k">Avg daily transactions</span>
+      <span class="v">${n0(S.payments / B.config.days)}</span>
+      <span class="s">${pct(S.block_rate,2)} of them blocked</span></div>
+    <div class="tile"><span class="k">Blocked for risk</span>
+      <span class="v">${n0(S.blocked)}</span>
+      <span class="s">the pile nobody revisits</span></div>
+  </div>
+  <div class="grid tiles" style="margin-top:14px">
+    <div class="tile pos"><span class="k">Fraud correctly stopped</span>
+      <span class="v">${cr(S.fraud_correctly_blocked_inr)}</span>
+      <span class="s">${n0(S.blocked_that_were_bad)} orders. The risk stack earning its keep.</span></div>
+    <div class="tile neg"><span class="k">False positives</span>
+      <span class="v">${n0(S.blocked_that_were_good)}</span>
+      <span class="s">${pct(S.fp_share_of_blocked_pile)} of everything blocked was a good customer</span></div>
+    <div class="tile hi"><span class="k">Revenue wrongly refused</span>
+      <span class="v">${cr(S.revenue_wrongly_blocked_inr)}</span>
+      <span class="s">${S.fp_to_tp_value_ratio.toFixed(1)}x the fraud stopped. This is where we work.</span></div>
+    <div class="tile"><span class="k">Recovered on holdout</span>
+      <span class="v">${cr(O.recovered)}</span>
+      <span class="s">against ${cr(O.admitted)} of fraud admitted, on ${n0(O.n_cases)} cases</span></div>
+  </div>
+  <div class="note-box"><p style="margin:0"><b>False positives are never injected.
+  They emerge.</b> A true world is built first, then a scorecard that never sees it
+  scores the orders. Honest-atypical customers emit the signals fraudsters do, so
+  it blocks some. No parameter anywhere sets that rate.</p></div>
+
+  <h3>Types of transaction in the blocked pile</h3>
+  <div class="grid two">
+    <div class="card"><h4>True outcome, whole portfolio</h4>
+      <div class="b">${barList(outMix.map(([k,v]) => ({
+        k, v, n: `${n0(v)}  ${pct(v/outTot,1)}`,
+        color: k === "clean" ? C.good : C.bad })))}
+      <p class="note" style="margin:13px 0 0">What each order would have done if
+      let through.</p></div></div>
+    <div class="card"><h4>Who gets wrongly blocked</h4>
+      <div class="b">${barList(fp.map(([k,v]) => ({
+        k, v, n: `${n0(v)}  ${pct(v/fpTot,1)}` })))}
+      <p class="note" style="margin:13px 0 0">${n0(fpTot)} false positives by
+      persona. The last two are the hard part: on this order they behaved, and the
+      evidence is identical.</p></div></div>
+  </div>
+
+  <div class="grid two" style="margin-top:14px">
+    <div class="card"><h4>Blocked by payment method</h4><div class="b">
+      ${barList(B.dist.method.map(d => ({
+        k: d.key, v: d.blocked, n: `${n0(d.blocked)}  ${pct(d.good_share,0)} good` })))}
+      <p class="note" style="margin:13px 0 0">Bar is volume, number is the good
+      share. COD is the outlier: UPI-sized volume, far lower good share.</p></div></div>
+    <div class="card"><h4>Reason the merchant gave</h4><div class="b">
+      ${barList(B.dist.block_reason.map(d => ({
+        k: d.key, v: d.blocked, n: `${n0(d.blocked)}  ${pct(d.good_share,0)} good` })))}
+      <p class="note" style="margin:13px 0 0">A velocity burst is usually a real
+      one. A return-history flag is wrong nine times in ten. The reason the
+      merchant gave is itself evidence.</p></div></div>
+  </div>
+
+  <h3>Signals used to judge a block</h3>
+  <div class="grid two">
+    <div class="card"><h4>Merchant-local
+      <span class="tag neut">${local.length} the merchant already had</span></h4>
+      <div class="b scroll"><table><tbody>
+      ${local.map(f => featRow(f, C.faint)).join("")}</tbody></table></div></div>
+    <div class="card"><h4>Cross-merchant network
+      <span class="tag blue">${net.length} only a platform holds</span></h4>
+      <div class="b scroll"><table><tbody>
+      ${net.map(f => featRow(f, C.accent)).join("")}</tbody></table></div></div>
+  </div>
+  <p class="note" style="margin-top:11px">Gain, not split count. They disagree:
+  <code>network_clean_rate</code> is sixth by split count and first by gain, at
+  ${impMap["network_clean_rate"].toFixed(3)}.</p>
+
+  <h3>Chronological replay of the holdout</h3>
+  <div class="grid two">
+    <div class="card"><h4>Recovered per day <span class="tag good">good releases</span></h4>
+      <div class="b" id="ch-rec"></div></div>
+    <div class="card"><h4>Fraud admitted per day <span class="tag bad">bad releases</span></h4>
+      <div class="b" id="ch-adm"></div></div>
+  </div>
+  <p class="note" style="margin-top:11px">Two panels, not two lines: recovery runs
+  about fifteen times fraud admitted, and a shared axis would flatten the one that
+  matters.</p>`;
+  },
+  after(){
+    const daily = B.dist.daily;
+    const xl = [{x:0,t:"day 1"},{x:Math.floor(daily.length/2),t:`day ${Math.floor(daily.length/2)}`},
+                {x:daily.length-1,t:`day ${daily.length}`}];
+    for (const [id, key, color, name] of [
+        ["ch-rec","recovered",C.good,"recovered"],
+        ["ch-adm","admitted",C.bad,"fraud admitted"]]){
+      const s = daily.map(d => ({ x:d.day, y:d[key], d }));
+      const node = document.getElementById(id);
+      node.innerHTML = svgLine(s, { color, h:160, fmt:cr, xlabels:xl,
+        aria:`${name} per day across the holdout window` });
+      wireChart(node, s, d => `<b>day ${d.d.day+1}</b><br>${name} ${cr(d.y)}<br>
+        ${d.d.released} of ${d.d.blocked} released`);
+    }
+  }});
+
+/* -------------------------------------------------------------- 3. agent --- */
+/* Every editable field, in the order a person reads a case rather than the
+   order the model wants them. `kind` picks the control: a flag gets a checkbox,
+   a count gets a stepper, a rate is 0..1. `lo`/`hi` are the range actually
+   present in the holdout, so a value outside them is extrapolation and the
+   field says so instead of just accepting it. */
+const GROUPS = [
+  { key:"order",   title:"The order",
+    note:"Amount drives the expected-value arithmetic. The model reads it in paise; you type rupees." },
+  { key:"local",   title:"What the merchant's own system saw",
+    note:"Each of these is a correct description of unusual behaviour. None of them is evidence about intent." },
+  { key:"network", title:"What only the payment network can see",
+    note:"The same identity across every merchant on the rails. A single merchant cannot buy this view at any price." },
+];
+const FIELDS = [
+  { f:"merchant",     g:"order", kind:"text",  label:"Merchant" },
+  { f:"amount_inr",   g:"order", kind:"money", label:"Amount", lo:105, hi:686716 },
+  { f:"method",       g:"order", kind:"pick",  label:"Method",
+    opts:["upi","card","cod","netbanking","wallet","emi"] },
+  { f:"block_reason", g:"order", kind:"pick",  label:"Why the stack blocked it",
+    opts:["amount_anomaly","rto_history","device_change","velocity","thin_file","geo_risk"] },
+
+  { f:"f_device_is_new",          g:"local", kind:"flag",  label:"New device" },
+  { f:"f_device_account_fanout",  g:"local", kind:"count", label:"Accounts on this device", lo:1, hi:8 },
+  { f:"f_address_mismatch",       g:"local", kind:"flag",  label:"Delivery differs from billing" },
+  { f:"f_orders_last_24h",        g:"local", kind:"count", label:"Orders in the last 24 hours", lo:0, hi:5 },
+  { f:"f_amount_z",               g:"local", kind:"num",   label:"Basket vs this merchant's norm", unit:"sd", step:0.1, lo:-2.62, hi:5.73 },
+  { f:"f_pincode_rto_propensity", g:"local", kind:"num",   label:"Pincode return index", step:0.05, lo:0.85, hi:1.45 },
+  { f:"f_is_night",               g:"local", kind:"flag",  label:"Placed overnight" },
+  { f:"f_thin_file_flag",         g:"local", kind:"flag",  label:"Merchant sees no history" },
+  { f:"f_disposable_email",       g:"local", kind:"flag",  label:"Disposable email domain" },
+  { f:"f_international",          g:"local", kind:"flag",  label:"International" },
+  { f:"f_merchant_prior_rto",     g:"local", kind:"count", label:"Past returns at this merchant", lo:0, hi:6 },
+  { f:"f_is_cod",                 g:"local", kind:"flag",  label:"Cash on delivery" },
+  { f:"risk_score",               g:"local", kind:"rate",  label:"The stack's own risk score", lo:0.38, hi:1 },
+
+  { f:"network_orders_prior",         g:"network", kind:"count", label:"Prior orders, every merchant", lo:0, hi:262 },
+  { f:"network_merchants_prior",      g:"network", kind:"count", label:"Distinct merchants shopped", lo:0, hi:8 },
+  { f:"network_tenure_days",          g:"network", kind:"count", label:"Days since first seen", lo:0, hi:1762 },
+  { f:"network_clean_rate",           g:"network", kind:"rate",  label:"Orders that completed cleanly", lo:0, hi:1 },
+  { f:"network_disputes_prior",       g:"network", kind:"count", label:"Prior disputes", lo:0, hi:34 },
+  { f:"network_rto_prior",            g:"network", kind:"count", label:"Prior returns", lo:0, hi:22 },
+  { f:"network_device_fanout",        g:"network", kind:"count", label:"Devices used", lo:1, hi:8 },
+  { f:"network_instrument_merchants", g:"network", kind:"count", label:"Merchants for this card or VPA", lo:0, hi:8 },
+];
+const FBY = Object.fromEntries(FIELDS.map(d => [d.f, d]));
+
+/* Three written scenarios in front of the six real holdout cases. The written
+   ones exist because a demo needs a case whose story you can follow; the real
+   ones exist because a case you wrote yourself proves nothing. Which is which
+   is on the chip. */
+const WRITTEN = [
+  { key:"wrong", tone:"good", chip:"Wrongly blocked",
+    story:"Four years, 214 orders across three shops, never a dispute. Today they order from a new phone, ship it to their office, at eleven at night. Every signal the merchant can see is unusual, and every one of them is about the phone rather than the person.",
+    json:{ payment_id:"pay_demo_wrongly_blocked", merchant:"Aurum Jewels",
+      amount_inr:189500, method:"upi", block_reason:"device_change", merchant_threshold:0.38,
+      f_device_is_new:1, f_device_account_fanout:1, f_address_mismatch:1, f_orders_last_24h:0,
+      f_amount_z:3.9, f_pincode_rto_propensity:1.4, f_is_night:1, f_thin_file_flag:0,
+      f_disposable_email:0, f_international:0, f_merchant_prior_rto:0, f_is_cod:0,
+      risk_score:0.62, network_orders_prior:214, network_merchants_prior:3,
+      network_tenure_days:1680, network_clean_rate:0.99, network_disputes_prior:0,
+      network_rto_prior:1, network_device_fanout:1, network_instrument_merchants:1 } },
+  { key:"right", tone:"bad", chip:"Correctly blocked",
+    story:"A perfect record: clean rate 1.000, zero disputes, zero returns. It is also ten weeks old, spread across six merchants, on one card that has appeared at seven. Nothing has come back yet because nothing has had time to. This is the shape a bust-out makes on the way up.",
+    json:{ payment_id:"pay_demo_correctly_blocked", merchant:"VoltEdge Electronics",
+      amount_inr:174900, method:"cod", block_reason:"velocity", merchant_threshold:0.38,
+      f_device_is_new:1, f_device_account_fanout:4, f_address_mismatch:1, f_orders_last_24h:3,
+      f_amount_z:5.2, f_pincode_rto_propensity:1.45, f_is_night:1, f_thin_file_flag:0,
+      f_disposable_email:1, f_international:0, f_merchant_prior_rto:0, f_is_cod:1,
+      risk_score:0.88, network_orders_prior:6, network_merchants_prior:6,
+      network_tenure_days:74, network_clean_rate:1, network_disputes_prior:0,
+      network_rto_prior:0, network_device_fanout:5, network_instrument_merchants:7 } },
+  { key:"thin", tone:"warn", chip:"No record either way",
+    story:"Two lakh ninety-two thousand rupees and an empty network file. There is no exculpatory evidence because there is no evidence. The honest output here is a question, not a probability.",
+    json:{ payment_id:"pay_demo_no_record", merchant:"Aurum Jewels",
+      amount_inr:292000, method:"card", block_reason:"thin_file", merchant_threshold:0.38,
+      f_device_is_new:1, f_device_account_fanout:1, f_address_mismatch:0, f_orders_last_24h:0,
+      f_amount_z:4, f_pincode_rto_propensity:1, f_is_night:0, f_thin_file_flag:1,
+      f_disposable_email:0, f_international:0, f_merchant_prior_rto:0, f_is_cod:0,
+      risk_score:0.71, network_orders_prior:0, network_merchants_prior:0,
+      network_tenure_days:335, network_clean_rate:0, network_disputes_prior:0,
+      network_rto_prior:0, network_device_fanout:1, network_instrument_merchants:1 } },
+];
+
+/* ---- the trace ----------------------------------------------------------- */
+/* Everything the decision touched, in the order it touched it. None of this is
+   narration written after the fact: every step reports what the same functions
+   the page scores with actually produced. */
+function treePath(tree, x){
+  const steps = []; let n = tree;
+  while (Array.isArray(n)){
+    const fi = n[0], thr = n[1], v = x[fi], left = v <= thr;
+    steps.push({ f:B.model.features[fi], v, thr, left });
+    n = left ? n[2] : n[3];
+  }
+  return { steps, leaf:n };
+}
+function trace(o){
+  const vr = vectorise(o), x = vr.x, missing = vr.missing;
+  const paths = B.model.trees.slice(0, 3).map(t => treePath(t, x));
+  let logit = 0;
+  for (const t of B.model.trees){
+    let n = t; while (Array.isArray(n)) n = x[n[0]] <= n[1] ? n[2] : n[3]; logit += n;
+  }
+  const uncal = 1 / (1 + Math.exp(-logit));
+  const p = calibrate(uncal);
+
+  /* which isotonic step the raw score landed on */
+  const xs = B.model.iso_x, ys = B.model.iso_y;
+  let lo = 0, hi = xs.length - 1, clamp = null;
+  if (uncal <= xs[0]) clamp = "below the first knot";
+  else if (uncal >= xs[xs.length-1]) clamp = "above the last knot";
+  else { while (hi - lo > 1){ const m = (lo+hi) >> 1; if (xs[m] <= uncal) lo = m; else hi = m; } }
+
+  /* one field at a time reset to its median over the blocked pile, everything
+     else held. Not an attribution. A counterfactual, and labelled as one. */
+  const movers = [];
+  if (B.typical){
+    B.model.features.forEach((f, i) => {
+      const t = B.typical[f];
+      if (t === undefined || Math.abs(t - x[i]) < 1e-12) return;
+      const y = x.slice(); y[i] = t;
+      const dd = calibrate(rawScore(y)) - p;
+      if (Math.abs(dd) > 1e-9) movers.push({ f, from:x[i], to:t, d:dd });
+    });
+    movers.sort((a,b) => Math.abs(b.d) - Math.abs(a.d));
+  }
+
+  const amount = Number(o.amount_inr != null ? o.amount_inr
+                        : (o.amount != null ? o.amount / 100 : 0)) || 0;
+  const orders = Number(o.network_orders_prior || 0);
+  const tenure = Number(o.network_tenure_days || 0);
+  const d = decide(p, amount, orders, tenure);
+  const big = amount >= B.stepup_floor_inr;
+
+  /* the policy ladder: every rung, evaluated whether or not it fired */
+  const rungs = [
+    { t:`p_bad > ${B.uphold_floor}`, hit:p > B.uphold_floor, out:"UPHOLD",
+      saw:`p_bad = ${p.toFixed(4)}`,
+      why:"Confidently bad. Nothing else needs checking, because upholding a block needs no exculpatory evidence." },
+    { t:"evidence gate fails", hit:!d.sufficient, out:big ? "STEP_UP" : "ESCALATE",
+      saw:d.sufficient ? "gate passed" : d.gate.join(", "),
+      why:"Too little record to act on. Big enough to be worth asking a question, otherwise a person reads it." },
+    { t:`EV > 0 and p_bad < ${B.cap}`, hit:d.ev > 0 && p < B.cap, out:"OVERTURN",
+      saw:`EV = ${d.ev >= 0 ? "+" : ""}${n0(d.ev)}, p_bad = ${p.toFixed(4)}`,
+      why:"Releasing is worth money, and the model is confident enough for that price to mean something." },
+    { t:"otherwise", hit:true, out:big ? "STEP_UP" : "UPHOLD",
+      saw:`amount ${big ? "at or above" : "below"} ${n0(B.stepup_floor_inr)}`,
+      why:"Ambiguous. Worth a verification exchange if the money justifies one, otherwise the block stands." },
+  ];
+  const fired = rungs.findIndex(r => r.hit);
+  rungs.forEach((r, i) => { r.reached = i <= fired; r.fired = i === fired; });
+
+  return { x, missing, paths, logit, uncal, p, iso:{ lo, hi, clamp }, movers,
+           amount, orders, tenure, d, rungs, big };
+}
+
+/* ---- rendering one field ------------------------------------------------- */
+function fieldHTML(d, v){
+  const id = "fld_" + d.f;
+  const warn = (d.lo !== undefined && (v < d.lo || v > d.hi))
+    ? `<span class="tag warn" title="outside the range present in the holdout">outside range</span>` : "";
+  let ctrl;
+  if (d.kind === "flag")
+    ctrl = `<label class="sw"><input type="checkbox" id="${id}" data-f="${d.f}"${
+      Number(v) ? " checked" : ""}><span>${Number(v) ? "yes" : "no"}</span></label>`;
+  else if (d.kind === "pick")
+    ctrl = `<select id="${id}" data-f="${d.f}">${d.opts.map(o =>
+      `<option${o === v ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+  else if (d.kind === "text")
+    ctrl = `<input type="text" id="${id}" data-f="${d.f}" value="${esc(v == null ? "" : v)}">`;
+  else if (d.kind === "money")
+    ctrl = `<div class="money"><span>Rs</span><input type="number" id="${id}" data-f="${d.f}"
+      value="${v}" step="100" min="0"></div>`;
+  else
+    ctrl = `<input type="number" id="${id}" data-f="${d.f}" value="${v}"
+      step="${d.kind === "rate" ? "0.01" : d.step || 1}"${
+      d.kind === "rate" ? ` min="0" max="1"` : d.kind === "count" ? ` min="0"` : ""}>`;
+  return `<div class="f">
+    <label for="${id}"><span class="fl">${esc(d.label)}${d.unit ? ` <i>${d.unit}</i>` : ""}</span>
+    <span class="fk">${esc(d.f)}</span></label>
+    <div class="fc">${ctrl}${warn}</div></div>`;
+}
+
+/* ---- the output --------------------------------------------------------- */
+/* The output is a pure function of the case so web/check_agent.js can run
+   it over every scenario and read the HTML. run() below only moves it into the
+   DOM: anything that renders wrong renders wrong here too, where it is checked. */
+/* A comparison is arithmetic, so print the number. fmt() turns a flag into
+   yes/no, which reads as nonsense beside "<= 0.00". LightGBM's sentinel
+   threshold for "is this zero" is 1e-35, which rounds to 0.00 and then looks
+   like a value sitting exactly on its own split. */
+function num(v){
+  const n = +v;
+  if (n !== 0 && Math.abs(n) < 0.005) return n > 0 ? "0.00+" : "-0.00";
+  return Number.isInteger(n) ? String(n) : n.toFixed(Math.abs(n) >= 1000 ? 2 : 3);
+}
+function fmt(f, v){
+  const d = FBY[f];
+  if (!d) return Number.isInteger(v) ? v : (+v).toFixed(3);
+  if (d.kind === "flag") return v ? "yes" : "no";
+  if (d.kind === "rate") return (+v).toFixed(3);
+  return Number.isInteger(+v) ? String(+v) : (+v).toFixed(2);
+}
+function verdictHTML(cur, last){
+  const r = trace(cur), p = r.p, d = r.d;
+  const ceil = B.margin / (1 + B.margin);
+  const known = B.model.features.length - r.missing.length;
+  const changed = last !== null && Math.abs(last - p) > 1e-12;
+  const delta = changed
+    ? `<span class="tag ${p > last ? "bad" : "good"}">${p > last ? "+" : ""}${
+        (p - last).toFixed(4)} from the last run</span>` : "";
+  last = p;
+
+  const step = (n, title, body, note) => `<div class="step">
+    <div class="sn">${n}</div>
+    <div class="sb"><h5>${title}</h5>${body}
+    ${note ? `<p class="note" style="margin:7px 0 0">${note}</p>` : ""}</div></div>`;
+
+  return { p, html:`
+  <div class="card verdict ${TONE[d.action]}">
+    <h4>Verdict <span style="flex:1"></span>
+      <span style="font:12.5px ui-monospace,Menlo,monospace;text-transform:none;
+        letter-spacing:0">${esc(cur.payment_id || "unnamed")}</span></h4>
+    <div class="b">
+      <div class="vhead">
+        <span class="va ${TONE[d.action]}">${d.action}</span>
+        <span class="vw">${esc({
+          OVERTURN:"release it, the block was wrong",
+          UPHOLD:"the block stands",
+          STEP_UP:"ask the customer one question first",
+          ESCALATE:"hand it to a reviewer with a brief" }[d.action])}</span>
+      </div>
+      <div class="grid tiles" style="gap:11px;margin-top:13px">
+        <div class="tile" style="padding:11px 13px"><span class="k">p(block was correct)</span>
+          <span class="v" style="font-size:22px">${p.toFixed(4)}</span>
+          <span class="s">${delta || `cap ${B.cap}`}</span></div>
+        <div class="tile" style="padding:11px 13px"><span class="k">EV of releasing</span>
+          <span class="v" style="font-size:22px;color:${d.ev > 0 ? C.good : C.bad}"
+            >${d.ev >= 0 ? "+" : ""}${cr(d.ev)}</span>
+          <span class="s">on ${cr(r.amount)} at ${pct(B.margin,0)} margin</span></div>
+        <div class="tile" style="padding:11px 13px"><span class="k">Evidence gate</span>
+          <span class="v" style="font-size:22px;color:${d.sufficient ? C.good : C.warn}"
+            >${d.sufficient ? "pass" : "thin"}</span>
+          <span class="s">${r.orders} orders, ${r.tenure} days</span></div>
+      </div>
+      ${r.missing.length ? `<div class="note-box w" style="margin:14px 0 0">
+        <p style="margin:0"><b>${r.missing.length} field${r.missing.length > 1 ? "s" : ""}
+        missing, treated as zero:</b> ${r.missing.map(esc).join(", ")}. What you see
+        is what the model makes of that, not of the real order.</p></div>` : ""}
+    </div>
+  </div>
+
+  <h3>How it got there</h3>
+  <div class="steps">
+    ${step(1, "Read the order",
+      `<p class="note" style="margin:0">${known} of ${B.model.features.length}
+       model features present${r.missing.length ? `, ${r.missing.length} assumed zero` : ""}.
+       <code>amount</code> = ${n0(r.amount * 100)} paise, from ${cr(r.amount)}.</p>`,
+      "Nothing about the outcome is in here. The answer key is quarantined behind a test suite and the model has never been shown it for this case.")}
+
+    ${step(2, `Walk ${B.model.n_trees} trees`,
+      `<pre>${r.paths.map((pp, i) =>
+        `<span class="c">tree ${i}</span>\n` + pp.steps.map(s =>
+          `  <span class="f">${esc(s.f).padEnd(30)}</span> ${num(s.v).padStart(9)} <span
+            class="o">${s.left ? "&lt;=" : "&nbsp;&gt;"} ${num(s.thr).padStart(9)}</span>  <span
+            class="br">${s.left ? "left " : "right"}</span>`).join("\n") +
+        `\n  <span class="${pp.leaf >= 0 ? "r" : "g"}">leaf ${
+            pp.leaf >= 0 ? "+" : ""}${pp.leaf.toFixed(4)}</span>`
+        ).join("\n")}
+<span class="c">... ${B.model.n_trees - 3} more trees</span>
+
+sum of leaves   <span class="${r.logit >= 0 ? "r" : "g"}">${
+    r.logit >= 0 ? "+" : ""}${r.logit.toFixed(4)}</span>
+sigmoid         <span class="k">${r.uncal.toFixed(6)}</span>  <span class="c">uncalibrated</span></pre>`,
+      "Three trees in full, with the branch taken at every split. A positive leaf pushes toward the block having been correct, a negative one away. The other " + (B.model.n_trees - 3) + " trees work the same way.")}
+
+    ${r.movers.length ? step(3, "What moved it",
+      `<div class="movers">${r.movers.slice(0, 6).map(m => {
+        const w = Math.min(100, 100 * Math.abs(m.d) / Math.abs(r.movers[0].d));
+        return `<div class="mv"><span class="mf">${esc(m.f)}</span>
+          <span class="mn">${fmt(m.f, m.from)} <i>&rarr;</i> ${fmt(m.f, m.to)}</span>
+          <span class="mt"><span class="mb ${m.d > 0 ? "up" : "dn"}"
+            style="width:${w}%"></span></span>
+          <span class="md ${m.d > 0 ? "r" : "g"}">${m.d > 0 ? "+" : ""}${m.d.toFixed(4)}</span>
+          </div>`; }).join("")}</div>`,
+      "Each row is this case re-scored with that one field set to its median over the blocked pile and everything else held. A counterfactual, not an attribution: the fields interact, so these do not sum to the score.") : ""}
+
+    ${step(r.movers.length ? 4 : 3, "Calibrate",
+      `<pre>raw     ${r.uncal.toFixed(6)}
+${r.iso.clamp
+  ? `        <span class="c">${r.iso.clamp}, clamped to the end value</span>`
+  : `bracket [${B.model.iso_x[r.iso.lo].toFixed(6)}, ${B.model.iso_x[r.iso.hi].toFixed(6)}]
+    <span class="c">-&gt; [${B.model.iso_y[r.iso.lo].toFixed(4)}, ${B.model.iso_y[r.iso.hi].toFixed(4)}]</span>`}
+p_bad   <span class="k">${p.toFixed(4)}</span></pre>`,
+      `A tree ensemble's raw output is a ranking, not a probability, and the arithmetic below needs a probability. Isotonic regression fitted on a chronological slice before the holdout supplies one. It has ${B.model.iso_x.length} knots, so p lands on one of ${new Set(B.model.iso_y).size} steps rather than moving smoothly.`)}
+
+    ${step(r.movers.length ? 5 : 4, "Check the evidence gate",
+      `<pre>orders  ${String(r.orders).padStart(6)} ${r.orders < B.min_orders
+        ? `<span class="r">&lt; ${B.min_orders}</span>  needs ${B.min_orders}`
+        : `<span class="g">&gt;= ${B.min_orders}</span>`}
+tenure  ${String(r.tenure).padStart(6)} ${r.tenure < B.min_tenure_days
+        ? `<span class="r">&lt; ${B.min_tenure_days}</span>  needs ${B.min_tenure_days} days`
+        : `<span class="g">&gt;= ${B.min_tenure_days}</span>`}
+gate    <span class="${d.sufficient ? "g" : "r"}">${d.sufficient ? "pass" : "thin"}</span></pre>`,
+      "Separate from the score on purpose. A confident number computed from an empty file is still a number computed from an empty file, and this is the test that says so out loud.")}
+
+    ${step(r.movers.length ? 6 : 5, "Price it",
+      `<pre><span class="c"># releasing pays only while p &lt; m/(1+m) = ${ceil.toFixed(2)}</span>
+EV = (1 - p) &middot; m &middot; A  -  p &middot; (A + f)
+   = (1 - ${p.toFixed(4)}) &middot; ${B.margin} &middot; ${n0(r.amount)}  -  ${p.toFixed(4)} &middot; (${n0(r.amount)} + ${n0(B.dispute_overhead_inr)})
+   = <span class="${d.ev > 0 ? "g" : "r"}">${d.ev >= 0 ? "+" : ""}${n0(d.ev)}</span></pre>`,
+      "You earn margin on a good order and lose the whole basket plus a dispute fee on a bad one. That asymmetry, not the score, is what makes the ceiling 0.20 rather than 0.50.")}
+
+    ${step(r.movers.length ? 7 : 6, "Walk the policy ladder",
+      `<div class="ladder">${r.rungs.map((rg, i) => `<div class="rung${
+        rg.fired ? " fired" : rg.reached ? "" : " skip"}">
+        <span class="ri">${rg.fired ? "&#9656;" : rg.reached ? "&times;" : ""}</span>
+        <div><span class="rt">${esc(rg.t)}</span>
+          <span class="rs">${esc(rg.saw)}</span>
+          ${rg.fired ? `<p class="note" style="margin:5px 0 0">${esc(rg.why)}</p>` : ""}
+        </div>
+        <span class="tag ${rg.fired ? TONE[rg.out] : "neut"}">${rg.out}</span>
+        </div>`).join("")}</div>`,
+      "Four rungs, tested top to bottom, first match wins. This is the whole decision: no model output reaches it except the one number, and no language model touches it at all.")}
+
+    ${step(r.movers.length ? 8 : 7, "Go and get the customer",
+      (() => {
+        const pl = rPlan(d.action, d.ev, r.amount, r.orders, r.tenure);
+        if (!pl.rungs.length) return `<p class="note" style="margin:0">${
+          esc(pl.reasons[0])}. Nothing is sent and nothing is spent.</p>`;
+        return `<div class="chain">${pl.rungs.map((g, i) => `
+          <div class="cstep">
+            <span class="ch ${CHTONE[g.channel]}">${CHICON[g.channel]}</span>
+            <div><span class="cn">${esc(CH[g.channel].name)}</span>
+              <span class="ct">${g.at < 1 ? "immediately" : "after " + mins(g.at)}
+                &middot; ${rs(g.cost)} &middot; ${pct(g.p,0)} chance they complete${
+                g.committed ? ' &middot; <span class="tag warn">mandated</span>' : ""}</span></div>
+          </div>${i < pl.rungs.length - 1
+            ? '<span class="carr">&darr; if that does not land</span>' : ""}`).join("")}
+          </div>
+          <div class="tot"><span>Overall</span><b>${pct(pl.p,0)}</b> come back
+            &middot; ${rs(pl.cost)} expected outreach spend &middot; typically
+            ${mins(pl.eta)} from block to completed order</div>`;
+      })(),
+      "Reversing a block recovers nothing on its own. The ladder is tried cheapest first and a rung is added only while the rupees it is expected to bring in beat " + RCFG.min_roas + "x what it costs to send, so a small order stops early and a large one earns a person. A step-up can only use a channel that takes an answer.")}
+  </div>
+
+  <div class="note-box" style="margin:16px 0 0"><p style="margin:0">
+    <b>The model did not decide this.</b> It produced ${p.toFixed(4)}. The action
+    came from the ladder above, which is arithmetic. A language model writes the
+    note the customer and the reviewer read, and three tests stop it doing anything
+    else: the tools it can reach take no free text, the extraction schema has no
+    field for a decision, and the verdict is handed a decision already made.</p></div>` };
+}
+
+PAGES.push({ id:"agent", nav:"Run the agent", sub:"one order, and how it was decided",
+  render(){ return `
+  <h2>Adjudicate one order</h2>
+  <p class="lede">Pick a case or edit any field. This runs the real model: the
+  ${B.model.n_trees} fitted trees and the isotonic calibrator were exported from
+  Python, and the exporter refuses to write them out unless this JavaScript
+  reproduces the Python probability on all ${n0(O.n_cases)} holdout cases.
+  Nothing here is a lookup table.</p>
+
+  <div class="pick">
+    <div class="pickrow"><span class="pl">Written for the demo</span>
+      ${WRITTEN.map((s,i) => `<button class="chip s" data-w="${i}">
+        <span class="dot ${s.tone}"></span>${esc(s.chip)}</button>`).join("")}
+    </div>
+    <div class="pickrow"><span class="pl">Real holdout cases</span>
+      ${B.samples.map((s,i) => `<button class="chip s" data-s="${i}"
+        title="${esc(s.role)}">${esc(s.json.payment_id.slice(4, 12))}</button>`).join("")}
+    </div>
+  </div>
+  <div id="story"></div>
+
+  <div class="grid io" style="margin-top:16px">
+    <div class="card" id="incard">
+      <h4>The case
+        <span style="flex:1"></span>
+        <span class="tabs"><button class="tb sel" data-tab="fields">Fields</button
+          ><button class="tb" data-tab="json">JSON</button></span>
+      </h4>
+      <div class="b">
+        <div id="tab-fields">
+          ${GROUPS.map(g => `<div class="fg">
+            <h5>${esc(g.title)}</h5><p class="note">${esc(g.note)}</p>
+            <div class="fields" data-g="${g.key}"></div></div>`).join("")}
+        </div>
+        <div id="tab-json" hidden>
+          <textarea id="inp" spellcheck="false" aria-label="Transaction JSON"></textarea>
+          <p class="note" style="margin:8px 0 0">Any field you leave out is treated as
+          zero and listed in the output. <code>amount</code> is in paise and is derived
+          from <code>amount_inr</code> if you omit it.</p>
+        </div>
+        <div class="chips" style="margin-top:13px">
+          <button class="btn go" id="run">Adjudicate</button>
+          <button class="btn" id="reset">Reset</button>
+          <span class="sub" id="hint"></span>
+        </div>
+      </div>
+    </div>
+    <div id="out"></div>
+  </div>`;
+  },
+  after(){
+    const out = document.getElementById("out"), hint = document.getElementById("hint");
+    const inp = document.getElementById("inp"), story = document.getElementById("story");
+    let cur = {}, last = null;
+
+    /* ---- the two views of one object ------------------------------------- */
+    function paintFields(){
+      GROUPS.forEach(g => {
+        const host = document.querySelector(`.fields[data-g="${g.key}"]`);
+        host.innerHTML = FIELDS.filter(d => d.g === g.key)
+          .map(d => fieldHTML(d, cur[d.f] !== undefined ? cur[d.f]
+            : (d.kind === "text" || d.kind === "pick" ? "" : 0))).join("");
+      });
+      host_wire();
+    }
+    function host_wire(){
+      document.querySelectorAll("[data-f]").forEach(el => {
+        el.oninput = () => {
+          const d = FBY[el.dataset.f];
+          // clearing a number field to retype it leaves "", which Number() reads
+          // as 0. Re-scoring at zero mid-keystroke looks like the page guessing.
+          if (el.type === "number" && el.value === "") return;
+          cur[d.f] = d.kind === "flag" ? (el.checked ? 1 : 0)
+            : (d.kind === "text" || d.kind === "pick") ? el.value : Number(el.value);
+          if (d.f === "amount_inr") cur.amount = Number(el.value) * 100;
+          if (d.kind === "flag") el.parentNode.querySelector("span").textContent =
+            el.checked ? "yes" : "no";
+          syncJSON(); run();
+        };
+      });
+    }
+    const syncJSON = () => { inp.value = JSON.stringify(cur, null, 2); };
+    function readJSON(){
+      try { cur = JSON.parse(inp.value); }
+      catch (e){
+        out.innerHTML = `<div class="card"><div class="b">
+          <span class="tag bad">cannot read the JSON</span>
+          <p class="note" style="margin:10px 0 0">${esc(e.message)}. Fix the syntax, or
+          switch back to Fields.</p></div></div>`;
+        return false;
+      }
+      return true;
+    }
+
+    /* ---- loading a case --------------------------------------------------- */
+    function load(json, note){
+      cur = JSON.parse(JSON.stringify(json));
+      if (cur.amount == null && cur.amount_inr != null) cur.amount = cur.amount_inr * 100;
+      story.innerHTML = note || "";
+      paintFields(); syncJSON(); run();
+    }
+    document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => {
+      const s = WRITTEN[+b.dataset.w];
+      hint.textContent = "written for the demo, not a holdout case";
+      load(s.json, `<div class="note-box" style="margin:14px 0 0">
+        <p style="margin:0"><b>${esc(s.chip)}.</b> ${esc(s.story)}</p></div>`);
+    });
+    document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+      const s = B.samples[+b.dataset.s];
+      hint.textContent = "a real holdout case, with an answer key";
+      load(s.json, `<div class="note-box" style="margin:14px 0 0">
+        <p style="margin:0 0 6px"><b>${esc(s.role)}.</b> ${esc(s.why)}</p>
+        <p class="note" style="margin:0">Answer key:
+        <b style="color:${s.truth === "clean" ? C.good : C.bad}">${esc(s.truth)}</b>,
+        persona <code>${esc(s.persona)}</code>. The decision below was made without it.</p>
+        </div>`);
+    });
+    document.getElementById("reset").onclick = () =>
+      document.querySelector("[data-w='0']").click();
+
+    document.querySelectorAll(".tb").forEach(b => b.onclick = () => {
+      const json = b.dataset.tab === "json";
+      if (!json && !readJSON()) return;
+      if (!json) paintFields();
+      document.querySelectorAll(".tb").forEach(t => t.classList.toggle("sel", t === b));
+      document.getElementById("tab-fields").hidden = json;
+      document.getElementById("tab-json").hidden = !json;
+      if (json) syncJSON();
+    });
+    document.getElementById("run").onclick = () => {
+      if (!document.getElementById("tab-json").hidden && !readJSON()) return;
+      run();
+    };
+    inp.addEventListener("keydown", e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter"){ if (readJSON()) run(); } });
+
+    function run(){
+      const v = verdictHTML(cur, last);
+      last = v.p; out.innerHTML = v.html;
+    }
+
+    document.querySelector("[data-w='0']").click();
+  }});
+
+/* ----------------------------------------------------- 4. operating point --- */
+/* The deployment table at any swept cap. Rates come from the Python table so
+   the rows stay the ones that document was written about. */
+const QRATES = B.queue.rows.map(r => r.rate);
+function queueRows(r){
+  const q = queueAt(r, B.margin);
+  return QRATES.map(rate => `<tr${rate === 1 ? ' class="mark"' : ""}>
+    <td>${rate === 1 ? "inline at checkout, full value"
+      : `queue review, ${pct(rate,0)} come back`}</td>
+    <td class="r">${cr(q.gross * rate)}</td>
+    <td class="r">${cr(r.admitted)}</td>
+    <td class="r">${cr(q.at(rate))}</td></tr>`).join("");
+}
+
+PAGES.push({ id:"frontier", nav:"Operating point", sub:"the trade curve, on a slider",
+  render(){ return `
+  <h2>Where to sit on the trade curve</h2>
+  <p class="lede">Releasing wrongly blocked orders admits some fraud. No version of
+  this does not, so here is the whole curve, both numbers on every row.</p>
+
+  <div class="card" style="margin-top:20px"><div class="b">
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:7px">
+      <span class="sub">Cap, the highest tolerable p(block was correct)</span>
+      <span style="flex:1"></span>
+      <span class="num" id="capv" style="font-size:17px;font-weight:650;color:var(--accent)"></span>
+    </div>
+    <input type="range" id="cap" min="0" max="${B.frontier.length-1}" step="1"
+      value="${B.frontier.length-1}" aria-label="Operating point cap">
+    <div class="grid tiles" style="margin-top:15px" id="capstats"></div>
+  </div></div>
+
+  <div class="grid two" style="margin-top:14px">
+    <div class="card"><h4>Revenue recovered <span class="tag good">higher is better</span></h4>
+      <div class="b" id="f-rec"></div></div>
+    <div class="card"><h4>Fraud admitted <span class="tag bad">lower is better</span></h4>
+      <div class="b" id="f-adm"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h4>Net contribution <span class="tag warn">what reaches the P&amp;L</span></h4>
+    <div class="b" id="f-net"></div></div>
+
+  <div class="note-box"><p style="margin:0"><b>Cap ${B.cap}, and it is not
+  tuned.</b> Releasing pays only while <code>p &lt; m/(1+m)</code>, which at a
+  ${pct(B.margin,0)} margin is ${(B.margin/(1+B.margin)).toFixed(2)}. Left buys a
+  prettier precision column and costs recall, so the headline sits where the
+  arithmetic stops working.</p></div>
+
+  <h3>The whole curve</h3>
+  <div class="card"><div class="b scroll"><table id="ftab">
+    <thead><tr><th>cap</th><th class="r">Released</th><th class="r">Precision</th>
+      <th class="r">Recall</th><th class="r">Recovered</th><th class="r">Fraud admitted</th>
+      <th class="r">Net contribution</th><th class="r">Abstained</th></tr></thead>
+    <tbody>${B.frontier.map((r,i) => `<tr data-r="${i}" style="cursor:pointer">
+      <td class="num">${r.cap}${r.cap === B.cap ? ' <span class="tag blue">shipped</span>' : ""}</td>
+      <td class="r">${n0(r.released)}</td><td class="r">${pct(r.precision)}</td>
+      <td class="r">${pct(r.recall)}</td><td class="r">${cr(r.recovered)}</td>
+      <td class="r">${cr(r.admitted)}</td><td class="r">${cr(r.contribution)}</td>
+      <td class="r">${pct(r.abstention)}</td></tr>`).join("")}</tbody>
+  </table></div></div>
+
+  <h3>Where it runs changes what it is worth</h3>
+  <p>Everything above assumes inline at checkout, full value, customer still in
+  session. As a queue review they have gone, and only some come back.</p>
+  <div class="note-box"><p style="margin:0 0 8px"><b>Breakeven is a
+  <span id="q-be">${pct(B.queue.breakeven)}</span> return rate.</b> The only figure
+  here that does not rest on a guessed parameter. Above it a queue review pays;
+  below it, it does not.</p>
+  <p class="note" style="margin:0">Declared, not measured: only good releases are
+  discounted, fraud is booked in full. That errs pessimistic.</p></div>
+  <div class="card"><div class="b scroll"><table>
+    <thead><tr><th>Deployment</th><th class="r">Recovered</th>
+      <th class="r">Fraud admitted</th><th class="r">Net contribution</th></tr></thead>
+    <tbody id="q-body">${queueRows(B.frontier[B.frontier.length-1])}</tbody>
+  </table></div></div>
+  <p class="note" style="margin-top:11px">Only the first term scales: margin is
+  ${pct(B.margin,0)} of a recovered rupee, fraud 100% of an admitted one, so a fixed
+  <span id="q-drag">${cr(B.queue.terms.drag_inr)}</span> of drag comes off a quarter
+  of a shrinking number. Contribution moves about four times as fast as
+  revenue.</p>`;
+  },
+  after(){
+    const F = B.frontier;
+    const xl = [0, Math.floor(F.length/2), F.length-1].map(i => ({x:F[i].cap, t:String(F[i].cap)}));
+    /* Three single-series panels, never one chart with three lines: recovery
+       runs about fifteen times fraud admitted and they are not the same unit.
+       paint() re-renders them so the marker tracks the slider. */
+    const CHARTS = [
+      ["recovered", C.good, "f-rec", "recovered"],
+      ["admitted", C.bad, "f-adm", "fraud admitted"],
+      ["contribution", C.warn, "f-net", "net contribution"]];
+    const slider = document.getElementById("cap");
+    const capv = document.getElementById("capv");
+    const stats = document.getElementById("capstats");
+    const rows = [...document.querySelectorAll("#ftab tbody tr")];
+    /* Only what the sweep actually measured moves. The seed spread, the
+       decision mix and the pile itself were computed at the shipped cap and
+       are left alone rather than rescaled by eye. */
+    function paint(){
+      const r = F[+slider.value];
+      const off = r.cap !== B.cap;
+      capv.textContent = `cap ${r.cap}` + (off ? "" : "  (shipped)");
+      for (const [key, color, el, name] of CHARTS){
+        const s = F.map(x => ({ x:x.cap, y:x[key], r:x }));
+        const node = document.getElementById(el);
+        node.innerHTML = svgLine(s, { color, h:168, fmt:cr, markX:r.cap, xlabels:xl,
+          aria:`${name} across the operating-point curve` });
+        wireChart(node, s, d => `<b>cap ${d.r.cap}</b><br>${name} ${cr(d.y)}<br>
+          ${n0(d.r.released)} released, ${pct(d.r.precision)} precision`);
+      }
+      const q = queueAt(r, B.margin);
+      document.getElementById("q-be").textContent = pct(q.breakeven);
+      document.getElementById("q-drag").textContent = cr(q.drag);
+      document.getElementById("q-body").innerHTML = queueRows(r);
+      document.getElementById("ev-cov").innerHTML = coverageBars(r);
+      document.getElementById("hsub").innerHTML = headerStats(r, off);
+      stats.innerHTML = `
+        <div class="tile" style="padding:11px 13px"><span class="k">Recall of recoverable</span>
+          <span class="v" style="font-size:22px">${pct(r.recall)}</span></div>
+        <div class="tile" style="padding:11px 13px"><span class="k">Precision</span>
+          <span class="v" style="font-size:22px">${pct(r.precision)}</span></div>
+        <div class="tile pos" style="padding:11px 13px"><span class="k">Recovered</span>
+          <span class="v" style="font-size:22px">${cr(r.recovered)}</span></div>
+        <div class="tile neg" style="padding:11px 13px"><span class="k">Fraud admitted</span>
+          <span class="v" style="font-size:22px">${cr(r.admitted)}</span></div>
+        <div class="tile hi" style="padding:11px 13px"><span class="k">Net contribution</span>
+          <span class="v" style="font-size:22px">${cr(r.contribution)}</span></div>`;
+      rows.forEach((tr,i) => tr.classList.toggle("mark", i === +slider.value));
+    }
+    slider.addEventListener("input", paint);
+    rows.forEach((tr,i) => tr.onclick = () => { slider.value = i; paint(); });
+    paint();
+  }});
+
+/* ----------------------------------------------------------- 5. evidence --- */
+/* Spread as a percentage of the midpoint. Three metrics in three units cannot
+   share an axis, so index them to their own middle and the axis becomes "how
+   much does this move", which is the actual question. */
+const spread = (lo, hi) => 200 * (hi - lo) / (hi + lo);
+
+/* Only the last bar depends on the operating point. The reviewer rows are
+   cap-independent by construction, which is worth saying on the page rather
+   than leaving a viewer to wonder why they sit still. */
+function coverageBars(r){
+  const hr = B.human.rationed;
+  const covs = Object.keys(hr).sort((a, b) => +b - +a);
+  return barList([
+    ...covs.slice().reverse().map(k => ({
+      k: `A person, top ${pct(+k, 0)} by value`, v: hr[k].recall, color: C.ctx,
+      n: `${pct(hr[k].recall)}\u2003${cr(hr[k].contribution)}` })),
+    { k: `A person, all ${n0(O.n_cases)}`, v: B.human.full.recall, color: C.ctx,
+      n: `${pct(B.human.full.recall)}\u2003${cr(B.human.full.contribution)}` },
+    { k: `This system, all ${n0(O.n_cases)}`, v: r.recall, color: C.accent,
+      n: `${pct(r.recall)}\u2003${cr(r.contribution)}` },
+  ]);
+}
+
+PAGES.push({ id:"evidence", nav:"How honest is it", sub:"the numbers that got worse",
+  render(){
+  const hr = B.human.rationed;
+  const covs = Object.keys(hr).sort((a,b)=>+b-+a);
+  return `
+  <h2>Everything on this page makes us look worse</h2>
+  <p class="lede">Four numbers moved against us. All four are here, because a
+  metrics table where the model always wins tells you nothing.</p>
+
+  <h3>A human reviewer beats this system</h3>
+  <div class="card"><h4>Recall of recoverable revenue
+    <span class="tag">net contribution on the right</span></h4>
+  <div class="b"><div class="bars-wide" id="ev-cov">${
+    coverageBars(B.frontier[B.frontier.length-1])}</div>
+  <p class="note" style="margin:12px 0 0">The reviewer rows do not move with the
+  cap. A person does not have one.</p></div></div>
+  <p style="margin-top:11px">On judgment a reviewer wins, by
+  ${cr(B.human.full.contribution - O.contribution)}, and that row stays because it is
+  true. Its assumption does not: at Rs 150 and four hours a case, nobody reviews the
+  whole pile. <b>The gap is reach, not intelligence.</b></p>
+
+  <h3>The numbers move between generated worlds</h3>
+  <div class="card"><div class="b scroll"><table>
+    <thead><tr><th>seed</th><th class="r">Holdout</th><th class="r">Precision</th>
+      <th class="r">Recall</th><th class="r">Fraud admitted</th>
+      <th class="r">Net contribution</th></tr></thead>
+    <tbody>${SD.rows.map(r => `<tr${r.seed === 42 ? ' class="mark"' : ""}>
+      <td class="num">${r.seed}${r.seed === 42 ? ' <span class="tag blue">quoted</span>' : ""}</td>
+      <td class="r">${n0(r.n_holdout)}</td><td class="r">${pct(r.shipped_precision)}</td>
+      <td class="r">${pct(r.shipped_recall)}</td>
+      <td class="r">${cr(r.shipped_fraud_admitted)}</td>
+      <td class="r">${cr(r.shipped_contribution)}</td></tr>`).join("")}</tbody>
+  </table></div></div>
+  <div class="card" style="margin-top:14px"><h4>How far each number moves between
+    the five worlds<span class="tag">as a share of its own midpoint, so the three
+    are comparable</span></h4><div class="b"><div class="bars-wide">${barList([
+      { k:"Recall", v: spread(SD.recall_min, SD.recall_max), color: C.seq[0],
+        n: `${pct(SD.recall_min)} to ${pct(SD.recall_max)}` },
+      { k:"Precision", v: spread(SD.precision_min, SD.precision_max), color: C.seq[1],
+        n: `${pct(SD.precision_min)} to ${pct(SD.precision_max)}` },
+      { k:"Net contribution", v: spread(SD.contribution_min, SD.contribution_max),
+        color: C.seq[2],
+        n: `${cr(SD.contribution_min)} to ${cr(SD.contribution_max)}` },
+    ])}</div>
+    <p class="note" style="margin:13px 0 0">Recall is the steady one because it
+    depends on ranking. Contribution swings
+    ${(SD.contribution_max/SD.contribution_min).toFixed(1)}x, because it depends on
+    where one world happened to put its large orders. Quote the range.</p>
+  </div></div>
+  <div class="note-box w"><p style="margin:0"><b>We called precision stable at
+  ${pct(SD.tuned_precision_min)} to ${pct(SD.tuned_precision_max)}.</b> That sweep
+  re-picked the threshold on every seed, absorbing the variation it was measuring.
+  Claim withdrawn.</p></div>
+
+  <h3>A merchant the model never trained on</h3>
+  <div class="grid tiles">
+    <div class="tile"><span class="k">AUC cost of dropping ${esc(H.unseen_merchant.merchant)}</span>
+      <span class="v">${H.unseen_merchant.auc_drop.toFixed(4)}</span>
+      <span class="s">ranking transfers essentially free</span></div>
+    <div class="tile neg"><span class="k">Precision at the same cap</span>
+      <span class="v" style="font-size:19px">${pct(H.unseen_merchant.precision_full)} to ${pct(H.unseen_merchant.precision_lomo)}</span>
+      <span class="s">pricing does not transfer</span></div>
+  </div>
+  <p style="margin-top:11px">Ranking transfers free. Calibration does not, and wants
+  a few hundred of that merchant's own cases. The drop is what makes it a claim
+  rather than a slogan.</p>
+
+  <h3>Value is concentrated</h3>
+  <div class="card"><div class="b scroll"><table>
+    <thead><tr><th>Merchant</th><th class="r">Blocked</th><th class="r">Good</th>
+      <th class="r">Value blocked</th><th class="r">Released</th><th class="r">Precision</th>
+      <th class="r">Recovered</th><th class="r">Fraud admitted</th></tr></thead>
+    <tbody>${B.merchants.map(m => `<tr><td>${esc(m.merchant)}</td>
+      <td class="r">${n0(m.blocked)}</td><td class="r">${pct(m.good/m.blocked,0)}</td>
+      <td class="r">${cr(m.value_blocked)}</td><td class="r">${n0(m.released)}</td>
+      <td class="r">${m.released ? pct(m.released_good/m.released) : "n/a"}</td>
+      <td class="r">${cr(m.recovered)}</td><td class="r">${cr(m.admitted)}</td></tr>`).join("")}</tbody>
+  </table></div></div>
+  <p class="note" style="margin-top:11px">${esc(B.merchants[0].merchant)} alone is
+  ${pct(B.merchants[0].value_blocked / B.merchants.reduce((s,m)=>s+m.value_blocked,0),0)}
+  of the holdout's blocked value, so the rupee figures are largely one merchant's
+  pile.</p>
+
+  <h3>Two things that were silently broken</h3>
+  <p>Neither threw. Neither failed a test. Both had green tests on top of them
+  measuring nothing, and both were found by reading output instead of a pass
+  count.</p>
+  <div class="grid two">
+    <div class="card"><h4>The citation checker read payment ids as evidence</h4>
+      <div class="b"><p class="note" style="margin:0 0 9px">Numbers in a verdict must
+      trace to the evidence. The regex also matched digits inside payment ids, so
+      <code>pay_5E72cODtQrmZkn</code> contributed "72", which appears nowhere. Every
+      correctly cited verdict failed three times and fell back to a template.</p>
+      <p class="note" style="margin:0">"300 of 300 verdicts audit clean" was true,
+      and was measuring a checker that would have rejected every real verdict it
+      ever saw.</p></div></div>
+    <div class="card"><h4>The demo screen contained no demo cases</h4>
+      <div class="b"><p class="note" style="margin:0 0 9px">It ran the agent over the
+      first 400 blocked orders, then tagged whichever matched a showcase role. Five
+      of the six sit past position 400, so one case rendered out of six and every
+      verdict on the demo screen was a template.</p>
+      <p class="note" style="margin:0">The page looked completely normal. Found by
+      counting verdict sources in the generated HTML.</p></div></div>
+  </div>
+  <div class="note-box"><p style="margin:0">A test that passes tells you the code did
+  what the test asked. It does not tell you the test asked for anything.</p></div>
+
+  <div class="foot">The data is synthetic. We wrote the world, so in a real sense we
+  wrote the answers; calibrating the generator against published industry figures and
+  sweeping its parameters reduces the circularity but does not remove it. The holdout
+  is ${n0(O.n_cases)} cases and the intervals are wide. Cross-merchant data has real
+  privacy implications; the features are aggregate behavioural counts rather than
+  shared personal information, and a payment processor already holds this data, which
+  is an argument rather than a dismissal. This does not replace a fraud system. It
+  reviews one.</div>`;
+  }});
+
+/* The header quotes an operating point. When the slider moves off the shipped
+   one the figures follow it, and the badge says so in amber, because a
+   screenshot taken at cap 0.05 must not be readable as the headline. */
+const SHIPPED = B.frontier.find(r => r.cap === B.cap) || B.frontier[B.frontier.length - 1];
+function headerStats(r, off){
+  return [
+    ["blocked orders reviewed", n0(O.n_cases)],
+    ["recall of recoverable", pct(r.recall)],
+    ["recovered", cr(r.recovered)],
+    ["fraud admitted", cr(r.admitted)],
+  ].map(([k, v]) => `<span class="hp"><b>${v}</b>${esc(k)}</span>`).join("")
+   + `<span class="hp ${off ? "off" : "dim"}"><b>cap ${r.cap}</b>${
+       off ? "not the shipped point"
+           : esc(`${B.model.learner}, ${B.model.n_trees} trees`)}</span>`;
+}
+
+/* ====================================================================== boot */
+/* One page. Every section is in the DOM at once and the rail on the left
+   scrolls to it. Five short sections read in one pass; five clicks do not, and
+   a judge standing over a laptop will not click. */
+const nav = document.getElementById("nav"), mainEl = document.getElementById("main");
+
+mainEl.innerHTML = PAGES.map((p, i) => `<section class="sec" id="${p.id}">
+  <div class="sechd"><span class="secno">${String(i + 1).padStart(2, "0")}</span>
+    <span class="sectt">${esc(p.nav)}</span>
+    <span class="secsub">${esc(p.sub)}</span></div>
+  ${p.render()}</section>`).join("") + `<footer class="pgfoot">
+  <span>Built by <b>Bhavit Rao</b> for Razorpay's Buildathon 2026</span>
+  <span class="sp"></span>
+  <span>Track 02 &middot; false-decline recovery</span>
+  <span><code>${esc(B.model.learner)}</code>, ${B.model.n_trees} trees,
+    cap ${B.cap}</span></footer>`;
+PAGES.forEach(p => { if (p.after) p.after(); });
+
+nav.innerHTML = `<div class="prog"><i id="progbar"></i></div>
+  <div class="navrows">${PAGES.map((p, i) => `<a class="row" href="#${p.id}">
+    <span class="n">${String(i + 1).padStart(2, "0")}</span>
+    <span><span class="t">${esc(p.nav)}</span><span class="d">${esc(p.sub)}</span></span>
+    </a>`).join("")}</div>
+  <div class="byline"><b>Bhavit Rao</b>Razorpay Buildathon 2026</div>`;
+
+document.getElementById("hsub").innerHTML = headerStats(SHIPPED, false);
+
+/* `main` is the scroll container, not the window, so an href="#id" jump and
+   any scrollspy both have to read main.scrollTop rather than the document. */
+const secs = PAGES.map(p => document.getElementById(p.id));
+const rows = [...nav.querySelectorAll(".row")];
+const progbar = document.getElementById("progbar");
+function spy(){
+  const y = mainEl.scrollTop + 96;
+  let at = 0;
+  secs.forEach((el, j) => { if (el && el.offsetTop <= y) at = j; });
+  rows.forEach((r, j) => {
+    r.classList.toggle("sel", j === at);
+    r.classList.toggle("done", j < at);
+  });
+  const run = mainEl.scrollHeight - mainEl.clientHeight;
+  progbar.style.width = (run > 0 ? 100 * mainEl.scrollTop / run : 0).toFixed(2) + "%";
+}
+function jump(id, smooth){
+  const el = document.getElementById(id);
+  if (!el) return false;
+  mainEl.scrollTo({ top: Math.max(0, el.offsetTop - 10),
+                    behavior: smooth ? "smooth" : "auto" });
+  return true;
+}
+nav.addEventListener("click", e => {
+  const a = e.target.closest(".row"); if (!a) return;
+  e.preventDefault();
+  const id = a.getAttribute("href").slice(1);
+  if (jump(id, true)) history.replaceState(null, "", "#" + id);
+});
+mainEl.addEventListener("scroll", () => { hideTip(); spy(); }, { passive: true });
+/* Number keys move between sections. Guarded on the focused element, because
+   the agent section has a JSON textarea and a dozen number inputs in it, and
+   typing a 3 into an amount must not throw the page somewhere else. */
+addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable))
+    return;
+  const n = Number(e.key);
+  if (Number.isInteger(n) && n >= 1 && n <= PAGES.length){
+    const id = PAGES[n - 1].id;
+    if (jump(id, true)) history.replaceState(null, "", "#" + id);
+  }
+});
+addEventListener("hashchange", () => jump(location.hash.slice(1), true));
+if (location.hash.length > 1) jump(location.hash.slice(1), false);
+spy();
+</script>
