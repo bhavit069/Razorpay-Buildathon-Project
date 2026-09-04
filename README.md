@@ -2,6 +2,10 @@
 
 **Razorpay Buildathon 2026, Track 02.**
 
+<a href="https://bhavit069.github.io/Razorpay-Buildathon-Project/" target="_blank">
+  <img src="https://img.shields.io/badge/▶%20Click%20to%20Start-000000?style=for-the-badge" alt="Click to Start">
+</a>
+
 A merchant's fraud system blocks an order. Nothing ever looks at that decision
 again. This reviews the blocked pile and decides which blocks were wrong.
 
