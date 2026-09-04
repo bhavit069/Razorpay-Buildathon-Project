@@ -3,7 +3,7 @@
 **Razorpay Buildathon 2026, Track 02.**
 
 <p>
-  <a href="https://bhavit069.github.io/Razorpay-Buildathon-Project/">
+  <a href="https://bhavit069.github.io/Razorpay-Buildathon-Project/demo/console.html#flow">
     <img src="https://img.shields.io/badge/🚀%20CLICK%20TO%20START-FF2D55?style=for-the-badge&logoColor=white" alt="Click to Start">
   </a>
 </p>
