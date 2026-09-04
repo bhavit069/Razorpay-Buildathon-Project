@@ -115,6 +115,27 @@ def build_pages():
         case_room.build()
 
 
+def port_is_taken(port: int) -> bool:
+    """Is something already answering on this port?
+
+    allow_reuse_address is set below, and on Windows that behaves like
+    SO_REUSEPORT: a second process binds the same port happily, and the two
+    then race to accept. Half the requests come from the stale server, so the
+    page half-updates and the obvious conclusion, that the new code is broken,
+    is wrong. bind() will not tell us, so ask by connecting.
+    """
+    for fam, addr in ((socket.AF_INET, ("127.0.0.1", port)),
+                      (socket.AF_INET6, ("::1", port))):
+        try:
+            with socket.socket(fam, socket.SOCK_STREAM) as probe:
+                probe.settimeout(0.4)
+                if probe.connect_ex(addr) == 0:
+                    return True
+        except OSError:
+            pass
+    return False
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--port", type=int, default=DEFAULT_PORT,
@@ -162,6 +183,14 @@ def main(argv=None):
             except OSError:
                 pass          # no usable IPv6, fall through to v4
         return Server((a.host, a.port), Handler)
+
+    if port_is_taken(a.port):
+        raise SystemExit(
+            f"something is already serving on port {a.port}, most likely an "
+            f"older copy of this server left running. Two of them can hold the "
+            f"same port here and they take turns answering, so you would get a "
+            f"mix of the old pages and the new ones. Stop it first, or use "
+            f"--port {a.port + 1}.")
 
     try:
         httpd = listen()
